@@ -1,0 +1,58 @@
+name: dgcatra
+
+services:
+  api:
+    build: .
+    container_name: dgcatra-api
+    command: ["node", "dist/api/index.js"]
+    restart: always
+    ports:
+      - "4002:4002"
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+
+  workers:
+    build: .
+    container_name: dgcatra-workers
+    command: ["node", "dist/workers/index.js"]
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: dgcatra-redis
+    restart: always
+    volumes:
+      - dgcatra-redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  db:
+    image: postgres:16-alpine
+    container_name: dgcatra-db
+    restart: always
+    environment:
+      POSTGRES_USER: norbridge
+      POSTGRES_PASSWORD: norbridge
+      POSTGRES_DB: norbridge
+    volumes:
+      - dgcatra-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U norbridge -d norbridge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dgcatra-pgdata:
+  dgcatra-redis-data:
