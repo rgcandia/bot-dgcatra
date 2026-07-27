@@ -13,7 +13,7 @@ const worker = createWorker(async (job) => {
   console.log(`   Message ID: ${messageId || 'N/A'}`);
 
   try {
-    await procesarMensaje(payload, messageId);
+    await procesarMensaje(payload);
   } catch (e) {
     console.error('   ❌ Error procesando mensaje:', e);
   }

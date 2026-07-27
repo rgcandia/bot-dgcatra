@@ -16,15 +16,24 @@ export default function DashboardLayout() {
             display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
             textDecoration: 'none', color: isActive ? '#fff' : '#94a3b8',
             background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
-            borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
+            borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
           })}>
             📊 Inicio
+          </NavLink>
+          <NavLink to="/tickets" style={({ isActive }) => ({
+            display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
+            textDecoration: 'none', color: isActive ? '#fff' : '#94a3b8',
+            background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
+            borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+          })}>
+            🎫 Tickets
           </NavLink>
         </nav>
       </aside>
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <header style={{ background: 'var(--surface)', padding: '.7rem 1.5rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--border)' }}>
           <span style={{ color: 'var(--text-secondary)', fontSize: '.9rem' }}>{user?.telefono}</span>
+          {user?.esAdmin && <span className="badge badge-admin" style={{ background: '#3b82f6', color: '#fff', padding: '.15rem .5rem', borderRadius: 4, fontSize: '.75rem' }}>Admin</span>}
           <button className="btn btn-ghost btn-sm" onClick={handleLogout}>Salir</button>
         </header>
         <div style={{ padding: '1.5rem', flex: 1 }}>

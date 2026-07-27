@@ -10,7 +10,7 @@ export default function DashboardHome() {
       </p>
       <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
         <p>Tu usuario: <strong>{user?.telefono}</strong></p>
-        {user?.esAdmin && <p style={{ color: 'var(--accent)' }}>🔑 Acceso de administrador</p>}
+        {user?.esAdmin && <p style={{ color: 'var(--primary)' }}>🔑 Acceso de administrador</p>}
       </div>
     </div>
   );

@@ -39,8 +39,17 @@ export async function update(req: AuthRequest, res: Response) {
     const user = await User.findByPk(req.params.telefono);
     if (!user) return res.status(404).json({ error: 'No encontrado' });
 
-    const { nombreCompleto, email, baseId, sectorId, esAdmin, activo } = req.body;
-    await user.update({ nombreCompleto, email, baseId, sectorId, esAdmin, activo });
+    const { nombreCompleto, email, baseId, sectorId, activo } = req.body;
+    const payload: Record<string, unknown> = { nombreCompleto, email, baseId, sectorId, activo };
+
+    if (req.body.esAdmin !== undefined) {
+      if (!req.user?.esAdmin) {
+        return res.status(403).json({ error: 'Solo un administrador puede cambiar permisos de admin' });
+      }
+      payload.esAdmin = req.body.esAdmin;
+    }
+
+    await user.update(payload);
 
     const updated = await User.findByPk(req.params.telefono, {
       include: [

@@ -44,6 +44,39 @@ export async function getById(req: AuthRequest, res: Response) {
   }
 }
 
+export async function create(req: AuthRequest, res: Response) {
+  try {
+    const { asunto, descripcion, ubicacion, baseId, sectorId } = req.body;
+    if (!asunto || !descripcion || !ubicacion || !baseId) {
+      return res.status(400).json({ error: 'asunto, descripcion, ubicacion y baseId son requeridos' });
+    }
+
+    const userTelefono = req.user?.telefono;
+    if (!userTelefono) return res.status(401).json({ error: 'Usuario no autenticado' });
+
+    const ticket = await Ticket.create({
+      asunto, descripcion, ubicacion, baseId, sectorId: sectorId || null, userTelefono,
+      estado: 'abierto', prioridad: 'media', historial: [],
+    });
+
+    const created = await Ticket.findByPk(ticket.id, {
+      include: [
+        { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
+        { model: Base, as: 'base', attributes: ['nombre'] },
+        { model: Sector, as: 'sector', attributes: ['nombre'] },
+      ],
+    });
+
+    const io = getIO();
+    if (io) io.emit('ticket-creado', created);
+
+    res.status(201).json(created);
+  } catch (e) {
+    console.error('Error en create ticket:', e);
+    res.status(500).json({ error: 'Error al crear ticket' });
+  }
+}
+
 export async function update(req: AuthRequest, res: Response) {
   try {
     const ticket = await Ticket.findByPk(req.params.id);
@@ -54,19 +87,19 @@ export async function update(req: AuthRequest, res: Response) {
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
 
     if (estado && estado !== ticket.estado) {
-      historial.push({ accion: `Estado cambiado de "${ticket.estado}" a "${estado}"`, timestamp: new Date().toISOString() });
+      historial.push({ accion: `Estado: "${ticket.estado}" → "${estado}"`, autor, timestamp: new Date().toISOString() });
       ticket.estado = estado;
     }
     if (prioridad && prioridad !== ticket.prioridad) {
-      historial.push({ accion: `Prioridad cambiada de "${ticket.prioridad}" a "${prioridad}"`, timestamp: new Date().toISOString() });
+      historial.push({ accion: `Prioridad: "${ticket.prioridad}" → "${prioridad}"`, autor, timestamp: new Date().toISOString() });
       ticket.prioridad = prioridad;
     }
     if (tecnicoAsignado !== undefined && tecnicoAsignado !== ticket.tecnicoAsignado) {
-      historial.push({ accion: `Técnico asignado: ${tecnicoAsignado}`, timestamp: new Date().toISOString() });
+      historial.push({ accion: `Técnico asignado: ${tecnicoAsignado}`, autor, timestamp: new Date().toISOString() });
       ticket.tecnicoAsignado = tecnicoAsignado || null;
     }
     if (solucion !== undefined && solucion !== ticket.solucion) {
-      historial.push({ accion: `Solución registrada`, timestamp: new Date().toISOString() });
+      historial.push({ accion: `Solución registrada`, autor, timestamp: new Date().toISOString() });
       ticket.solucion = solucion || null;
     }
 

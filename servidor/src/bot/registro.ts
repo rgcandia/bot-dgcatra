@@ -172,10 +172,10 @@ async function paso5Confirmar(ctx: BotCtx): Promise<boolean> {
 
   await user.update({
     nombreCompleto: ctxData.nombre,
-    email: ctxData.email || null,
+    email: ctxData.email ? String(ctxData.email) : null,
     baseId: ctxData.baseId,
     sectorId: ctxData.sectorId,
-    esAdmin,
+    esAdmin: !!esAdmin,
     registroCompleto: true,
     pasoRegistro: 0,
     context: null,

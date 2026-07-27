@@ -3,6 +3,8 @@ import { useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
+import TicketsList from './pages/TicketsList';
+import TicketDetail from './pages/TicketDetail';
 
 function Private({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -15,6 +17,8 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<Private><DashboardLayout /></Private>}>
         <Route index element={<DashboardHome />} />
+        <Route path="tickets" element={<TicketsList />} />
+        <Route path="tickets/:id" element={<TicketDetail />} />
       </Route>
     </Routes>
   );

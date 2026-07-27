@@ -12,6 +12,17 @@ export async function getAll(_req: AuthRequest, res: Response) {
   }
 }
 
+export async function getById(req: AuthRequest, res: Response) {
+  try {
+    const sector = await Sector.findByPk(req.params.id);
+    if (!sector) return res.status(404).json({ error: 'No encontrado' });
+    res.json(sector);
+  } catch (e) {
+    console.error('Error en getById sector:', e);
+    res.status(500).json({ error: 'Error al obtener sector' });
+  }
+}
+
 export async function create(req: AuthRequest, res: Response) {
   try {
     const { nombre } = req.body;

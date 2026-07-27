@@ -45,7 +45,7 @@ input, select, textarea { font: inherit; }
   display: inline-block; padding: .15rem .5rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
 }
 .badge-abierto { background: #dbeafe; color: #1d4ed8; }
-.badge-en_curso { background: #fef3c7; color: #92400e; }
+.badge-en_proceso { background: #fef3c7; color: #92400e; }
 .badge-cerrado { background: #dcfce7; color: #166534; }
 
 table { width: 100%; border-collapse: collapse; }

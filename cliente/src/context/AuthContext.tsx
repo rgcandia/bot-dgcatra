@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
+const API = import.meta.env.VITE_API_URL || '';
+
 interface AuthState {
   telefono: string;
   nombre: string;
@@ -31,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (telefono: string) => {
     setLoading(true);
     try {
-      await fetch('/api/auth/solicitar-codigo', {
+      await fetch(`${API}/api/auth/solicitar-codigo`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telefono }),
       });
@@ -41,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verify = useCallback(async (telefono: string, codigo: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/verificar-codigo', {
+      const res = await fetch(`${API}/api/auth/verificar-codigo`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telefono, codigo }),
       });

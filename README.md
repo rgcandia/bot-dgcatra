@@ -138,6 +138,34 @@ bot-dgcatra/
 
 **Admins adicionales:** los asigna un admin existente desde el dashboard.
 
+## Flujo de creación de ticket (bot)
+
+1. Usuario escribe "ticket" o presiona el botón "🎫 Nuevo ticket"
+2. Bot pide **descripción del problema**
+3. Bot pide **ubicación** (dónde ocurre)
+4. Bot muestra resumen y pide confirmación
+5. Confirmado → se crea el ticket con estado `abierto` y el usuario recibe el número de ticket
+6. El ticket aparece en el dashboard para que un admin lo adopte
+
+## Tipos de usuarios
+
+| Tipo | Qué puede hacer |
+|------|----------------|
+| **Usuario** | Crear tickets por WhatsApp, ver sus tickets con `/mis-tickets` |
+| **Admin** | Todo lo anterior + dashboard, adoptar/cerrar tickets, gestionar bases/sectores/usuarios |
+| **Super Admin** | Mismo que admin + se asigna automáticamente al registrarse si coincide con `SUPER_ADMIN_PHONE` |
+
+## Frontend (cliente/)
+
+Dashboard React con autenticación JWT.
+
+| Ruta | Componente | Descripción |
+|------|-----------|------------|
+| `/login` | `LoginPage` | Autenticación 2 pasos (teléfono → código) |
+| `/` | `DashboardHome` | Panel principal |
+| `/tickets` | `TicketsList` | Lista de tickets con filtros (estado, prioridad) |
+| `/tickets/:id` | `TicketDetail` | Detalle del ticket + adoptar/cerrar + historial |
+
 ---
 
 ## Variables de entorno (servidor/.env)
@@ -166,10 +194,10 @@ bot-dgcatra/
 | GET | /webhook/meta | Verificación del webhook (Meta challenge) |
 | POST | /webhook/meta | Webhook entrante de WhatsApp (firma HMAC-SHA256) |
 
-### Auth (público)
+### Auth (público — rate limited: 5 intentos / 5 min)
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | /api/auth/solicitar-codigo | Envía código de 6 dígitos por WhatsApp |
+| POST | /api/auth/solicitar-codigo | Solicita código de 6 dígitos |
 | POST | /api/auth/verificar-codigo | Verifica código y devuelve JWT |
 
 ### Dashboard (requiere JWT via `Authorization: Bearer <token>`)
@@ -178,20 +206,22 @@ bot-dgcatra/
 | GET | /api/bases | Listar bases |
 | POST | /api/bases | Crear base |
 | PATCH | /api/bases/:id | Actualizar base |
-| DELETE | /api/bases/:id | Eliminar base |
+| DELETE | /api/bases/:id | Eliminar base | ✅ Admin |
 | GET | /api/sectores | Listar sectores |
-| POST | /api/sectores | Crear sector |
-| PATCH | /api/sectores/:id | Actualizar sector |
-| DELETE | /api/sectores/:id | Eliminar sector |
+| GET | /api/sectores/:id | Obtener sector |
 | GET | /api/sectores/base/:baseId | Sectores de una base |
-| POST | /api/sectores/asignar | Asignar sector a base |
-| DELETE | /api/sectores/base/:baseId/sector/:sectorId | Remover sector de base |
-| GET | /api/usuarios | Listar usuarios (filtros: baseId, sectorId) |
+| POST | /api/sectores | Crear sector | ✅ Admin |
+| PATCH | /api/sectores/:id | Actualizar sector | ✅ Admin |
+| DELETE | /api/sectores/:id | Eliminar sector | ✅ Admin |
+| POST | /api/sectores/asignar | Asignar sector a base | ✅ Admin |
+| DELETE | /api/sectores/base/:baseId/sector/:sectorId | Remover sector de base | ✅ Admin |
+| GET | /api/usuarios | Listar usuarios |
 | GET | /api/usuarios/:telefono | Obtener usuario por teléfono |
-| PATCH | /api/usuarios/:telefono | Actualizar usuario |
+| PATCH | /api/usuarios/:telefono | Actualizar usuario (solo admin puede cambiar `esAdmin`) |
 | GET | /api/tickets | Listar tickets (filtros: estado, prioridad, baseId, sectorId) |
 | GET | /api/tickets/:id | Detalle del ticket (incluye historial) |
-| PATCH | /api/tickets/:id | Actualizar ticket (estado, prioridad, técnico, solución) |
+| POST | /api/tickets | Crear ticket (asunto, descripcion, ubicacion, baseId) |
+| PATCH | /api/tickets/:id | Actualizar ticket (estado, prioridad, técnico, solución) | ✅ Admin |
 | GET | /api/stats/resumen | Totales (abiertos, cerrados, en curso, alta prioridad, usuarios) |
 | GET | /api/stats/por-base | Tickets agrupados por base |
 | GET | /api/stats/por-mes | Tickets agrupados por mes |

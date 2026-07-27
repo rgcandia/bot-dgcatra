@@ -1,8 +1,8 @@
-import type { Transaction } from 'sequelize';
 import { User } from '../models/models.js';
 import { manejarRegistro } from './registro.js';
+import { manejarCreacionTicket } from './ticket.js';
 
-export async function procesarMensaje(payload: any, messageId?: string) {
+export async function procesarMensaje(payload: any) {
   const entry = payload?.entry?.[0];
   const change = entry?.changes?.[0];
   const value = change?.value;
@@ -40,11 +40,7 @@ export async function procesarMensaje(payload: any, messageId?: string) {
     });
   }
 
-  const procesado = await manejarRegistro({
-    telefono: from,
-    texto: text,
-    buttonId,
-  });
+  const procesado = await manejarRegistro({ telefono: from, texto: text, buttonId });
 
   if (!procesado) {
     const { enviarTexto } = await import('./enviar.js');
@@ -59,15 +55,26 @@ async function manejarUsuarioRegistrado(ctx: { telefono: string; texto: string; 
   const { enviarTexto, enviarBotones } = await import('./enviar.js');
   const texto = ctx.texto.toLowerCase().trim();
 
-  if (texto === 'hola' || texto === 'menu' || texto === 'ayuda') {
+  if (texto === 'cancelar') {
+    await enviarTexto(ctx.telefono, 'Ok. Escribí *ayuda* para ver el menú.');
+    return;
+  }
+
+  const user = await User.findByPk(ctx.telefono);
+  const context = (user?.context || {}) as any;
+
+  if (context.ticketPaso !== undefined) {
+    await manejarCreacionTicket(ctx);
+    return;
+  }
+
+  if (texto === 'hola' || texto === 'menu' || texto === 'ayuda' || ctx.buttonId === 'cmd_ayuda') {
     await enviarBotones(
       ctx.telefono,
       '👋 *Hola!* ¿Qué querés hacer?\n\n' +
-      'Podés usar estos comandos:\n' +
-      '• */ticket* - Abrir un ticket\n' +
-      '• */mis-tickets* - Ver mis tickets\n' +
-      '• */cerrar* - Cerrar ticket\n' +
-      '• */ayuda* - Ver este menú',
+      '• 🎫 *Nuevo ticket* - Reportar un problema\n' +
+      '• 📋 *Mis tickets* - Ver tus reportes\n' +
+      '• ❓ *Ayuda* - Ver este menú',
       [
         { id: 'cmd_ticket', title: '🎫 Nuevo ticket' },
         { id: 'cmd_mis_tickets', title: '📋 Mis tickets' },
@@ -77,13 +84,30 @@ async function manejarUsuarioRegistrado(ctx: { telefono: string; texto: string; 
     return;
   }
 
-  if (texto.startsWith('/ticket')) {
-    await enviarTexto(ctx.telefono, '📝 *Nuevo ticket*\n\nDescribí el problema en un mensaje:');
+  if (texto.startsWith('/ticket') || ctx.buttonId === 'cmd_ticket') {
+    await manejarCreacionTicket(ctx);
     return;
   }
 
   if (texto === '/mis-tickets' || ctx.buttonId === 'cmd_mis_tickets') {
-    await enviarTexto(ctx.telefono, '📋 *Tus tickets* (próximamente)');
+    const tickets = await (await import('../models/models.js')).Ticket.findAll({
+      where: { userTelefono: ctx.telefono },
+      order: [['createdAt', 'DESC']],
+      limit: 5,
+    });
+
+    if (tickets.length === 0) {
+      await enviarTexto(ctx.telefono, '📋 No tenés tickets registrados todavía.');
+      return;
+    }
+
+    let msg = '📋 *Tus últimos tickets:*\n\n';
+    tickets.forEach(t => {
+      const estado = t.estado === 'abierto' ? '🔴' : t.estado === 'en_proceso' ? '🟡' : '✅';
+      msg += `${estado} *Ticket #${t.id}* — ${(t.asunto || '').substring(0, 50)}\n`;
+      msg += `   Estado: ${t.estado.replace('_', ' ')} · ${new Date(t.createdAt).toLocaleDateString('es-AR')}\n\n`;
+    });
+    await enviarTexto(ctx.telefono, msg);
     return;
   }
 
