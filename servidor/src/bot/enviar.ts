@@ -1,18 +1,9 @@
-const API_VERSION = 'v25.0';
-const BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
+import { client } from './whatsapp.js';
 
-function getToken() { return process.env.META_ACCESS_TOKEN || ''; }
-function getPhoneId() { return process.env.META_PHONE_NUMBER_ID || ''; }
-
-function formatearNumero(telefono: string): string {
+function formatearChatId(telefono: string): string {
   let num = telefono.replace(/[^\d]/g, '');
-  if (num.startsWith('549')) {
-    num = '54' + num.slice(3);
-  }
-  if (!num.startsWith('+')) {
-    num = '+' + num;
-  }
-  return num;
+  if (num.startsWith('+')) num = num.slice(1);
+  return `${num}@c.us`;
 }
 
 interface Button {
@@ -26,72 +17,60 @@ interface ListRow {
   description?: string;
 }
 
-export async function enviarTexto(to: string, texto: string): Promise<boolean> {
-  const token = getToken();
-  const phoneId = getPhoneId();
-  if (!token || !phoneId) { console.error('   ❌ Token o Phone ID no configurado'); return false; }
-  const res = await fetch(`${BASE_URL}/${phoneId}/messages`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: formatearNumero(to),
-      type: 'text',
-      text: { body: texto },
-    }),
+let clientReady = false;
+client.on('ready', () => { clientReady = true; });
+
+function esperarCliente(): Promise<void> {
+  if (clientReady) return Promise.resolve();
+  return new Promise((resolve) => {
+    const check = setInterval(() => {
+      if (clientReady) { clearInterval(check); resolve(); }
+    }, 500);
   });
-  return res.ok;
+}
+
+export async function enviarTexto(to: string, texto: string): Promise<boolean> {
+  await esperarCliente();
+  try {
+    const chatId = formatearChatId(to);
+    await client.sendMessage(chatId, texto);
+    return true;
+  } catch (e) {
+    console.error('❌ Error enviando texto:', e);
+    return false;
+  }
 }
 
 export async function enviarBotones(to: string, texto: string, buttons: Button[]): Promise<boolean> {
-  const token = getToken();
-  const phoneId = getPhoneId();
-  if (!token || !phoneId) { console.error('   ❌ Token o Phone ID no configurado'); return false; }
-  if (buttons.length > 3) {
-    return enviarLista(to, texto, 'Ver opciones', buttons.map(b => ({ id: b.id, title: b.title })));
+  await esperarCliente();
+  try {
+    const chatId = formatearChatId(to);
+    if (buttons.length <= 3) {
+      const btnList = buttons.map(b => ({
+        body: b.title.length > 20 ? b.title.substring(0, 20) : b.title,
+      }));
+      await client.sendMessage(chatId, texto);
+      for (const b of buttons) {
+        await client.sendMessage(chatId, `👉 ${b.title}`);
+      }
+      return true;
+    }
+    return enviarTexto(to, texto + '\n\n' + buttons.map(b => `• ${b.title}`).join('\n'));
+  } catch (e) {
+    console.error('❌ Error enviando botones:', e);
+    return false;
   }
-  const res = await fetch(`${BASE_URL}/${phoneId}/messages`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: formatearNumero(to),
-      type: 'interactive',
-      interactive: {
-        type: 'button',
-        body: { text: texto },
-        action: {
-          buttons: buttons.map(b => ({
-            type: 'reply',
-            reply: { id: b.id, title: b.title },
-          })),
-        },
-      },
-    }),
-  });
-  return res.ok;
 }
 
 export async function enviarLista(to: string, texto: string, botonLabel: string, rows: ListRow[]): Promise<boolean> {
-  const token = getToken();
-  const phoneId = getPhoneId();
-  if (!token || !phoneId) { console.error('   ❌ Token o Phone ID no configurado'); return false; }
-  const res = await fetch(`${BASE_URL}/${phoneId}/messages`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: formatearNumero(to),
-      type: 'interactive',
-      interactive: {
-        type: 'list',
-        body: { text: texto },
-        action: {
-          button: botonLabel,
-          sections: [{ title: 'Opciones', rows }],
-        },
-      },
-    }),
-  });
-  return res.ok;
+  await esperarCliente();
+  try {
+    const chatId = formatearChatId(to);
+    const lista = rows.map((r, i) => `${i + 1}. ${r.title}`).join('\n');
+    await client.sendMessage(chatId, `${texto}\n\n${lista}\n\nRespondé con el número de tu opción.`);
+    return true;
+  } catch (e) {
+    console.error('❌ Error enviando lista:', e);
+    return false;
+  }
 }

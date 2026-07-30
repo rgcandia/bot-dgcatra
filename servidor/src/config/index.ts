@@ -13,10 +13,6 @@ export const config = {
     secret: required('JWT_SECRET'),
   },
   superAdminPhone: process.env.SUPER_ADMIN_PHONE || '',
-  redis: {
-    host: process.env.REDIS_HOST || 'redis',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-  },
   database: {
     url: required('DATABASE_URL'),
   },

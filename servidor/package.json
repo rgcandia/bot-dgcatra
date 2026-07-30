@@ -12,22 +12,23 @@
     "seed": "node dist/seed.js"
   },
   "dependencies": {
-    "bullmq": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
     "express-rate-limit": "^8.6.1",
-    "ioredis": "^5.4.0",
     "jsonwebtoken": "^9.0.0",
     "pg": "^8.13.0",
+    "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.37.0",
-    "socket.io": "^4.8.0"
+    "socket.io": "^4.8.0",
+    "whatsapp-web.js": "^1.34.7"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.0",
     "@types/jsonwebtoken": "^9.0.0",
     "@types/node": "^22.0.0",
+    "@types/qrcode-terminal": "^0.12.2",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }

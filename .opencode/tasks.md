@@ -16,16 +16,17 @@
 
 > **Motivo:** La API oficial de Meta requiere registrar una empresa, verificar negocio, configurar webhook, tokens de acceso y números de teléfono business. Es un proceso burocrático y lento. Para un bot interno de tickets (bajo volumen, uso exclusivo de empleados), optamos por `whatsapp-web.js` que se conecta vía WhatsApp Web escaneando un QR, sin necesidad de Meta Business API.
 
-#### Pendiente
-- [ ] Agregar dependencias: `whatsapp-web.js`, `qrcode-terminal`, `puppeteer`
-- [ ] Actualizar Dockerfile: instalar Chrome + librerías
-- [ ] Crear `src/bot/whatsapp.ts`: cliente WhatsApp con LocalAuth + QR
-- [ ] Reemplazar `src/bot/enviar.ts`: Meta API → `client.sendMessage()`
-- [ ] Eliminar webhook Meta de `src/api/index.ts`
-- [ ] Eliminar BullMQ + Workers (los mensajes llegan por evento)
-- [ ] Eliminar Redis de docker-compose.yml
-- [ ] Limpiar .env: sacar vars Meta, agregar CHROME_PATH
-- [ ] Probar en Docker con QR
+#### Completado
+- [x] **Dependencias**: agregadas `whatsapp-web.js`, `qrcode-terminal`, `puppeteer`
+- [x] **Dockerfile**: instalado Chromium + librerías, creado `/app/session` para sesión persistente
+- [x] **Cliente WhatsApp**: `src/bot/whatsapp.ts` con LocalAuth, QR en terminal, eventos
+- [x] **Reemplazar enviar.ts**: Meta API → `client.sendMessage()` con simulación de escritura
+- [x] **Eliminar Meta Webhook**: removidas rutas `GET/POST /webhook/meta` de api/index.ts
+- [x] **Eliminar BullMQ + Workers**: removidos queue/, workers/, configuración Redis
+- [x] **Auth OTP**: Redis → Map en memoria (eliminada dependencia ioredis)
+- [x] **Docker Compose**: simplificado a solo API + DB, sin workers/redis
+- [x] **Config/Limpieza**: .env.example sin vars Meta, removidos `bullmq` e `ioredis`
+- [x] **Build**: TypeScript compila sin errores
 
 ### 2026-07-27 — Seguridad, estructura y tickets
 

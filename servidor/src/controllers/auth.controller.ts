@@ -1,11 +1,18 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import Redis from 'ioredis';
 import { User } from '../models/models.js';
 import { config } from '../config/index.js';
 
-const redis = new Redis({ host: config.redis.host, port: config.redis.port });
+const codigos = new Map<string, { codigo: string; expires: number }>();
+
+function limpiarExpirados() {
+  const now = Date.now();
+  for (const [key, val] of codigos) {
+    if (val.expires < now) codigos.delete(key);
+  }
+}
+setInterval(limpiarExpirados, 60000);
 
 export async function solicitarCodigo(req: Request, res: Response) {
   try {
@@ -16,10 +23,9 @@ export async function solicitarCodigo(req: Request, res: Response) {
     if (!user) return res.status(404).json({ error: 'Usuario no registrado' });
 
     const codigo = crypto.randomInt(100000, 999999).toString();
-    await redis.set(`auth:${telefono}`, codigo, 'EX', 300);
+    codigos.set(`auth:${telefono}`, { codigo, expires: Date.now() + 300000 });
 
     console.log(`📱 Código para ${telefono}: ${codigo}`);
-    // TODO: enviar código por WhatsApp via Meta API
 
     res.json({ message: 'Código enviado' });
   } catch (e) {
@@ -33,18 +39,17 @@ export async function verificarCodigo(req: Request, res: Response) {
     const { telefono, codigo } = req.body;
     if (!telefono || !codigo) return res.status(400).json({ error: 'Teléfono y código requeridos' });
 
-    const almacenado = await redis.get(`auth:${telefono}`);
-    if (!almacenado || almacenado !== codigo) {
+    const almacenado = codigos.get(`auth:${telefono}`);
+    if (!almacenado || almacenado.expires < Date.now() || almacenado.codigo !== codigo) {
       return res.status(401).json({ error: 'Código inválido o expirado' });
     }
 
-    await redis.del(`auth:${telefono}`);
+    codigos.delete(`auth:${telefono}`);
 
     const user = await User.findByPk(telefono);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     const esAdmin = user.esAdmin || false;
-
     const token = jwt.sign({ telefono, esAdmin }, config.jwt.secret, { expiresIn: '8h' });
 
     res.json({ token, esAdmin });

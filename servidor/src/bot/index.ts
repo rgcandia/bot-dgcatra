@@ -2,26 +2,20 @@ import { User } from '../models/models.js';
 import { manejarRegistro } from './registro.js';
 import { manejarCreacionTicket } from './ticket.js';
 
-export async function procesarMensaje(payload: any) {
-  const entry = payload?.entry?.[0];
-  const change = entry?.changes?.[0];
-  const value = change?.value;
-  const message = value?.messages?.[0];
+function limpiarNumero(from: string): string {
+  return from.replace(/@c\.us$/, '').replace(/[^\d]/g, '');
+}
 
-  if (!message) {
-    console.log('   ℹ️ No hay mensaje en el payload (puede ser un status update)');
-    return;
-  }
-
-  const from = message.from;
-  const text = message.text?.body || '';
-  const buttonId = message.interactive?.button_reply?.id || message.interactive?.list_reply?.id;
-  const timestamp = message.timestamp;
+export async function procesarMensaje(msg: any) {
+  const from = limpiarNumero(msg.from);
+  const text = msg.body || '';
+  const buttonId = msg._data?.interactiveAnnouncement?.nativeFlow?.messageParams?.action?.buttons?.[0]?.id
+    || msg._data?.buttonsResponse?.id
+    || undefined;
 
   console.log(`   📩 De: ${from}`);
-  console.log(`   💬 Mensaje: ${text || '(botón)'}`);
+  console.log(`   💬 Mensaje: ${text || '(sin texto)'}`);
   if (buttonId) console.log(`   🔘 Botón: ${buttonId}`);
-  console.log(`   🕒 Timestamp: ${timestamp}`);
 
   const user = await User.findByPk(from);
   const textoLower = text.toLowerCase().trim();
@@ -90,7 +84,8 @@ async function manejarUsuarioRegistrado(ctx: { telefono: string; texto: string; 
   }
 
   if (texto === '/mis-tickets' || ctx.buttonId === 'cmd_mis_tickets') {
-    const tickets = await (await import('../models/models.js')).Ticket.findAll({
+    const { Ticket } = await import('../models/models.js');
+    const tickets = await Ticket.findAll({
       where: { userTelefono: ctx.telefono },
       order: [['createdAt', 'DESC']],
       limit: 5,
