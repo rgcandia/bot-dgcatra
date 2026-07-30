@@ -2,17 +2,30 @@
 
 ## Pendiente
 
-### Bot WhatsApp (cuando haya número)
-- [ ] Conectar con número de WhatsApp de producción
-- [ ] Enviar código de auth por WhatsApp (hoy solo se loguea en consola)
-- [ ] Integrar Groq IA para conversación natural
-- [ ] Socket.IO en frontend para tiempo real (socket.io-client)
+### Frontend
 - [ ] CRUD de bases/sectores/usuarios en frontend
+- [ ] Socket.IO en frontend para tiempo real (socket.io-client)
 - [ ] Deploy del frontend en Vercel
+- [ ] Integrar Groq IA para conversación natural
 
 ---
 
 ## En progreso / Completado
+
+### 2026-07-29 — Migración: Meta API → whatsapp-web.js
+
+> **Motivo:** La API oficial de Meta requiere registrar una empresa, verificar negocio, configurar webhook, tokens de acceso y números de teléfono business. Es un proceso burocrático y lento. Para un bot interno de tickets (bajo volumen, uso exclusivo de empleados), optamos por `whatsapp-web.js` que se conecta vía WhatsApp Web escaneando un QR, sin necesidad de Meta Business API.
+
+#### Pendiente
+- [ ] Agregar dependencias: `whatsapp-web.js`, `qrcode-terminal`, `puppeteer`
+- [ ] Actualizar Dockerfile: instalar Chrome + librerías
+- [ ] Crear `src/bot/whatsapp.ts`: cliente WhatsApp con LocalAuth + QR
+- [ ] Reemplazar `src/bot/enviar.ts`: Meta API → `client.sendMessage()`
+- [ ] Eliminar webhook Meta de `src/api/index.ts`
+- [ ] Eliminar BullMQ + Workers (los mensajes llegan por evento)
+- [ ] Eliminar Redis de docker-compose.yml
+- [ ] Limpiar .env: sacar vars Meta, agregar CHROME_PATH
+- [ ] Probar en Docker con QR
 
 ### 2026-07-27 — Seguridad, estructura y tickets
 
