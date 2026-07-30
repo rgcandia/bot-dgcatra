@@ -4,11 +4,9 @@
   "description": "WhatsApp bot with IA for ticket management - GCBA",
   "type": "module",
   "scripts": {
-    "dev:api": "tsx watch src/api/index.ts",
-    "dev:workers": "tsx watch src/workers/index.ts",
+    "dev": "tsx watch src/api/index.ts",
     "build": "tsc",
-    "start:api": "node dist/api/index.js",
-    "start:workers": "node dist/workers/index.js",
+    "start": "node dist/api/index.js",
     "seed": "node dist/seed.js"
   },
   "dependencies": {

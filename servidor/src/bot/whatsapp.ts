@@ -2,14 +2,13 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 import { procesarMensaje } from './index.js';
-import { enviarTexto } from './enviar.js';
+import { setClient } from './enviar.js';
 
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: 'dgcatra' }),
   puppeteer: {
     headless: true,
     dumpio: true,
-    executablePath: process.env.CHROME_PATH || '/usr/bin/chromium',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -22,10 +21,11 @@ const client = new Client({
   },
 });
 
+setClient(client);
+
 client.on('qr', (qr) => {
   console.log('📱 [WhatsApp] Escaneá el QR para conectar:');
   qrcode.generate(qr, { small: true });
-  console.log('🔄 También disponible en: http://localhost:4002/api/whatsapp/qr');
 });
 
 client.on('ready', () => {
@@ -34,7 +34,6 @@ client.on('ready', () => {
 
 client.on('auth_failure', (msg) => {
   console.error('❌ [WhatsApp] Error de autenticación:', msg);
-  console.log('🔄 Eliminá la sesión y escaneá el QR de nuevo.');
 });
 
 client.on('disconnected', (reason) => {

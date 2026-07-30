@@ -10,7 +10,7 @@ import usuariosRoutes from '../routes/usuarios.routes.js';
 import ticketsRoutes from '../routes/tickets.routes.js';
 import statsRoutes from '../routes/stats.routes.js';
 import { config } from '../config/index.js';
-import './bot/whatsapp.js';
+import '../bot/whatsapp.js';
 
 const app = express();
 const server = http.createServer(app);

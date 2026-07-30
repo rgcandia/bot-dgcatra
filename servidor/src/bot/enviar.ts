@@ -1,4 +1,12 @@
-import { client } from './whatsapp.js';
+import type { Client } from 'whatsapp-web.js';
+
+let _client: Client | null = null;
+let _ready = false;
+
+export function setClient(c: Client) {
+  _client = c;
+  c.on('ready', () => { _ready = true; });
+}
 
 function formatearChatId(telefono: string): string {
   let num = telefono.replace(/[^\d]/g, '');
@@ -6,34 +14,24 @@ function formatearChatId(telefono: string): string {
   return `${num}@c.us`;
 }
 
+function esperarCliente(): Promise<void> {
+  if (_ready && _client) return Promise.resolve();
+  return new Promise((resolve) => {
+    const check = setInterval(() => {
+      if (_ready && _client) { clearInterval(check); resolve(); }
+    }, 500);
+  });
+}
+
 interface Button {
   id: string;
   title: string;
 }
 
-interface ListRow {
-  id: string;
-  title: string;
-  description?: string;
-}
-
-let clientReady = false;
-client.on('ready', () => { clientReady = true; });
-
-function esperarCliente(): Promise<void> {
-  if (clientReady) return Promise.resolve();
-  return new Promise((resolve) => {
-    const check = setInterval(() => {
-      if (clientReady) { clearInterval(check); resolve(); }
-    }, 500);
-  });
-}
-
 export async function enviarTexto(to: string, texto: string): Promise<boolean> {
   await esperarCliente();
   try {
-    const chatId = formatearChatId(to);
-    await client.sendMessage(chatId, texto);
+    await _client!.sendMessage(formatearChatId(to), texto);
     return true;
   } catch (e) {
     console.error('❌ Error enviando texto:', e);
@@ -45,29 +43,23 @@ export async function enviarBotones(to: string, texto: string, buttons: Button[]
   await esperarCliente();
   try {
     const chatId = formatearChatId(to);
-    if (buttons.length <= 3) {
-      const btnList = buttons.map(b => ({
-        body: b.title.length > 20 ? b.title.substring(0, 20) : b.title,
-      }));
-      await client.sendMessage(chatId, texto);
-      for (const b of buttons) {
-        await client.sendMessage(chatId, `👉 ${b.title}`);
-      }
-      return true;
+    await _client!.sendMessage(chatId, texto);
+    for (const b of buttons) {
+      await _client!.sendMessage(chatId, `👉 ${b.title}`);
     }
-    return enviarTexto(to, texto + '\n\n' + buttons.map(b => `• ${b.title}`).join('\n'));
+    return true;
   } catch (e) {
     console.error('❌ Error enviando botones:', e);
     return false;
   }
 }
 
-export async function enviarLista(to: string, texto: string, botonLabel: string, rows: ListRow[]): Promise<boolean> {
+export async function enviarLista(to: string, texto: string, botonLabel: string, rows: { id: string; title: string; description?: string }[]): Promise<boolean> {
   await esperarCliente();
   try {
     const chatId = formatearChatId(to);
     const lista = rows.map((r, i) => `${i + 1}. ${r.title}`).join('\n');
-    await client.sendMessage(chatId, `${texto}\n\n${lista}\n\nRespondé con el número de tu opción.`);
+    await _client!.sendMessage(chatId, `${texto}\n\n${lista}\n\nRespondé con el número de tu opción.`);
     return true;
   } catch (e) {
     console.error('❌ Error enviando lista:', e);
