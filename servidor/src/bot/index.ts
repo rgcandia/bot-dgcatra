@@ -1,116 +1,73 @@
-import { User } from '../models/models.js';
-import { manejarRegistro } from './registro.js';
-import { manejarCreacionTicket } from './ticket.js';
+import { manejarRegistro } from './handlers/registro.js';
+import { manejarCreacionTicket } from './handlers/ticket.js';
+import { manejarComandos } from './handlers/comandos.js';
+import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante, invalidarCache } from './session.js';
+import { registrarChatId } from './enviar.js';
 
 function limpiarNumero(from: string): string {
-  return from.replace(/@c\.us$/, '').replace(/[^\d]/g, '');
+  return from.split('@')[0].replace(/[^\d]/g, '');
+}
+
+function extraerButtonId(msg: any): string | undefined {
+  if (msg.selectedButtonId) return msg.selectedButtonId;
+  if (msg._data?.buttonsResponse?.selectedButtonId) return msg._data.buttonsResponse.selectedButtonId;
+  if (msg._data?.listResponse?.singleSelectReply?.selectedRowId) {
+    return msg._data.listResponse.singleSelectReply.selectedRowId;
+  }
+  if (msg._data?.interactiveAnnouncement?.nativeFlow?.messageParams?.action?.buttons?.[0]?.id) {
+    return msg._data.interactiveAnnouncement.nativeFlow.messageParams.action.buttons[0].id;
+  }
+  return undefined;
 }
 
 export async function procesarMensaje(msg: any) {
-  const from = limpiarNumero(msg.from);
+  const rawFrom = msg.from;
+  const from = limpiarNumero(rawFrom);
+  registrarChatId(from, rawFrom);
+
   const text = msg.body || '';
-  const buttonId = msg._data?.interactiveAnnouncement?.nativeFlow?.messageParams?.action?.buttons?.[0]?.id
-    || msg._data?.buttonsResponse?.id
-    || undefined;
+  const buttonId = extraerButtonId(msg);
 
-  console.log(`   📩 De: ${from}`);
-  console.log(`   💬 Mensaje: ${text || '(sin texto)'}`);
-  if (buttonId) console.log(`   🔘 Botón: ${buttonId}`);
+  console.log(`📩 De: ${rawFrom}`);
+  console.log(`💬 Mensaje: ${text || '(sin texto)'}`);
+  if (buttonId) console.log(`🔘 Botón: ${buttonId}`);
 
-  const user = await User.findByPk(from);
-  const textoLower = text.toLowerCase().trim();
+  registrarMensajeEntrante(from, text);
 
-  if (user?.registroCompleto) {
-    await manejarUsuarioRegistrado({ telefono: from, texto: text, buttonId });
+  const user = await obtenerUsuario(from);
+
+  if (user.registroCompleto) {
+    await manejarFlujoRegistrado({ telefono: from, texto: text, buttonId });
     return;
   }
 
+  const textoLower = text.toLowerCase().trim();
   if (textoLower === 'hola' || textoLower === 'menu' || textoLower === 'ayuda' || textoLower === 'start') {
-    await User.upsert({
-      telefono: from,
-      pasoRegistro: 0,
-      context: null,
-      registroCompleto: false,
-    });
+    await guardarUsuario(from, { pasoRegistro: 0, context: null, registroCompleto: false });
   }
 
   const procesado = await manejarRegistro({ telefono: from, texto: text, buttonId });
 
   if (!procesado) {
-    const { enviarTexto } = await import('./enviar.js');
-    const paso = (await User.findByPk(from))?.pasoRegistro ?? 0;
+    const paso = (await obtenerUsuario(from)).pasoRegistro ?? 0;
     if (paso === 0) {
+      const { enviarTexto } = await import('./enviar.js');
       await enviarTexto(from, '👋 Escribí *hola* para comenzar el registro.');
     }
   }
 }
 
-async function manejarUsuarioRegistrado(ctx: { telefono: string; texto: string; buttonId?: string }) {
-  const { enviarTexto, enviarBotones } = await import('./enviar.js');
-  const texto = ctx.texto.toLowerCase().trim();
+async function manejarFlujoRegistrado(ctx: { telefono: string; texto: string; buttonId?: string }) {
+  const user = await obtenerUsuario(ctx.telefono);
+  const context = (user.context || {}) as any;
 
-  if (texto === 'cancelar') {
-    await enviarTexto(ctx.telefono, 'Ok. Escribí *ayuda* para ver el menú.');
-    return;
-  }
-
-  const user = await User.findByPk(ctx.telefono);
-  const context = (user?.context || {}) as any;
-
-  if (context.ticketPaso !== undefined) {
+  if (context.ticketPaso !== undefined && context.ticketPaso !== null) {
     await manejarCreacionTicket(ctx);
     return;
   }
 
-  if (texto === 'hola' || texto === 'menu' || texto === 'ayuda' || ctx.buttonId === 'cmd_ayuda') {
-    await enviarBotones(
-      ctx.telefono,
-      '👋 *Hola!* ¿Qué querés hacer?\n\n' +
-      '• 🎫 *Nuevo ticket* - Reportar un problema\n' +
-      '• 📋 *Mis tickets* - Ver tus reportes\n' +
-      '• ❓ *Ayuda* - Ver este menú',
-      [
-        { id: 'cmd_ticket', title: '🎫 Nuevo ticket' },
-        { id: 'cmd_mis_tickets', title: '📋 Mis tickets' },
-        { id: 'cmd_ayuda', title: '❓ Ayuda' },
-      ]
-    );
-    return;
-  }
-
-  if (texto.startsWith('/ticket') || ctx.buttonId === 'cmd_ticket') {
+  const handled = await manejarComandos(ctx);
+  if (!handled) {
     await manejarCreacionTicket(ctx);
-    return;
   }
-
-  if (texto === '/mis-tickets' || ctx.buttonId === 'cmd_mis_tickets') {
-    const { Ticket } = await import('../models/models.js');
-    const tickets = await Ticket.findAll({
-      where: { userTelefono: ctx.telefono },
-      order: [['createdAt', 'DESC']],
-      limit: 5,
-    });
-
-    if (tickets.length === 0) {
-      await enviarTexto(ctx.telefono, '📋 No tenés tickets registrados todavía.');
-      return;
-    }
-
-    let msg = '📋 *Tus últimos tickets:*\n\n';
-    tickets.forEach(t => {
-      const estado = t.estado === 'abierto' ? '🔴' : t.estado === 'en_proceso' ? '🟡' : '✅';
-      msg += `${estado} *Ticket #${t.id}* — ${(t.asunto || '').substring(0, 50)}\n`;
-      msg += `   Estado: ${t.estado.replace('_', ' ')} · ${new Date(t.createdAt).toLocaleDateString('es-AR')}\n\n`;
-    });
-    await enviarTexto(ctx.telefono, msg);
-    return;
-  }
-
-  await enviarBotones(
-    ctx.telefono,
-    '🤖 No entendí ese comando.\nEscribí *ayuda* para ver las opciones disponibles.',
-    [
-      { id: 'cmd_ayuda', title: '❓ Ayuda' },
-    ]
-  );
 }

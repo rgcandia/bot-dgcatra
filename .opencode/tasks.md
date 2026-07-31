@@ -1,5 +1,46 @@
 # Tareas - bot-dgcatra
 
+## En progreso
+
+### 2026-07-31 — Restructuración del bot: botones nativos, typing humano, historial
+
+> **Diagnóstico:** Al migrar de Meta API a whatsapp-web.js, el bot quedó con código legacy que simula botones mandando múltiples mensajes con `👉`, no usa la clase `Buttons` nativa de la librería, la simulación de typing está en código muerto (nunca se ejecuta), y el modelo `Conversacion` nunca persiste historial. Además hay 3-5 queries SQL redundantes por cada mensaje recibido.
+
+#### Problemas detectados
+- [ ] **3-5 queries User.findByPk por mensaje** — se busca el mismo usuario repetidas veces en `procesarMensaje`, `manejarUsuarioRegistrado`, `manejarRegistro`, y cada paso del registro
+- [ ] **Button detection rota** — `msg._data?.interactiveAnnouncement?.nativeFlow...` es formato Meta API; los `Buttons` nativos responden en `msg.selectedButtonId`
+- [ ] **enviarBotones spam** — manda 1 texto + N mensajes `👉` separados. Detectable por anti-bot de WhatsApp
+- [ ] **Typing simulado muerto** — `msg.reply` override en `whatsapp.ts:47-54` nunca se invoca; todas las respuestas van por `client.sendMessage`
+- [ ] **Historial de conversación no se persiste** — tabla `conversaciones` y modelo `Conversacion` existen pero nunca se escribe ningún registro
+- [ ] **User.upsert + race condition** — en `procesarMensaje` se hace upsert y luego se lee inmediatamente, posible estado inconsistente
+- [ ] **Sin timeout de sesión** — si el usuario abandona el flujo de registro/ticket, el context queda sucio indefinidamente
+
+#### Plan de restructura
+
+| Nuevo archivo | Responsabilidad |
+|---|---|
+| `src/bot/whatsapp.ts` | Solo init del cliente + eventos |
+| `src/bot/index.ts` | Router ligero, 1 sola query al usuario |
+| `src/bot/session.ts` | Caché en memoria + fetch único de User + guardado de historial |
+| `src/bot/enviar.ts` | Envío unificado con typing real (`sendStateTyping` + delays aleatorios) + `Buttons`/`List` nativos |
+| `src/bot/handlers/registro.ts` | Flujo de registro con botones nativos (max 3) + soporte texto numérico |
+| `src/bot/handlers/ticket.ts` | Flujo de creación de ticket con botones nativos |
+| `src/bot/handlers/comandos.ts` | Comandos de usuario registrado (ayuda, mis-tickets) |
+| `src/bot/historial.ts` | Guarda cada mensaje inbound/outbound en `Conversacion` |
+
+#### Checklist de implementación
+- [x] **Fix chatId**: `limpiarNumero` soporta `@lid`, caché de chatId en `enviar.ts` (26-07-31)
+- [x] **Session.ts**: único punto de acceso a User, caché LRU en memoria, guarda historial
+- [x] **Historial.ts**: persistir cada mensaje inbound/outbound en `conversaciones` (fire-and-forget)
+- [x] **Enviar.ts nativo**: `Buttons` y `List` reales, `sendStateTyping` + delays 1.5-4s aleatorios
+- [x] **Handlers/**: separados en `handlers/registro.ts`, `ticket.ts`, `comandos.ts`
+- [x] **Index.ts**: router delgado que solo despacha al handler correcto (1 sola query a User)
+- [x] **Whatsapp.ts**: limpiado código muerto del typing viejo
+- [ ] **Timeout de sesión**: limpiar context después de 15 min de inactividad
+- [x] **Build + deploy**: compilado, copiado a contenedor, reconectado sin QR
+
+---
+
 ## Pendiente
 
 ### Frontend

@@ -42,17 +42,6 @@ client.on('disconnected', (reason) => {
 
 client.on('message', async (msg) => {
   if (msg.from === 'status@broadcast') return;
-
-  const originalReply = msg.reply.bind(msg);
-  msg.reply = async (content: any) => {
-    try {
-      const chat = await msg.getChat();
-      await chat.sendStateTyping();
-      await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
-    } catch { }
-    return originalReply(content);
-  };
-
   console.log(`📩 De: ${msg.from} · ${msg.body || '(archivo/multimedia)'}`);
   await procesarMensaje(msg);
 });
