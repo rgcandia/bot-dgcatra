@@ -40,12 +40,15 @@ async function esperarCliente(): Promise<Client> {
 async function simularEscritura(chatId: string, texto: string): Promise<void> {
   try {
     const client = await esperarCliente();
-    const chat = await client.getChatById(chatId);
-    await chat.sendStateTyping();
-    const base = 800 + texto.length * 15;
-    const delay = base + Math.random() * 2000;
+    await (client as any).pupPage.evaluate((id: string) => {
+      (window as any).WWebJS.sendChatstate('typing', id);
+    }, chatId);
+    const delay = 1500 + texto.length * 15 + Math.random() * 2000;
     await new Promise(r => setTimeout(r, delay));
-  } catch { }
+  } catch {
+    const delay = 1500 + Math.random() * 2000;
+    await new Promise(r => setTimeout(r, delay));
+  }
 }
 
 async function rateLimitar(telefono: string): Promise<void> {
