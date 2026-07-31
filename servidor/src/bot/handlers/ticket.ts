@@ -76,7 +76,6 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
           { id: 'ticket_confirmar', title: 'Enviar' },
           { id: 'cancelar', title: 'Cancelar' },
         ],
-        'Confirmar ticket',
       );
     }
 

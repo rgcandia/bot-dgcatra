@@ -7,6 +7,8 @@ services:
     restart: always
     ports:
       - "4002:4002"
+    volumes:
+      - ./.wwebjs_auth:/app/.wwebjs_auth
     env_file:
       - .env
     depends_on:
@@ -14,6 +16,15 @@ services:
         condition: service_healthy
     environment:
       - CHROME_CRASHPAD_HANDLER=/dev/null
+    shm_size: '2gb'
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:16-alpine
@@ -30,7 +41,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   dgcatra-pgdata:
-  dgcatra-session:

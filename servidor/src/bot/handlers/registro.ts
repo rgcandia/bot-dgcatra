@@ -48,7 +48,7 @@ async function paso0(ctx: Ctx): Promise<boolean> {
     [
       { id: 'reg_iniciar', title: 'Registrarme' },
       { id: 'reg_salir', title: 'Salir' },
-    ], 'Registro');
+    ]);
 }
 
 async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
@@ -84,7 +84,7 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
       ...sectores.map(s => ({ id: `sector_${s.id}`, title: s.nombre })),
       { id: 'cancelar', title: 'Cancelar' },
     ];
-    return await enviarBotones(ctx.telefono, '👤 Seleccioná tu *sector*:', btns, 'Sector');
+    return await enviarBotones(ctx.telefono, '👤 Seleccioná tu *sector*:', btns);
   }
 
   return await enviarLista(
@@ -98,7 +98,6 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
         { id: 'cancelar', title: '❌ Cancelar' },
       ],
     }],
-    'Sector',
   );
 }
 
@@ -168,7 +167,6 @@ async function paso3Nombre(ctx: Ctx): Promise<boolean> {
       { id: 'email_no', title: 'Omitir' },
       { id: 'cancelar', title: 'Cancelar' },
     ],
-    'Correo electrónico',
   );
 }
 
@@ -213,7 +211,6 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
       { id: 'conf_si', title: 'Confirmar' },
       { id: 'conf_no', title: 'Cancelar' },
     ],
-    'Confirmación',
   );
 }
 

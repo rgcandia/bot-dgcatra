@@ -44,4 +44,4 @@ RUN mkdir -p /app/.local/share/applications /app/.wwebjs_auth /app/.cache && \
 # (el bot solo escucha en puerto interno, no expuesto al exterior)
 #USER app
 EXPOSE 4002
-CMD ["node", "dist/api/index.js"]
+CMD sh -c "rm -f .wwebjs_auth/session-dgcatra/Singleton* && node dist/api/index.js"

@@ -1,7 +1,7 @@
 import pkg from 'whatsapp-web.js';
 import type { Client } from 'whatsapp-web.js';
-const { Buttons, List } = pkg;
-import { registrarMensajeSaliente } from './session.js';
+const { List } = pkg;
+import { registrarMensajeSaliente, guardarUltimosBotones } from './session.js';
 
 let _client: Client | null = null;
 let _ready = false;
@@ -35,12 +35,13 @@ async function esperarCliente(): Promise<Client> {
   });
 }
 
-async function simularEscritura(chatId: string): Promise<void> {
+async function simularEscritura(chatId: string, texto: string): Promise<void> {
   try {
     const client = await esperarCliente();
     const chat = await client.getChatById(chatId);
     await chat.sendStateTyping();
-    const delay = 1500 + Math.random() * 2500;
+    const base = 800 + texto.length * 15;
+    const delay = base + Math.random() * 2000;
     await new Promise(r => setTimeout(r, delay));
   } catch { }
 }
@@ -53,7 +54,7 @@ export interface BtnDef {
 export async function enviarTexto(to: string, texto: string): Promise<boolean> {
   try {
     const chatId = formatearChatId(to);
-    await simularEscritura(chatId);
+    await simularEscritura(chatId, texto);
 
     const client = await esperarCliente();
     await client.sendMessage(chatId, texto);
@@ -66,45 +67,40 @@ export async function enviarTexto(to: string, texto: string): Promise<boolean> {
   }
 }
 
-export async function enviarBotones(
-  to: string,
-  body: string,
-  buttons: BtnDef[],
-  title?: string,
-  footer?: string,
-): Promise<boolean> {
-  try {
-    const chatId = formatearChatId(to);
-    await simularEscritura(chatId);
+export async function enviarBotones(to: string, body: string, buttons: BtnDef[]): Promise<boolean> {
+  const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
+  const opts = buttons.map((b, i) => `${emojis[i] || `${i + 1}.`} *${b.title}*`).join('\n');
+  const msg = `${body}\n\n${opts}`;
 
-    const client = await esperarCliente();
-    const mapped = buttons.slice(0, 3).map(b => ({ id: b.id, body: b.title }));
-    const btns = new Buttons(body, mapped, title, footer);
-    await client.sendMessage(chatId, btns);
-
-    registrarMensajeSaliente(to, body);
-    return true;
-  } catch (e) {
-    console.error('❌ Error enviando botones:', e);
-    return false;
-  }
+  guardarUltimosBotones(to, buttons);
+  return await enviarTexto(to, msg);
 }
 
 export async function enviarLista(
   to: string,
   body: string,
-  buttonText: string,
+  _buttonText: string,
   sections: { title: string; rows: { id: string; title: string; description?: string }[] }[],
-  msgTitle?: string,
-  footer?: string,
 ): Promise<boolean> {
   try {
     const chatId = formatearChatId(to);
-    await simularEscritura(chatId);
+    const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣', '🔟'];
 
+    let msg = `${body}\n\n`;
+    let idx = 0;
+    for (const sec of sections) {
+      msg += `*${sec.title}*\n`;
+      for (const row of sec.rows) {
+        msg += `${emojis[idx] || `${idx + 1}.`} ${row.title}\n`;
+        if (row.description) msg += `   ${row.description}\n`;
+        idx++;
+      }
+      msg += '\n';
+    }
+
+    await simularEscritura(chatId, msg);
     const client = await esperarCliente();
-    const list = new List(body, buttonText, sections, msgTitle, footer);
-    await client.sendMessage(chatId, list);
+    await client.sendMessage(chatId, msg);
 
     registrarMensajeSaliente(to, body);
     return true;

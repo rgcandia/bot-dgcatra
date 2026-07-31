@@ -38,6 +38,9 @@
 - [x] **Whatsapp.ts**: limpiado código muerto del typing viejo
 - [ ] **Timeout de sesión**: limpiar context después de 15 min de inactividad
 - [x] **Build + deploy**: compilado, copiado a contenedor, reconectado sin QR
+- [x] **Docker**: volumen `.wwebjs_auth` bind mount para persistir sesión, `shm_size: 2gb`, `dns`, rotación logs, fix `Singleton*`
+- [x] **Cola por usuario**: `Map` en memoria, mensajes del mismo usuario se procesan en orden FIFO
+- [x] **sendSeen()**: marcar como leído antes de responder (comportamiento humano natural)
 
 ---
 

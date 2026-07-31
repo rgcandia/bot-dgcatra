@@ -42,7 +42,34 @@ export async function guardarUsuario(telefono: string, data: Partial<SessionUser
     ...data,
   } as any);
   cache.set(telefono, { user, ts: Date.now() });
+
+  const cached = cache.get(telefono);
+  if (cached?.user) {
+    const merged: any = { ...(cached.user as any).get({ plain: true }) };
+    if (data.context) {
+      const currentCtx = (cached.user as any).context || {};
+      merged.context = { ...currentCtx, ...data.context };
+    }
+    return merged as SessionUser;
+  }
   return user as unknown as SessionUser;
+}
+
+export async function guardarUltimosBotones(telefono: string, buttons: { id: string; title: string }[]) {
+  const entry = cache.get(telefono);
+  if (entry?.user) {
+    const currentCtx = (entry.user as any).context || {};
+    currentCtx._lastButtons = buttons;
+    return;
+  }
+
+  const user = await User.findByPk(telefono);
+  if (user) {
+    const ctx = (user.context || {}) as any;
+    ctx._lastButtons = buttons;
+    await User.update({ context: ctx }, { where: { telefono } });
+    cache.set(telefono, { user: user as unknown as User | null, ts: Date.now() });
+  }
 }
 
 export async function registrarMensajeEntrante(telefono: string, texto: string) {

@@ -41,7 +41,6 @@ async function mostrarMenu(telefono: string): Promise<boolean> {
       { id: 'cmd_mis_tickets', title: 'Mis tickets' },
       { id: 'cmd_ayuda', title: 'Ayuda' },
     ],
-    'Menú principal',
   );
 }
 
@@ -72,6 +71,5 @@ async function mostrarNoEntendido(telefono: string): Promise<boolean> {
   return await enviarBotones(telefono,
     '🤖 No entendí ese comando.\nEscribí *ayuda* para ver las opciones disponibles.',
     [{ id: 'cmd_ayuda', title: 'Ayuda' }],
-    'Ayuda',
   );
 }
