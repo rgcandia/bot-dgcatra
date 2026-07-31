@@ -5,6 +5,9 @@ import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
 import TicketsList from './pages/TicketsList';
 import TicketDetail from './pages/TicketDetail';
+import BasesPage from './pages/admin/BasesPage';
+import SectoresPage from './pages/admin/SectoresPage';
+import UsuariosPage from './pages/admin/UsuariosPage';
 
 function Private({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -19,6 +22,9 @@ export default function App() {
         <Route index element={<DashboardHome />} />
         <Route path="tickets" element={<TicketsList />} />
         <Route path="tickets/:id" element={<TicketDetail />} />
+        <Route path="admin/bases" element={<BasesPage />} />
+        <Route path="admin/sectores" element={<SectoresPage />} />
+        <Route path="admin/usuarios" element={<UsuariosPage />} />
       </Route>
     </Routes>
   );

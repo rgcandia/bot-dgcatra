@@ -46,11 +46,19 @@
 
 ## Pendiente
 
-### Frontend
-- [ ] CRUD de bases/sectores/usuarios en frontend
-- [ ] Socket.IO en frontend para tiempo real (socket.io-client)
-- [ ] Deploy del frontend en Vercel
-- [ ] Integrar Groq IA para conversación natural
+### 🔴 Producción — Bloqueantes
+- [ ] **Timeout de sesión**: limpiar `context` y resetear `pasoRegistro` si pasan 15 min sin actividad del usuario durante registro/ticket
+- [ ] **Rate limit por usuario en el bot**: máximo 1 respuesta cada 2 segundos por usuario para evitar spam loops
+
+### 🟡 Experiencia — Alta prioridad
+- [ ] **Socket.IO en frontend**: conectar `cliente/` al servidor para ver tickets nuevos en tiempo real
+- [ ] **Notificaciones por WhatsApp**: cuando un admin adopta/cierra tu ticket, avisar al agente por WhatsApp
+- [ ] **Comando `/ticket #id`**: consultar estado de un ticket específico con su número
+
+### 🟢 Mantenimiento — Media prioridad
+- [ ] **CRUD visual de bases/sectores/usuarios** en el dashboard
+- [ ] **Admin puede crear bases/sectores desde el frontend** (hoy solo seed manual o SQL directo)
+- [ ] **Deploy del frontend en Vercel**
 
 ---
 

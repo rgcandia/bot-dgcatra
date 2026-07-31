@@ -7,6 +7,8 @@ let _client: Client | null = null;
 let _ready = false;
 
 const chatIdCache = new Map<string, string>();
+const lastSend = new Map<string, number>();
+const RATE_LIMIT_MS = 2000;
 
 export function setClient(c: Client) {
   _client = c;
@@ -46,6 +48,16 @@ async function simularEscritura(chatId: string, texto: string): Promise<void> {
   } catch { }
 }
 
+async function rateLimitar(telefono: string): Promise<void> {
+  const now = Date.now();
+  const ultimo = lastSend.get(telefono) || 0;
+  const espera = RATE_LIMIT_MS - (now - ultimo);
+  if (espera > 0) {
+    await new Promise(r => setTimeout(r, espera));
+  }
+  lastSend.set(telefono, Date.now());
+}
+
 export interface BtnDef {
   id: string;
   title: string;
@@ -57,6 +69,7 @@ export async function enviarTexto(to: string, texto: string): Promise<boolean> {
     await simularEscritura(chatId, texto);
 
     const client = await esperarCliente();
+    await rateLimitar(to);
     await client.sendMessage(chatId, texto);
 
     registrarMensajeSaliente(to, texto);

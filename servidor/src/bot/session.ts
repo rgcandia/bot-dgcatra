@@ -2,7 +2,8 @@ import { User } from '../models/models.js';
 import { guardarMensaje } from './historial.js';
 
 const cache = new Map<string, { user: User | null; ts: number }>();
-const TTL = 60_000;
+const CACHE_TTL = 60_000;
+const SESION_TTL = 15 * 60_000;
 
 export interface SessionUser {
   telefono: string;
@@ -17,16 +18,48 @@ export interface SessionUser {
   context: any;
 }
 
+function estaVencido(context: any, now: number): boolean {
+  if (!context?._lastActivity) return true;
+  return (now - context._lastActivity) > SESION_TTL;
+}
+
+function necesitaLimpieza(user: SessionUser, now: number): boolean {
+  if (user.registroCompleto) {
+    return !!(user.context?.ticketPaso !== undefined && estaVencido(user.context, now));
+  }
+  return user.pasoRegistro > 0 && estaVencido(user.context, now);
+}
+
+async function limpiarSesionVencida(telefono: string, user: User) {
+  user.set('pasoRegistro', 0);
+  user.set('context', null);
+  user.set('registroCompleto', false);
+  await user.save();
+}
+
 export async function obtenerUsuario(telefono: string): Promise<SessionUser> {
   const entry = cache.get(telefono);
   const now = Date.now();
 
-  if (entry && (now - entry.ts) < TTL) {
+  if (entry && (now - entry.ts) < CACHE_TTL) {
     return (entry.user ?? createDefault(telefono)) as SessionUser;
   }
 
   const user = await User.findByPk(telefono);
-  const sessionUser = (user ?? createDefault(telefono)) as unknown as SessionUser;
+  if (!user) {
+    const def = createDefault(telefono);
+    cache.set(telefono, { user: null, ts: now });
+    return def;
+  }
+
+  const sessionUser = user.get({ plain: true }) as unknown as SessionUser;
+
+  if (necesitaLimpieza(sessionUser, now)) {
+    await limpiarSesionVencida(telefono, user);
+    sessionUser.pasoRegistro = 0;
+    sessionUser.context = null;
+    sessionUser.registroCompleto = false;
+  }
 
   cache.set(telefono, { user: user as unknown as User | null, ts: now });
   return sessionUser;
@@ -43,15 +76,6 @@ export async function guardarUsuario(telefono: string, data: Partial<SessionUser
   } as any);
   cache.set(telefono, { user, ts: Date.now() });
 
-  const cached = cache.get(telefono);
-  if (cached?.user) {
-    const merged: any = { ...(cached.user as any).get({ plain: true }) };
-    if (data.context) {
-      const currentCtx = (cached.user as any).context || {};
-      merged.context = { ...currentCtx, ...data.context };
-    }
-    return merged as SessionUser;
-  }
   return user as unknown as SessionUser;
 }
 
@@ -60,6 +84,7 @@ export async function guardarUltimosBotones(telefono: string, buttons: { id: str
   if (entry?.user) {
     const currentCtx = (entry.user as any).context || {};
     currentCtx._lastButtons = buttons;
+    currentCtx._lastActivity = Date.now();
     return;
   }
 
@@ -67,6 +92,7 @@ export async function guardarUltimosBotones(telefono: string, buttons: { id: str
   if (user) {
     const ctx = (user.context || {}) as any;
     ctx._lastButtons = buttons;
+    ctx._lastActivity = Date.now();
     await User.update({ context: ctx }, { where: { telefono } });
     cache.set(telefono, { user: user as unknown as User | null, ts: Date.now() });
   }

@@ -59,3 +59,8 @@ th { font-weight: 600; color: var(--text-secondary); font-size: .85rem; }
 }
 .modal { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
 .modal h3 { margin-bottom: 1rem; }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

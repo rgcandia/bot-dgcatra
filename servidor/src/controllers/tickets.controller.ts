@@ -3,6 +3,13 @@ import { AuthRequest } from '../middleware/auth.js';
 import { Ticket, User, Base, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 
+async function notificarAgente(telefono: string, mensaje: string) {
+  try {
+    const { enviarTexto } = await import('../bot/enviar.js');
+    await enviarTexto(telefono, mensaje);
+  } catch {}
+}
+
 export async function getAll(req: AuthRequest, res: Response) {
   try {
     const where: any = {};
@@ -85,6 +92,7 @@ export async function update(req: AuthRequest, res: Response) {
     const { estado, prioridad, tecnicoAsignado, solucion } = req.body;
     const autor = req.user?.telefono || 'Sistema';
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
+    const oldEstado = ticket.estado;
 
     if (estado && estado !== ticket.estado) {
       historial.push({ accion: `Estado: "${ticket.estado}" → "${estado}"`, autor, timestamp: new Date().toISOString() });
@@ -105,6 +113,15 @@ export async function update(req: AuthRequest, res: Response) {
 
     ticket.historial = historial;
     await ticket.save();
+
+    if (estado && estado !== oldEstado && ticket.userTelefono) {
+      const labels: Record<string, string> = { en_proceso: 'en proceso ⚙️', cerrado: 'cerrado ✅', abierto: 'reabierto 🔴' };
+      const label = labels[estado] || estado;
+      let msg = `📋 *Ticket #${ticket.id}*\nTu ticket fue: *${label}*`;
+      if (estado === 'cerrado' && solucion) msg += `\n\n🔧 Solución: ${(solucion as string).substring(0, 200)}`;
+      if (estado === 'en_proceso') msg += '\n\nUn técnico ya está trabajando en tu caso.';
+      notificarAgente(ticket.userTelefono, msg);
+    }
 
     const updated = await Ticket.findByPk(ticket.id, {
       include: [

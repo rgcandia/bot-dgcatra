@@ -20,6 +20,10 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   }
 
   if (texto.startsWith('/ticket') || ctx.buttonId === 'cmd_ticket') {
+    const ticketMatch = texto.match(/^\/ticket\s+#?(\d+)$/i);
+    if (ticketMatch) {
+      return await mostrarTicket(ctx.telefono, parseInt(ticketMatch[1]));
+    }
     return false;
   }
 
@@ -72,4 +76,31 @@ async function mostrarNoEntendido(telefono: string): Promise<boolean> {
     '🤖 No entendí ese comando.\nEscribí *ayuda* para ver las opciones disponibles.',
     [{ id: 'cmd_ayuda', title: 'Ayuda' }],
   );
+}
+
+async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
+  const ticket = await Ticket.findOne({ where: { id, userTelefono: telefono } });
+  if (!ticket) {
+    await enviarTexto(telefono, `❌ No encontré el ticket #${id}.\nAsegurate de que sea tuyo y el número sea correcto.`);
+    return true;
+  }
+
+  const estadoIcon = ticket.estado === 'abierto' ? '🔴' : ticket.estado === 'en_proceso' ? '🟡' : '✅';
+  const historial = (Array.isArray(ticket.historial) ? ticket.historial : []).slice(-3);
+  const histStr = historial.length > 0
+    ? '\n\n📜 *Últimos cambios:*\n' + historial.map((h: any) =>
+        `   ${new Date(h.timestamp).toLocaleDateString('es-AR')} — ${h.accion}`
+      ).join('\n')
+    : '';
+
+  const msg = `${estadoIcon} *Ticket #${ticket.id}*\n\n` +
+    `📝 ${ticket.asunto}\n` +
+    `📍 ${ticket.ubicacion || 'No especificada'}\n` +
+    `⚡ Prioridad: ${ticket.prioridad}\n` +
+    `📅 ${new Date(ticket.createdAt).toLocaleDateString('es-AR')}\n` +
+    `${ticket.solucion ? `\n🔧 Solución: ${(ticket.solucion as string).substring(0, 200)}` : ''}` +
+    histStr;
+
+  await enviarTexto(telefono, msg);
+  return true;
 }

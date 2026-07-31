@@ -1,9 +1,11 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/useSocket';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { notificacion, limpiarNotificacion } = useSocket();
 
   function handleLogout() { logout(); navigate('/login', { replace: true }); }
 
@@ -28,6 +30,38 @@ export default function DashboardLayout() {
           })}>
             🎫 Tickets
           </NavLink>
+
+          {user?.esAdmin && (
+            <>
+              <div style={{ color: '#64748b', fontSize: '.7rem', padding: '1rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 1 }}>
+                Administración
+              </div>
+              <NavLink to="/admin/bases" style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
+                textDecoration: 'none', color: isActive ? '#fff' : '#94a3b8',
+                background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
+                borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+              })}>
+                🏢 Bases
+              </NavLink>
+              <NavLink to="/admin/sectores" style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
+                textDecoration: 'none', color: isActive ? '#fff' : '#94a3b8',
+                background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
+                borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+              })}>
+                ⚙️ Sectores
+              </NavLink>
+              <NavLink to="/admin/usuarios" style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
+                textDecoration: 'none', color: isActive ? '#fff' : '#94a3b8',
+                background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
+                borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+              })}>
+                👥 Usuarios
+              </NavLink>
+            </>
+          )}
         </nav>
       </aside>
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -40,6 +74,17 @@ export default function DashboardLayout() {
           <Outlet />
         </div>
       </main>
+
+      {notificacion && (
+        <div onClick={limpiarNotificacion} style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+          background: '#1e293b', color: '#fff', padding: '.8rem 1.2rem',
+          borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,.3)', cursor: 'pointer',
+          maxWidth: 360, animation: 'slideIn .3s ease',
+        }}>
+          {notificacion}
+        </div>
+      )}
     </div>
   );
 }
