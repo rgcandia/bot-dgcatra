@@ -67,92 +67,59 @@
 | **Orden garantizado** | Sí, secuencial por usuario | Parcial |
 | **Riesgo detección** | Bajo | Bajo (con rate limit agregado) |
 
----
+---### 2026-08-04 (2) — Botones nativos + limpieza
 
-## Pendiente
-
-### 🔴 Producción — Bloqueantes
-- [ ] **Timeout de sesión**: limpiar `context` y resetear `pasoRegistro` si pasan 15 min sin actividad del usuario durante registro/ticket
-- [ ] **Rate limit por usuario en el bot**: máximo 1 respuesta cada 2 segundos por usuario para evitar spam loops
-
-### 🟡 Experiencia — Alta prioridad
-- [ ] **Socket.IO en frontend**: conectar `cliente/` al servidor para ver tickets nuevos en tiempo real
-- [ ] **Notificaciones por WhatsApp**: cuando un admin adopta/cierra tu ticket, avisar al agente por WhatsApp
-- [ ] **Comando `/ticket #id`**: consultar estado de un ticket específico con su número
-
-### 🟢 Mantenimiento — Media prioridad
-- [ ] **CRUD visual de bases/sectores/usuarios** en el dashboard
-- [ ] **Admin puede crear bases/sectores desde el frontend** (hoy solo seed manual o SQL directo)
-- [ ] **Deploy del frontend en Vercel**
+- [x] **`enviarBotones()`**: Reemplazado texto con emojis por clase `Buttons` nativa de whatsapp-web.js. Botones interactivos reales, máximo 3.
+- [x] **`enviarLista()`**: Reemplazado texto con emojis por clase `List` nativa. Agregado `guardarUltimosBotones()` para que el parseo numérico funcione.
+- [x] **tasks.md**: Limpiadas tareas ya completadas (timeout, rate limit, socket.io, notificaciones, /ticket #id, CRUD, deploy Vercel).
+- [x] **README.md**: Removidas referencias a archivos/APIs inexistentes (Meta API, workers/, queue/, types/index.ts, instructions.md, "en curso" → "en_proceso").
 
 ---
 
-## En progreso / Completado
+## Pendiente (real)
+
+### 🔴 Bloqueantes
+- [ ] **Deploy frontend en Vercel**
+- [ ] **Validar `user.baseId` antes de `!`** en `handlers/ticket.ts:92`
+- [ ] **Asociar `ticketId` en historial** — `Conversacion.ticketId` siempre es null
+
+### 🟡 Alta prioridad
+- [ ] **Tests** — 0 unitarios, 0 integración
+- [ ] **Renombrar creds DB** — `norbridge` → `dgcatra` en docker-compose.yml y seed.ts
+- [ ] **Manejar email duplicado** — upsert en `guardarUsuario()` puede fallar silenciosamente
+- [ ] **Graceful shutdown** — cerrar Puppeteer + DB en SIGTERM
+- [ ] **Endpoint `/health/bot`** — verificar `client.info?.wid`
+
+### 🟢 Media prioridad
+- [ ] **Endpoint historial conversaciones** — `GET /api/conversaciones?telefono=X`
+- [ ] **Gráficos Recharts** en dashboard home (ya instalado, sin usar)
+- [ ] **Logging estructurado** — reemplazar `console.log` por pino/winston
+- [ ] **Seed con nombres GCBA** — reemplazar "Base Piedras / Base Once"
+
+---
+
+## Historial (completado)
+
+### 2026-08-04 — Fix typing + rate limit + colas
+- [x] **Typing**: inyección directa `WAWebChatStateBridge.sendChatStateComposing()` via `pupPage.evaluate()`
+- [x] **Rate limit**: 2s por usuario en `enviar.ts` y `whatsapp.ts` (norbridge)
+- [x] **Debug error "r"**: diagnosticado como fallo de `getChatById` por serialización de modelo Chat
+
+### 2026-07-31 — Restructuración: botones, typing, historial
+- [x] Session.ts con caché LRU + timeout 15 min
+- [x] Historial.ts persistiendo `conversaciones`
+- [x] Cola FIFO por usuario (`Map<tel, Promise>`)
+- [x] sendSeen() antes de responder
+- [x] ChatId caché (@c.us / @lid)
+- [x] Docker con `.wwebjs_auth` bind mount, `shm_size: 2gb`, rotación logs
 
 ### 2026-07-29 — Migración: Meta API → whatsapp-web.js
+- [x] whatsapp-web.js + qrcode-terminal + puppeteer
+- [x] Eliminados workers/, queue/, Redis, Meta webhook
+- [x] Auth OTP: Redis → Map en memoria
 
-> **Motivo:** La API oficial de Meta requiere registrar una empresa, verificar negocio, configurar webhook, tokens de acceso y números de teléfono business. Es un proceso burocrático y lento. Para un bot interno de tickets (bajo volumen, uso exclusivo de empleados), optamos por `whatsapp-web.js` que se conecta vía WhatsApp Web escaneando un QR, sin necesidad de Meta Business API.
-
-#### Completado
-- [x] **Dependencias**: agregadas `whatsapp-web.js`, `qrcode-terminal`, `puppeteer`
-- [x] **Dockerfile**: instalado Chromium + librerías, creado `/app/session` para sesión persistente
-- [x] **Cliente WhatsApp**: `src/bot/whatsapp.ts` con LocalAuth, QR en terminal, eventos
-- [x] **Reemplazar enviar.ts**: Meta API → `client.sendMessage()` con simulación de escritura
-- [x] **Eliminar Meta Webhook**: removidas rutas `GET/POST /webhook/meta` de api/index.ts
-- [x] **Eliminar BullMQ + Workers**: removidos queue/, workers/, configuración Redis
-- [x] **Auth OTP**: Redis → Map en memoria (eliminada dependencia ioredis)
-- [x] **Docker Compose**: simplificado a solo API + DB, sin workers/redis
-- [x] **Config/Limpieza**: .env.example sin vars Meta, removidos `bullmq` e `ioredis`
-- [x] **Build**: TypeScript compila sin errores
-
-### 2026-07-27 — Seguridad, estructura y tickets
-
-#### Backend — Seguridad
-- [x] **Fix privilege escalation**: crear `middleware/admin.ts` que verifica `esAdmin`
-- [x] **Fix usuarios**: solo admin puede cambiar `esAdmin` en PATCH `/api/usuarios/:telefono`
-- [x] **Fix adminMiddleware en rutas sensibles**: bases create/update/delete, sectores create/update/delete/asignar, tickets update
-- [x] **Fix rate limiting**: express-rate-limit en `/auth/solicitar-codigo` y `/auth/verificar-codigo` (5 intentos / 5 min)
-- [x] **Fix Socket.IO auth**: validación de JWT en handshake con `io.use()`
-- [x] **Fix route shadow**: reordenar sectores.routes — `GET /base/:baseId` antes de `GET /:id`
-- [x] **Fix Login URL producción**: AuthContext usa `VITE_API_URL` en vez de rutas relativas
-- [x] **Fix CSS var inexistente**: `DashboardHome` usaba `var(--accent)` no definido → `var(--primary)`
-
-#### Backend — Tickets
-- [x] **POST /api/tickets**: crear ticket desde dashboard o bot
-- [x] **Flujo completo creación de ticket por WhatsApp**: 4 pasos con botones (iniciar → describir → ubicación → confirmar)
-- [x] **Comando /mis-tickets**: muestra últimos 5 tickets del usuario con estado
-- [x] **Historial con autor**: cada cambio registra quién lo hizo
-
-#### Frontend — Tickets
-- [x] **Página TicketsList.tsx**: tabla con filtros por estado y prioridad
-- [x] **Página TicketDetail.tsx**: detalle con botón "Adoptar caso" (admin) y "Cerrar ticket" (admin con solución)
-- [x] **Historial visible**: timeline de cambios con autor y timestamp
-- [x] **Badge admin en sidebar**: muestra "Admin" si el usuario es admin
-- [x] **Rutas**: `/tickets` (lista), `/tickets/:id` (detalle)
-
-#### Frontend — Instalación
-- [x] `express-rate-limit` agregado a servidor
-
----
-
-## Análisis (2026-07-15)
-
-### Estado general
-La arquitectura está bien pensada (API + worker separados, cola BullMQ, Docker), el modelo de datos es sólido, y el README es exhaustivo. Con los cambios del 2026-07-27 se resolvieron los problemas críticos de seguridad y se implementó la funcionalidad core de tickets.
-
-### Lo que está bien
-- **Arquitectura:** API y worker separados, webhook encola y retorna 200 — mensajes no se pierden si el worker cae
-- **Modelo de datos:** 6 tablas limpias, relaciones correctas (Base↔Sector M:M, User→Base/Sector, Ticket→User/Base/Sector)
-- **Config centralizada:** config/index.ts valida env vars al inicio, JWT_SECRET y DATABASE_URL required
-- **Auth flow:** Registro guiado por WhatsApp: código base → sector → nombre → email → confirmar. Flujo completo
-- **Dockerfile:** Multi-stage build, usuario non-root, sin dev dependencies en producción
-- **Frontend:** CSS design system limpio, auth flow funcional, TypeScript estricto
-- **Seguridad:** Admin middleware, rate limiting, Socket.IO auth, privilege escalation fixed
-- **Tickets:** Creación por WhatsApp, listado en frontend, detalle con adoptar/cerrar
-
-### Lo que falta (para producción)
-1. Conectar número de WhatsApp real (Meta API)
-2. Enviar OTP por WhatsApp (hoy solo console.log)
-3. Frontend: CRUD de bases, sectores, usuarios
-4. Deploy frontend en Vercel
-5. Socket.IO client en frontend
+### 2026-07-27 — Seguridad, estructura, tickets
+- [x] Admin middleware + rate limiting + Socket.IO JWT auth
+- [x] Flujo creación ticket WhatsApp (4 pasos)
+- [x] Comandos: /mis-tickets, /ticket #id, ayuda
+- [x] Dashboard: CRUD bases/sectores/usuarios, stats, notificaciones WhatsApp

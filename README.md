@@ -54,7 +54,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | sectorId | int FK | Sector destino |
 | asunto | string | Asunto del ticket |
 | descripcion | string | Descripción |
-| estado | enum | abierto / en curso / cerrado |
+| estado | enum | abierto / en_proceso / cerrado |
 | prioridad | enum | baja / media / alta |
 | historial | JSON | Acciones y timestamps |
 
@@ -99,31 +99,29 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 ```
 bot-dgcatra/
 ├── .opencode/
-│   ├── instructions.md        # Instrucciones para la IA
 │   └── tasks.md               # Seguimiento de tareas
 ├── cliente/                   # Frontend React (Vite + TypeScript)
 │   ├── src/
 │   │   ├── api/client.ts      # Fetch wrapper con JWT
 │   │   ├── context/AuthContext.tsx  # Login (teléfono → código → token)
+│   │   ├── context/useSocket.ts     # Socket.IO hook para real-time
 │   │   ├── layouts/DashboardLayout.tsx  # Sidebar + header
-│   │   ├── pages/             # Dashboard (placeholder)
-│   │   └── types/index.ts     # Tipos compartidos
+│   │   └── pages/                   # Dashboard, login, tickets, admin CRUD
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── .env
 ├── servidor/
 │   ├── src/
-│   │   ├── api/index.ts       # Express entry point (webhook + dashboard + Socket.IO)
-│   │   ├── config/index.ts    # Config centralizado (env vars)
+│   │   ├── api/index.ts       # Express entry point + Socket.IO
+│   │   ├── bot/               # Lógica del bot WhatsApp (whatsapp-web.js)
+│   │   ├── config/            # Config centralizado + DB connection
 │   │   ├── controllers/       # CRUD auth, bases, sectores, usuarios, tickets, stats
-│   │   ├── middleware/auth.ts # JWT middleware
+│   │   ├── middleware/         # JWT + admin middleware
 │   │   ├── models/            # Modelos Sequelize (Base, Sector, BaseSector, User, Ticket, Conversacion)
-│   │   ├── routes/            # Rutas Express por recurso
-│   │   ├── socket/server.ts   # Inicialización Socket.IO
-│   │   ├── workers/           # Workers BullMQ — procesan cola de mensajes
-│   │   └── queue/             # BullMQ config
+│   │   ├── routes/            # Rutas Express
+│   │   └── socket/server.ts   # Socket.IO server
 │   ├── Dockerfile
-│   ├── docker-compose.yml     # api, workers, redis, db
+│   ├── docker-compose.yml     # api + db
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── .env.example
@@ -182,26 +180,13 @@ Dashboard React con autenticación JWT.
 | Variable | Descripción |
 |---|---|
 | `PORT` | Puerto del servidor (4002) |
-| `REDIS_HOST` / `REDIS_PORT` | Conexión a Redis |
 | `DATABASE_URL` | Conexión a PostgreSQL |
 | `JWT_SECRET` | Secreto para firmar JWT |
 | `SUPER_ADMIN_PHONE` | Teléfono del super admin (se registra automáticamente como admin) |
-| `META_APP_ID` | ID de la Meta App |
-| `META_APP_SECRET` | App Secret para firma HMAC |
-| `META_VERIFY_TOKEN` | Token de verificación del webhook |
-| `META_ACCESS_TOKEN` | Token de acceso permanente (WhatsApp) |
-| `META_PHONE_NUMBER_ID` | ID del número de teléfono de WhatsApp |
-| `GROQ_API_KEY` | API Key de Groq (IA) |
 
 ---
 
 ## Mapa de rutas (API)
-
-### Webhook Meta
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | /webhook/meta | Verificación del webhook (Meta challenge) |
-| POST | /webhook/meta | Webhook entrante de WhatsApp (firma HMAC-SHA256) |
 
 ### Auth (público — rate limited: 5 intentos / 5 min)
 | Método | Ruta | Descripción |
@@ -231,7 +216,7 @@ Dashboard React con autenticación JWT.
 | GET | /api/tickets/:id | Detalle del ticket (incluye historial) |
 | POST | /api/tickets | Crear ticket (asunto, descripcion, ubicacion, baseId) |
 | PATCH | /api/tickets/:id | Actualizar ticket (estado, prioridad, técnico, solución) | ✅ Admin |
-| GET | /api/stats/resumen | Totales (abiertos, cerrados, en curso, alta prioridad, usuarios) |
+| GET | /api/stats/resumen | Totales (abiertos, cerrados, en_proceso, alta prioridad, usuarios) |
 | GET | /api/stats/por-base | Tickets agrupados por base |
 | GET | /api/stats/por-mes | Tickets agrupados por mes |
 | GET | /api/stats/top-usuarios | Usuarios con más tickets |

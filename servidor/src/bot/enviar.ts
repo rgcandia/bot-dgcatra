@@ -1,6 +1,6 @@
 import pkg from 'whatsapp-web.js';
 import type { Client } from 'whatsapp-web.js';
-const { List } = pkg;
+const { List, Buttons } = pkg;
 import { registrarMensajeSaliente, guardarUltimosBotones } from './session.js';
 
 let _client: Client | null = null;
@@ -87,39 +87,48 @@ export async function enviarTexto(to: string, texto: string): Promise<boolean> {
 }
 
 export async function enviarBotones(to: string, body: string, buttons: BtnDef[]): Promise<boolean> {
-  const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
-  const opts = buttons.map((b, i) => `${emojis[i] || `${i + 1}.`} *${b.title}*`).join('\n');
-  const msg = `${body}\n\n${opts}`;
+  try {
+    const chatId = formatearChatId(to);
+    await simularEscritura(chatId, body);
 
-  guardarUltimosBotones(to, buttons);
-  return await enviarTexto(to, msg);
+    const client = await esperarCliente();
+    await rateLimitar(to);
+
+    guardarUltimosBotones(to, buttons);
+    const btns = new Buttons(body, buttons.slice(0, 3).map(b => ({ id: b.id, body: b.title })));
+    await client.sendMessage(chatId, btns);
+
+    registrarMensajeSaliente(to, body);
+    return true;
+  } catch (e) {
+    console.error('❌ Error enviando botones:', e);
+    return false;
+  }
 }
 
 export async function enviarLista(
   to: string,
   body: string,
-  _buttonText: string,
+  buttonText: string,
   sections: { title: string; rows: { id: string; title: string; description?: string }[] }[],
 ): Promise<boolean> {
   try {
     const chatId = formatearChatId(to);
-    const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣', '🔟'];
 
-    let msg = `${body}\n\n`;
-    let idx = 0;
+    const allRows: BtnDef[] = []; 
     for (const sec of sections) {
-      msg += `*${sec.title}*\n`;
       for (const row of sec.rows) {
-        msg += `${emojis[idx] || `${idx + 1}.`} ${row.title}\n`;
-        if (row.description) msg += `   ${row.description}\n`;
-        idx++;
+        allRows.push({ id: row.id, title: row.title });
       }
-      msg += '\n';
     }
+    guardarUltimosBotones(to, allRows);
 
-    await simularEscritura(chatId, msg);
+    await simularEscritura(chatId, body);
     const client = await esperarCliente();
-    await client.sendMessage(chatId, msg);
+    await rateLimitar(to);
+
+    const list = new List(body, buttonText, sections);
+    await client.sendMessage(chatId, list);
 
     registrarMensajeSaliente(to, body);
     return true;
