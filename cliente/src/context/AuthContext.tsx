@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 const API = import.meta.env.VITE_API_URL || '';
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
 
 interface AuthState {
   telefono: string;
@@ -10,10 +10,13 @@ interface AuthState {
   esAdmin: boolean;
 }
 
+interface AdminInfo { id: string; nombre: string; }
+
 interface AuthCtx {
   user: AuthState | null;
-  login: (telefono: string) => Promise<string>;
-  verify: (telefono: string, codigo: string) => Promise<void>;
+  fetchAdmins: () => Promise<AdminInfo[]>;
+  login: (id: string) => Promise<string>;
+  verify: (id: string, codigo: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -39,12 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthState | null>(loadAuth);
   const [loading, setLoading] = useState(false);
 
-  const login = useCallback(async (telefono: string): Promise<string> => {
+  const fetchAdmins = useCallback(async (): Promise<AdminInfo[]> => {
+    const res = await fetch(`${API}/api/auth/admins`);
+    if (!res.ok) return [];
+    return res.json();
+  }, []);
+
+  const login = useCallback(async (id: string): Promise<string> => {
     setLoading(true);
     try {
       const res = await fetch(`${API}/api/auth/solicitar-codigo`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telefono }),
+        body: JSON.stringify({ telefono: id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al solicitar código');
@@ -52,16 +61,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally { setLoading(false); }
   }, []);
 
-  const verify = useCallback(async (telefono: string, codigo: string) => {
+  const verify = useCallback(async (id: string, codigo: string) => {
     setLoading(true);
     try {
       const res = await fetch(`${API}/api/auth/verificar-codigo`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telefono, codigo }),
+        body: JSON.stringify({ telefono: id, codigo }),
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Código inválido');
       const data = await res.json();
-      const session: AuthState = { telefono, token: data.token, nombre: data.nombre || '', esAdmin: data.esAdmin, _ts: Date.now() } as any;
+      const session: AuthState = { telefono: id, token: data.token, nombre: data.nombre || '', esAdmin: data.esAdmin, _ts: Date.now() } as any;
       localStorage.setItem('dgcatra_auth', JSON.stringify(session));
       setUser(session);
     } finally { setLoading(false); }
@@ -96,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user, logout]);
 
-  return <AuthContext.Provider value={{ user, login, verify, logout, loading }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, verify, logout, loading, fetchAdmins }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { solicitarCodigo, verificarCodigo } from '../controllers/auth.controller.js';
+import { solicitarCodigo, verificarCodigo, listarAdmins } from '../controllers/auth.controller.js';
 
 const router = Router();
 
@@ -12,6 +12,7 @@ const codeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+router.get('/admins', listarAdmins);
 router.post('/solicitar-codigo', codeLimiter, solicitarCodigo);
 router.post('/verificar-codigo', codeLimiter, verificarCodigo);
 

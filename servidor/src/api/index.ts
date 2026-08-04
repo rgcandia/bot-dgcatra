@@ -23,6 +23,7 @@ initSocket(server);
 const allowedOrigins = [
   'https://dgcatra.alejndrogcandia.online',
   'http://localhost:5173',
+  'http://172.17.0.202:5173',
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ].filter(Boolean);
 

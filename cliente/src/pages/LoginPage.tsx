@@ -1,22 +1,31 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+interface AdminInfo { id: string; nombre: string; }
+
 export default function LoginPage() {
-  const [phone, setPhone] = useState('');
+  const [admins, setAdmins] = useState<AdminInfo[]>([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [selectedNombre, setSelectedNombre] = useState('');
   const [code, setCode] = useState('');
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
+  const [step, setStep] = useState<'select' | 'code' | 'master'>('select');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [showMaster, setShowMaster] = useState(false);
-  const { login, verify, loading } = useAuth();
+  const [loaded, setLoaded] = useState(false);
+  const { fetchAdmins, login, verify, loading } = useAuth();
   const navigate = useNavigate();
 
-  async function handlePhone(e: FormEvent) {
-    e.preventDefault(); setError(''); setMessage('');
-    if (phone.length < 8) { setError('Ingresá un número válido'); return; }
+  useEffect(() => {
+    fetchAdmins().then(list => { setAdmins(list); setLoaded(true); });
+  }, [fetchAdmins]);
+
+  async function handleSelectAdmin(admin: AdminInfo) {
+    setSelectedId(admin.id);
+    setSelectedNombre(admin.nombre);
+    setError(''); setMessage('');
     try {
-      const msg = await login(phone);
+      const msg = await login(admin.id);
       setMessage(msg);
       setStep('code');
     } catch (err: any) { setError(err.message); }
@@ -26,32 +35,65 @@ export default function LoginPage() {
     e.preventDefault(); setError('');
     if (code.length < 4) { setError('Código inválido'); return; }
     try {
-      await verify(phone, code);
+      if (step === 'master') {
+        await verify('master', code);
+      } else {
+        await verify(selectedId, code);
+      }
       navigate('/', { replace: true });
     } catch (err: any) { setError(err.message); }
   }
+
+  if (!loaded) return <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>Cargando...</div>;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="card" style={{ width: 380 }}>
         <h1 style={{ marginBottom: 4, fontSize: '1.5rem' }}>DG Catra</h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Panel de gestión</p>
-        {step === 'phone' ? (
-          <form onSubmit={handlePhone}>
-            <div className="form-group">
-              <label>Teléfono (sin 15, sin 0)</label>
-              <input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,''))} placeholder="1166086509" autoFocus />
-            </div>
-            {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</p>}
-            <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-              {loading ? 'Enviando...' : 'Solicitar código'}
-            </button>
-          </form>
-        ) : (
+
+        {step === 'select' && (
+          <div>
+            {admins.length > 0 ? (
+              <>
+                <p style={{ marginBottom: '1rem' }}>Seleccioná tu usuario:</p>
+                {admins.map(a => (
+                  <button key={a.id} className="btn btn-primary" style={{ width: '100%', marginBottom: '.5rem' }}
+                    onClick={() => handleSelectAdmin(a)} disabled={loading}>
+                    {a.nombre}
+                  </button>
+                ))}
+                <button type="button" className="btn btn-ghost" style={{ width: '100%', fontSize: '.8rem', marginTop: '.5rem' }}
+                  onClick={() => { setStep('master'); setCode(''); }}>
+                  Usar código maestro
+                </button>
+              </>
+            ) : (
+              <>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                  No hay administradores registrados. Ingresá el código maestro.
+                </p>
+                <button className="btn btn-primary" style={{ width: '100%' }}
+                  onClick={() => setStep('master')}>
+                  Ingresar código maestro
+                </button>
+              </>
+            )}
+            {error && <p style={{ color: 'var(--danger)', marginTop: '1rem' }}>{error}</p>}
+          </div>
+        )}
+
+        {(step === 'code' || step === 'master') && (
           <form onSubmit={handleCode}>
-            <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)' }}>
-              📱 Te enviamos un código de 6 dígitos a tu WhatsApp <strong>{phone}</strong>
-            </p>
+            {step === 'code' ? (
+              <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)' }}>
+                📱 Código enviado a <strong>{selectedNombre}</strong>
+              </p>
+            ) : (
+              <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)' }}>
+                🔐 Ingresá el código maestro de acceso
+              </p>
+            )}
             {message && <p style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '.85rem' }}>{message}</p>}
             <div className="form-group">
               <label>Código</label>
@@ -61,26 +103,9 @@ export default function LoginPage() {
             <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
               {loading ? 'Verificando...' : 'Ingresar'}
             </button>
-            <div style={{ marginTop: '1rem', fontSize: '.85rem', textAlign: 'center' }}>
-              {!showMaster ? (
-                <button type="button" className="btn btn-ghost" style={{ fontSize: '.8rem' }}
-                  onClick={() => setShowMaster(true)}>
-                  ¿No recibiste el código? Usá código de acceso
-                </button>
-              ) : (
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  Ingresá el código maestro en el campo de arriba
-                  <br />
-                  <button type="button" className="btn btn-ghost" style={{ fontSize: '.75rem', marginTop: '.25rem' }}
-                    onClick={() => { setShowMaster(false); setCode(''); }}>
-                    Volver a código SMS
-                  </button>
-                </span>
-              )}
-            </div>
             <button type="button" className="btn btn-ghost" style={{ width: '100%', marginTop: '.5rem' }}
-              onClick={() => { setStep('phone'); setError(''); setMessage(''); setShowMaster(false); }}>
-              Cambiar número
+              onClick={() => { setStep('select'); setError(''); setMessage(''); setCode(''); }}>
+              Volver
             </button>
           </form>
         )}

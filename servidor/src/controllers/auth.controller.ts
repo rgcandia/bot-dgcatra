@@ -16,32 +16,23 @@ function limpiarExpirados() {
 }
 setInterval(limpiarExpirados, 60000);
 
-function normalizarTelefono(telefono: string): string {
-  let num = telefono.replace(/[^\d]/g, '');
-  if (num.startsWith('549')) return num;
-  if (num.startsWith('54')) return '54' + num.substring(2);
-  if (num.startsWith('0')) return '54' + num.substring(1);
-  return '549' + num;
-}
-
 export async function solicitarCodigo(req: Request, res: Response) {
   try {
     const { telefono } = req.body;
-    if (!telefono) return res.status(400).json({ error: 'Teléfono requerido' });
+    if (!telefono) return res.status(400).json({ error: 'ID requerido' });
 
-    const normalizado = normalizarTelefono(telefono);
-    const user = await User.findByPk(normalizado);
+    const user = await User.findByPk(telefono);
     if (!user || !user.registroCompleto) {
-      return res.status(404).json({ error: 'Usuario no registrado. Registrate primero enviando "hola" al bot de WhatsApp.' });
+      return res.status(404).json({ error: 'Usuario no registrado.' });
     }
 
     const codigo = crypto.randomInt(100000, 999999).toString();
-    codigos.set(`auth:${normalizado}`, { codigo, expires: Date.now() + OTP_EXPIRY });
+    codigos.set(`auth:${telefono}`, { codigo, expires: Date.now() + OTP_EXPIRY });
 
     const { enviarTexto } = await import('../bot/enviar.js');
-    await enviarTexto(normalizado,
+    await enviarTexto(telefono,
       `🔐 *Código de acceso*\n\nTu código es: *${codigo}*\n\nExpira en 5 minutos.\nSi no lo pediste vos, ignorá este mensaje.`);
-    console.log(`📱 Código para ${normalizado}: ${codigo}`);
+    console.log(`📱 Código para ${telefono}: ${codigo}`);
 
     res.json({ message: 'Código enviado a tu WhatsApp' });
   } catch (e) {
@@ -55,31 +46,46 @@ export async function verificarCodigo(req: Request, res: Response) {
     const { telefono, codigo } = req.body;
     if (!telefono || !codigo) return res.status(400).json({ error: 'Teléfono y código requeridos' });
 
-    const normalizado = normalizarTelefono(telefono);
-
     const esMasterCode = getSetting('masterCode') && codigo === getSetting('masterCode');
 
-    if (!esMasterCode) {
-      const almacenado = codigos.get(`auth:${normalizado}`);
-      if (!almacenado || almacenado.expires < Date.now() || almacenado.codigo !== codigo) {
-        return res.status(401).json({ error: 'Código inválido o expirado' });
-      }
-      codigos.delete(`auth:${normalizado}`);
+    if (esMasterCode) {
+      const token = jwt.sign(
+        { telefono, esAdmin: true },
+        config.jwt.secret,
+        { expiresIn: '24h' },
+      );
+      return res.json({ token, esAdmin: true, nombre: 'Admin' });
     }
 
-    const user = await User.findByPk(normalizado);
-    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const almacenado = codigos.get(`auth:${telefono}`);
+    if (!almacenado || almacenado.expires < Date.now() || almacenado.codigo !== codigo) {
+      return res.status(401).json({ error: 'Código inválido o expirado' });
+    }
+    codigos.delete(`auth:${telefono}`);
 
-    const esAdmin = user.esAdmin || false;
+    const user = await User.findByPk(telefono);
+    const esAdmin = user?.esAdmin || false;
     const token = jwt.sign(
-      { telefono: normalizado, esAdmin },
+      { telefono, esAdmin },
       config.jwt.secret,
       { expiresIn: '24h' },
     );
 
-    res.json({ token, esAdmin, nombre: user.nombreCompleto });
+    res.json({ token, esAdmin, nombre: user?.nombreCompleto || 'Admin' });
   } catch (e) {
     console.error('Error en verificarCodigo:', e);
     res.status(500).json({ error: 'Error interno' });
   }
+}
+
+export async function listarAdmins(_req: Request, res: Response) {
+  const admins = await User.findAll({
+    where: { esAdmin: true, registroCompleto: true },
+    attributes: ['telefono', 'nombreCompleto'],
+    order: [['nombreCompleto', 'ASC']],
+  });
+  res.json(admins.map(u => ({
+    id: u.telefono,
+    nombre: u.nombreCompleto || 'Admin',
+  })));
 }
