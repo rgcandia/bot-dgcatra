@@ -2,6 +2,7 @@ import { User, Base, Sector, BaseSector } from '../../models/models.js';
 import { enviarTexto, enviarBotones, enviarLista } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { config } from '../../config/index.js';
+import { getSetting } from '../../config/settings.js';
 import type { BtnDef } from '../enviar.js';
 
 interface Ctx {
@@ -20,7 +21,9 @@ export async function manejarRegistro(ctx: Ctx): Promise<boolean> {
     case 2: return await paso2Sector(ctx);
     case 3: return await paso3Nombre(ctx);
     case 4: return await paso4Email(ctx);
-    case 5: return await paso5Confirmar(ctx);
+    case 5: return await paso5Rol(ctx);
+    case 6: return await paso6CodigoAdmin(ctx);
+    case 7: return await paso7Confirmar(ctx);
     default: return await paso0(ctx);
   }
 }
@@ -185,7 +188,7 @@ async function paso4Email(ctx: Ctx): Promise<boolean> {
   if (ctx.buttonId === 'email_no') {
     ctxData.email = '';
     await guardarUsuario(ctx.telefono, { pasoRegistro: 5, context: ctxData });
-    return await mostrarConfirmacion(ctx.telefono, ctxData);
+    return await mostrarPaso5Rol(ctx.telefono);
   }
 
   if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono);
@@ -193,20 +196,82 @@ async function paso4Email(ctx: Ctx): Promise<boolean> {
   if (ctx.texto && ctx.texto.includes('@')) {
     ctxData.email = ctx.texto;
     await guardarUsuario(ctx.telefono, { pasoRegistro: 5, context: ctxData });
-    return await mostrarConfirmacion(ctx.telefono, ctxData);
+    return await mostrarPaso5Rol(ctx.telefono);
   }
 
   await enviarTexto(ctx.telefono, '❌ Eso no parece un email válido. Escribí uno con @ (ej: nombre@correo.com):');
   return false;
 }
 
+async function mostrarPaso5Rol(telefono: string): Promise<boolean> {
+  return await enviarBotones(telefono,
+    '🛡️ Seleccioná tu *rol*:\n\n' +
+    '👤 *Agente* — Reporta incidencias\n' +
+    '🔧 *Admin* — Gestiona tickets y panel',
+    [
+      { id: 'rol_agente', title: 'Agente' },
+      { id: 'rol_admin', title: 'Admin' },
+      { id: 'cancelar', title: 'Cancelar' },
+    ],
+  );
+}
+
+async function paso5Rol(ctx: Ctx): Promise<boolean> {
+  if (ctx.buttonId === 'cancelar') return await cancelarRegistro(ctx.telefono);
+
+  const user = await obtenerUsuario(ctx.telefono);
+  const ctxData = (user.context || {}) as any;
+
+  if (ctx.buttonId === 'rol_agente') {
+    ctxData.esAdmin = false;
+    await guardarUsuario(ctx.telefono, { pasoRegistro: 7, context: ctxData });
+    return await mostrarConfirmacion(ctx.telefono, ctxData);
+  }
+
+  if (ctx.buttonId === 'rol_admin') {
+    ctxData.esAdmin = true;
+    await guardarUsuario(ctx.telefono, { pasoRegistro: 6, context: ctxData });
+    return await enviarTexto(ctx.telefono,
+      '🛡️ *Admin requiere autorización*\n\n' +
+      'Ingresá el *código de administrador*:\n\n' +
+      'Escribí *cancelar* para volver atrás.');
+  }
+
+  return false;
+}
+
+async function paso6CodigoAdmin(ctx: Ctx): Promise<boolean> {
+  if (ctx.texto?.toLowerCase() === 'cancelar') {
+    const user = await obtenerUsuario(ctx.telefono);
+    const ctxData = (user.context || {}) as any;
+    ctxData.esAdmin = false;
+    await guardarUsuario(ctx.telefono, { pasoRegistro: 5, context: ctxData });
+    return await mostrarPaso5Rol(ctx.telefono);
+  }
+
+  const adminCode = getSetting('adminCode') || config.adminCode;
+  if (ctx.texto?.trim() !== adminCode) {
+    await enviarTexto(ctx.telefono, '❌ Código de admin incorrecto. Intentá de nuevo o escribí *cancelar* para volver.');
+    return false;
+  }
+
+  const user = await obtenerUsuario(ctx.telefono);
+  const ctxData = (user.context || {}) as any;
+  ctxData.esAdmin = true;
+  ctxData.adminCodeOk = true;
+  await guardarUsuario(ctx.telefono, { pasoRegistro: 7, context: ctxData });
+  return await mostrarConfirmacion(ctx.telefono, ctxData);
+}
+
 async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean> {
+  const rol = ctx.esAdmin ? '🛡️ Admin' : '👤 Agente';
   const email = ctx.email ? `📧 ${ctx.email}` : '📧 No registrado';
   return await enviarBotones(telefono,
     '✅ *Confirmá tus datos:*\n\n' +
     `👤 *Nombre:* ${ctx.nombre}\n` +
     `🏢 *Base:* ${ctx.baseNombre}\n` +
     `⚙️ *Sector:* ${ctx.sectorNombre}\n` +
+    `${rol}\n` +
     `${email}\n\n` +
     '¿Está todo correcto?',
     [
@@ -216,7 +281,7 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
   );
 }
 
-async function paso5Confirmar(ctx: Ctx): Promise<boolean> {
+async function paso7Confirmar(ctx: Ctx): Promise<boolean> {
   if (ctx.buttonId === 'conf_no' || ctx.buttonId === 'cancelar') {
     return await cancelarRegistro(ctx.telefono);
   }
@@ -225,7 +290,7 @@ async function paso5Confirmar(ctx: Ctx): Promise<boolean> {
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;
 
-  const esAdmin = config.superAdminPhone && ctx.telefono === config.superAdminPhone;
+  const esAdmin = ctxData.esAdmin || (config.superAdminPhone && ctx.telefono === config.superAdminPhone);
 
   await guardarUsuario(ctx.telefono, {
     nombreCompleto: ctxData.nombre,

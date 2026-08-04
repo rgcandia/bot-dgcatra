@@ -14,4 +14,7 @@ export function initSettings() {
   if (config.masterCode) {
     runtime.set('masterCode', config.masterCode);
   }
+  if (config.adminCode) {
+    runtime.set('adminCode', config.adminCode);
+  }
 }

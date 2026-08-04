@@ -13,6 +13,7 @@ export const config = {
     secret: required('JWT_SECRET'),
   },
   superAdminPhone: process.env.SUPER_ADMIN_PHONE || '',
+  adminCode: process.env.ADMIN_CODE || '',
   masterCode: process.env.MASTER_CODE || '',
   database: {
     url: required('DATABASE_URL'),
