@@ -76,12 +76,21 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | Frontend | React, TypeScript, Vite |
 | Backend | Node.js, Express, TypeScript |
 | Base de datos | PostgreSQL + Sequelize |
-| Cola de mensajes | Redis + BullMQ |
-| Bot WhatsApp | Meta API (WhatsApp Business API) |
+| Bot WhatsApp | whatsapp-web.js + Puppeteer (WhatsApp Web, no oficial) |
 | IA | Groq API |
 | Tiempo real | Socket.IO |
 | Exposición segura | Cloudflare Tunnel (cloudflared) |
 | Contenedores | Docker & Docker Compose |
+
+### Simulación de comportamiento humano (anti-detección)
+
+| Mecanismo | Implementación |
+|---|---|
+| **Typing indicator** | Inyección directa vía `client.pupPage.evaluate()` con `WAWebChatStateBridge.sendChatStateComposing()` (no usa `sendStateTyping()` que falla con error CDP). Delay proporcional: `1500 + texto.length * 15 + random(0-2000)` ms |
+| **Rate limit** | Máximo 1 mensaje saliente cada 2 segundos por usuario (`enviar.ts`) |
+| **Cola FIFO** | Mensajes inbound procesados secuencialmente por usuario (`Map<tel, Promise>`) |
+| **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
+| **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
 
 ---
 
