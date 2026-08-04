@@ -60,6 +60,14 @@ export default function DashboardLayout() {
               })}>
                 👥 Usuarios
               </NavLink>
+              <NavLink to="/admin/settings" style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
+                textDecoration: 'none', color: isActive ? '#fff' : '#94a3b8',
+                background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
+                borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+              })}>
+                🔐 Configuración
+              </NavLink>
             </>
           )}
         </nav>

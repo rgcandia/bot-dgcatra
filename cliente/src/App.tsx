@@ -8,6 +8,7 @@ import TicketDetail from './pages/TicketDetail';
 import BasesPage from './pages/admin/BasesPage';
 import SectoresPage from './pages/admin/SectoresPage';
 import UsuariosPage from './pages/admin/UsuariosPage';
+import SettingsPage from './pages/admin/SettingsPage';
 
 function Private({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="admin/bases" element={<BasesPage />} />
         <Route path="admin/sectores" element={<SectoresPage />} />
         <Route path="admin/usuarios" element={<UsuariosPage />} />
+        <Route path="admin/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   );

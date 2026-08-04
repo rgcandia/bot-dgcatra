@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/models.js';
 import { config } from '../config/index.js';
+import { getSetting } from '../config/settings.js';
 
 const codigos = new Map<string, { codigo: string; expires: number }>();
 const OTP_EXPIRY = 5 * 60 * 1000; // 5 minutos
@@ -56,7 +57,7 @@ export async function verificarCodigo(req: Request, res: Response) {
 
     const normalizado = normalizarTelefono(telefono);
 
-    const esMasterCode = config.masterCode && codigo === config.masterCode;
+    const esMasterCode = getSetting('masterCode') && codigo === getSetting('masterCode');
 
     if (!esMasterCode) {
       const almacenado = codigos.get(`auth:${normalizado}`);

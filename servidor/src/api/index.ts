@@ -9,8 +9,12 @@ import sectoresRoutes from '../routes/sectores.routes.js';
 import usuariosRoutes from '../routes/usuarios.routes.js';
 import ticketsRoutes from '../routes/tickets.routes.js';
 import statsRoutes from '../routes/stats.routes.js';
+import settingsRoutes from '../routes/settings.routes.js';
 import { config } from '../config/index.js';
+import { initSettings } from '../config/settings.js';
 import '../bot/whatsapp.js';
+
+initSettings();
 
 const app = express();
 const server = http.createServer(app);
@@ -32,6 +36,7 @@ app.use('/api/sectores', sectoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
