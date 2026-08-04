@@ -69,7 +69,13 @@
 
 ---
 
-### 2026-08-04 (6) — Registro de admin con código + selección de rol
+### 2026-08-04 (7) — Simplificación: sector Soporte Técnico = admin
+
+- [x] **Eliminado paso de rol separado**: el sector "Soporte Técnico" es automáticamente admin (pide código `admin2024`)
+- [x] **Sectores renombrados**: Operativo, Administrativo, Soporte Técnico
+- [x] **Flujo final**: base → sector → admin code (si Soporte Técnico) → nombre → email → confirmar
+
+### 2026-08-04 (6) — Registro de admin con código + selección de rol (revertido, ver #7)
 
 - [x] **Paso 5 (rol)**: nuevo paso en el registro por WhatsApp con botones "Agente" / "Admin"
 - [x] **Paso 6 (admin)**: si elige Admin, pide código de autorización (`ADMIN_CODE` runtime)

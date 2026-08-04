@@ -137,18 +137,13 @@ bot-dgcatra/
 ## Flujo de registro (bot)
 
 1. Usuario envía "hola" al bot
-2. Bot pide **código de acceso de la base**
-3. Si es correcto → muestra los sectores de esa base
-4. Usuario elige sector
-5. Usuario escribe nombre completo
-6. Usuario escribe email (opcional)
-7. Selecciona **rol**: Agente (👤) o Admin (🛡️)
-   - Si elige Admin → pide **código de autorización** (`ADMIN_CODE`)
-8. Confirmar datos → ✅ Registro completo
+2. Bot pide **código de acceso de la base** (`PIE2026` / `ONC2026`)
+3. Muestra los **sectores** de esa base (Operativo, Administrativo, Soporte Técnico)
+4. Si elige **Soporte Técnico** → pide código de admin (`admin2024`) → será admin
+5. Si elige otro sector → usuario normal
+6. Nombre completo → email (opcional) → confirmar → ✅
 
-**Agente:** 1 solo código (base). **Admin:** 2 códigos (base + admin).
-
-**Super admin:** definido en `.env` con `SUPER_ADMIN_PHONE` — se registra como admin sin código extra.
+**Un solo código para todos. Los de Soporte Técnico ponen uno extra.**
 
 ## Flujo de creación de ticket (bot)
 
