@@ -1,4 +1,5 @@
 import { User, Ticket } from '../../models/models.js';
+import { Conversacion } from '../../models/models.js';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 
@@ -85,11 +86,16 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       const ctxData = (user.context || {}) as any;
       const asunto = (ctxData.descripcion || '').substring(0, 100);
 
+      if (!user.baseId) {
+        await enviarTexto(ctx.telefono, '❌ Error: no tenés una base asignada. Contactá a sistemas.');
+        return false;
+      }
+
       const ticket = await Ticket.create({
         asunto,
         descripcion: ctxData.descripcion || '',
         ubicacion: ctxData.ubicacion || '',
-        baseId: user.baseId!,
+        baseId: user.baseId,
         sectorId: user.sectorId,
         userTelefono: ctx.telefono,
         estado: 'abierto',
@@ -101,6 +107,11 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         }],
       });
 
+      Conversacion.update(
+        { ticketId: ticket.id },
+        { where: { userTelefono: ctx.telefono, ticketId: null } },
+      ).catch(() => {});
+
       await guardarUsuario(ctx.telefono, { context: null });
 
       return await enviarTexto(ctx.telefono,
@@ -109,7 +120,8 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         `📝 ${asunto}\n` +
         `📍 ${ctxData.ubicacion}\n` +
         `🆔 #${ticket.id}\n\n` +
-        'Escribí *ayuda* para ver el menú.');
+        'Escribí *ayuda* para ver el menú.',
+        ticket.id);
     }
 
     default:

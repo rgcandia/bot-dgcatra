@@ -79,10 +79,14 @@
 
 ### 2026-08-04 (2) — Limpieza tasks.md + README.md
 
-- [x] **`enviarBotones()`**: Reemplazado texto con emojis por clase `Buttons` nativa de whatsapp-web.js. Botones interactivos reales, máximo 3.
-- [x] **`enviarLista()`**: Reemplazado texto con emojis por clase `List` nativa. Agregado `guardarUltimosBotones()` para que el parseo numérico funcione.
-- [x] **tasks.md**: Limpiadas tareas ya completadas (timeout, rate limit, socket.io, notificaciones, /ticket #id, CRUD, deploy Vercel).
-- [x] **README.md**: Removidas referencias a archivos/APIs inexistentes (Meta API, workers/, queue/, types/index.ts, instructions.md, "en curso" → "en_proceso").
+- [x] Limpiadas tareas ya completadas, agregados bugs reales detectados
+- [x] README: removidas refs a Meta API, workers/, queue/, types/index.ts, instructions.md
+
+### 2026-08-04 (4) — Fix puntos débiles
+
+- [x] **`user.baseId!` validado** (`ticket.ts:89-92`): si es null devuelve error claro en vez de explotar
+- [x] **`paso2SectorNumerico` sin queries duplicadas** (`registro.ts:126-147`): usa `_lastButtons` en vez de 2 queries a DB
+- [x] **`ticketId` en historial** (`ticket.ts:113-116`): `Conversacion.update` asocia mensajes recientes al ticket creado. `enviarTexto/Botones/Lista` aceptan `ticketId` opcional
 
 ---
 
@@ -90,8 +94,6 @@
 
 ### 🔴 Bloqueantes
 - [ ] **Deploy frontend en Vercel**
-- [ ] **Validar `user.baseId` antes de `!`** en `handlers/ticket.ts:92`
-- [ ] **Asociar `ticketId` en historial** — `Conversacion.ticketId` siempre es null
 
 ### 🟡 Alta prioridad
 - [ ] **Tests** — 0 unitarios, 0 integración

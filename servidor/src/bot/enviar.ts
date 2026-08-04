@@ -67,7 +67,7 @@ export interface BtnDef {
   title: string;
 }
 
-export async function enviarTexto(to: string, texto: string): Promise<boolean> {
+export async function enviarTexto(to: string, texto: string, ticketId?: number | null): Promise<boolean> {
   try {
     const chatId = formatearChatId(to);
     await simularEscritura(chatId, texto);
@@ -76,7 +76,7 @@ export async function enviarTexto(to: string, texto: string): Promise<boolean> {
     await rateLimitar(to);
     await client.sendMessage(chatId, texto);
 
-    registrarMensajeSaliente(to, texto);
+    registrarMensajeSaliente(to, texto, ticketId);
     return true;
   } catch (e) {
     console.error('❌ Error enviando texto:', e);
@@ -84,7 +84,7 @@ export async function enviarTexto(to: string, texto: string): Promise<boolean> {
   }
 }
 
-export async function enviarBotones(to: string, body: string, buttons: BtnDef[]): Promise<boolean> {
+export async function enviarBotones(to: string, body: string, buttons: BtnDef[], ticketId?: number | null): Promise<boolean> {
   try {
     const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
     const opts = buttons.map((b, i) => `${emojis[i] || `${i + 1}.`} *${b.title}*`).join('\n');
@@ -98,7 +98,7 @@ export async function enviarBotones(to: string, body: string, buttons: BtnDef[])
     await rateLimitar(to);
     await client.sendMessage(chatId, msg);
 
-    registrarMensajeSaliente(to, msg);
+    registrarMensajeSaliente(to, msg, ticketId);
     return true;
   } catch (e) {
     console.error('❌ Error enviando botones:', e);
@@ -111,6 +111,7 @@ export async function enviarLista(
   body: string,
   _buttonText: string,
   sections: { title: string; rows: { id: string; title: string; description?: string }[] }[],
+  ticketId?: number | null,
 ): Promise<boolean> {
   try {
     const chatId = formatearChatId(to);
@@ -136,7 +137,7 @@ export async function enviarLista(
     await rateLimitar(to);
     await client.sendMessage(chatId, msg);
 
-    registrarMensajeSaliente(to, body);
+    registrarMensajeSaliente(to, body, ticketId);
     return true;
   } catch (e) {
     console.error('❌ Error enviando lista:', e);

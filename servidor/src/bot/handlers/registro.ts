@@ -129,18 +129,20 @@ async function paso2SectorNumerico(ctx: Ctx): Promise<boolean> {
 
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;
-  const baseSectors = await BaseSector.findAll({ where: { baseId: ctxData.baseId } });
-  const sectorIds = baseSectors.map(bs => bs.sectorId);
-  const sectores = await Sector.findAll({ where: { id: sectorIds }, order: [['nombre', 'ASC']] });
+  const lastButtons: BtnDef[] | undefined = ctxData._lastButtons;
 
-  const sector = sectores[num - 1];
-  if (!sector) {
-    await enviarTexto(ctx.telefono, `❌ Opción inválida. Elegí un número del 1 al ${sectores.length}.`);
+  if (!lastButtons || num > lastButtons.length || lastButtons[num - 1].id === 'cancelar') {
+    await enviarTexto(ctx.telefono, `❌ Opción inválida. Elegí un número del 1 al ${lastButtons?.length || '?'}.`);
     return false;
   }
 
-  ctxData.sectorId = sector.id;
-  ctxData.sectorNombre = sector.nombre;
+  const btn = lastButtons[num - 1]; 
+  const match = (btn.id as string).match(/^sector_(\d+)$/);
+  if (!match) return false;
+
+  ctxData.sectorId = parseInt(match[1]);
+  ctxData.sectorNombre = btn.title;
+
   await guardarUsuario(ctx.telefono, { pasoRegistro: 3, context: ctxData });
   return await enviarTexto(ctx.telefono,
     '👤 Escribí tu *nombre completo*:\n\nEj: `Juan Pérez`\n\nEscribí *cancelar* para salir.');

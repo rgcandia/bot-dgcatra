@@ -98,12 +98,12 @@ export async function guardarUltimosBotones(telefono: string, buttons: { id: str
   }
 }
 
-export async function registrarMensajeEntrante(telefono: string, texto: string) {
-  guardarMensaje(telefono, texto, 'inbound');
+export async function registrarMensajeEntrante(telefono: string, texto: string, ticketId?: number | null) {
+  guardarMensaje(telefono, texto, 'inbound', ticketId);
 }
 
-export async function registrarMensajeSaliente(telefono: string, texto: string) {
-  guardarMensaje(telefono, texto, 'outbound');
+export async function registrarMensajeSaliente(telefono: string, texto: string, ticketId?: number | null) {
+  guardarMensaje(telefono, texto, 'outbound', ticketId);
 }
 
 export function invalidarCache(telefono: string) {
