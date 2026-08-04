@@ -89,8 +89,9 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | **Typing indicator** | Inyección directa vía `client.pupPage.evaluate()` con `WAWebChatStateBridge.sendChatStateComposing()` (no usa `sendStateTyping()` que falla con error CDP). Delay proporcional: `1500 + texto.length * 15 + random(0-2000)` ms |
 | **Rate limit** | Máximo 1 mensaje saliente cada 2 segundos por usuario (`enviar.ts`) |
 | **Cola FIFO** | Mensajes inbound procesados secuencialmente por usuario (`Map<tel, Promise>`) |
-| **Botones nativos** | `Buttons` y `List` de whatsapp-web.js (no texto con emojis) |
+| **Botones** | Texto con emojis numerados + `parsearBotonNumerico()` + `_lastButtons`. Los `Buttons`/`List` nativos de whatsapp-web.js están deprecados por WhatsApp y no funcionan. |
 | **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
+| **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes recientes con `ticketId`. |
 | **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
 
 ---
