@@ -1,6 +1,4 @@
-import pkg from 'whatsapp-web.js';
 import type { Client } from 'whatsapp-web.js';
-const { List, Buttons } = pkg;
 import { registrarMensajeSaliente, guardarUltimosBotones } from './session.js';
 
 let _client: Client | null = null;
@@ -88,17 +86,19 @@ export async function enviarTexto(to: string, texto: string): Promise<boolean> {
 
 export async function enviarBotones(to: string, body: string, buttons: BtnDef[]): Promise<boolean> {
   try {
+    const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
+    const opts = buttons.map((b, i) => `${emojis[i] || `${i + 1}.`} *${b.title}*`).join('\n');
+    const msg = `${body}\n\n${opts}`;
+
+    guardarUltimosBotones(to, buttons);
     const chatId = formatearChatId(to);
-    await simularEscritura(chatId, body);
+    await simularEscritura(chatId, msg);
 
     const client = await esperarCliente();
     await rateLimitar(to);
+    await client.sendMessage(chatId, msg);
 
-    guardarUltimosBotones(to, buttons);
-    const btns = new Buttons(body, buttons.slice(0, 3).map(b => ({ id: b.id, body: b.title })));
-    await client.sendMessage(chatId, btns);
-
-    registrarMensajeSaliente(to, body);
+    registrarMensajeSaliente(to, msg);
     return true;
   } catch (e) {
     console.error('❌ Error enviando botones:', e);
@@ -109,26 +109,32 @@ export async function enviarBotones(to: string, body: string, buttons: BtnDef[])
 export async function enviarLista(
   to: string,
   body: string,
-  buttonText: string,
+  _buttonText: string,
   sections: { title: string; rows: { id: string; title: string; description?: string }[] }[],
 ): Promise<boolean> {
   try {
     const chatId = formatearChatId(to);
+    const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣', '🔟'];
 
-    const allRows: BtnDef[] = []; 
+    let msg = `${body}\n\n`;
+    let idx = 0;
+    const allRows: BtnDef[] = [];
     for (const sec of sections) {
+      msg += `*${sec.title}*\n`;
       for (const row of sec.rows) {
+        msg += `${emojis[idx] || `${idx + 1}.`} ${row.title}\n`;
+        if (row.description) msg += `   ${row.description}\n`;
         allRows.push({ id: row.id, title: row.title });
+        idx++;
       }
+      msg += '\n';
     }
     guardarUltimosBotones(to, allRows);
 
-    await simularEscritura(chatId, body);
+    await simularEscritura(chatId, msg);
     const client = await esperarCliente();
     await rateLimitar(to);
-
-    const list = new List(body, buttonText, sections);
-    await client.sendMessage(chatId, list);
+    await client.sendMessage(chatId, msg);
 
     registrarMensajeSaliente(to, body);
     return true;

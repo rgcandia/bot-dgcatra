@@ -67,7 +67,17 @@
 | **Orden garantizado** | Sí, secuencial por usuario | Parcial |
 | **Riesgo detección** | Bajo | Bajo (con rate limit agregado) |
 
----### 2026-08-04 (2) — Botones nativos + limpieza
+---
+
+### 2026-08-04 (3) — ⚠️ Botones nativos NO funcionan (revertido)
+
+> **Lección:** WhatsApp descontinuó el soporte para `Buttons` y `List` nativos de whatsapp-web.js. El `sendMessage()` con estas clases imprime `"Buttons are now deprecated"` y falla silenciosamente — el mensaje nunca se entrega. **NO volver a intentar usar `Buttons`/`List` de whatsapp-web.js.**
+
+- [x] **Revertido `enviarBotones()`**: vuelve a texto con emojis (único enfoque funcional)
+- [x] **Revertido `enviarLista()`**: vuelve a texto con emojis + `guardarUltimosBotones()`
+- [x] **`guardarUltimosBotones()` en `enviarLista()`**: se mantiene (el fix del parseo numérico sí era necesario)
+
+### 2026-08-04 (2) — Limpieza tasks.md + README.md
 
 - [x] **`enviarBotones()`**: Reemplazado texto con emojis por clase `Buttons` nativa de whatsapp-web.js. Botones interactivos reales, máximo 3.
 - [x] **`enviarLista()`**: Reemplazado texto con emojis por clase `List` nativa. Agregado `guardarUltimosBotones()` para que el parseo numérico funcione.
