@@ -40,12 +40,15 @@ async function esperarCliente(): Promise<Client> {
 async function simularEscritura(chatId: string, texto: string): Promise<void> {
   try {
     const client = await esperarCliente();
-    await (client as any).pupPage.evaluate((id: string) => {
-      (window as any).WWebJS.sendChatstate('typing', id);
+    await client.pupPage!.evaluate(async (id: string) => {
+      const WidFactory = window.require('WAWebWidFactory');
+      const ChatState = window.require('WAWebChatStateBridge');
+      await ChatState.sendChatStateComposing(WidFactory.createWid(id));
     }, chatId);
     const delay = 1500 + texto.length * 15 + Math.random() * 2000;
     await new Promise(r => setTimeout(r, delay));
-  } catch {
+  } catch (e: any) {
+    console.warn('⚠️ [Typing] Error al simular escritura:', e?.message || e);
     const delay = 1500 + Math.random() * 2000;
     await new Promise(r => setTimeout(r, delay));
   }

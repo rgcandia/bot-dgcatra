@@ -42,6 +42,31 @@
 - [x] **Cola por usuario**: `Map` en memoria, mensajes del mismo usuario se procesan en orden FIFO
 - [x] **sendSeen()**: marcar como leído antes de responder (comportamiento humano natural)
 
+### 2026-08-04 — Fix typing simulation + rate limit + análisis de colas
+
+> **Diagnóstico inicial:** La simulación de escritura en dgcatra usaba `pupPage.evaluate()` con `WWebJS.sendChatstate` directamente. En norbridge, el delay era fijo (1-3s) y los errores se silenciaban.
+
+> **Primer intento (fallido):** Reemplazar por `getChatById() + sendStateTyping()` — falló porque `getChatById` llama internamente a `WWebJS.getChat(chatId)` SIN `{getAsModel: false}`, y WhatsApp Web devuelve error CDP `"r"` durante la serialización del modelo Chat.
+
+> **Debug:** Se agregaron logs temporales que revelaron el stack trace completo: el error ocurría en `Client.getChatById()` → `pupPage.evaluate()` → `ExecutionContext.evaluate()` → CDP exception details con valor `"r"`.
+
+> **Solución final:** Inyectar el typing directamente en una sola llamada a `pupPage.evaluate()` con callback async, usando los módulos internos de WhatsApp Web (`WAWebChatStateBridge` + `WAWebWidFactory`), sin pasar por `getChatById` ni `sendStateTyping`. Mismo patrón que usa `sendMessage` (que sí funciona).
+
+#### Cambios realizados
+- [x] **dgcatra `enviar.ts`**: `simularEscritura` inyecta `sendChatStateComposing` directo vía `pupPage.evaluate(async callback)`. Bye a `getChatById` + `sendStateTyping`.
+- [x] **norbridge `whatsapp.ts`**: Delay proporcional a `texto.length * 12`, logs de error, rate limit 2s por usuario.
+- [x] **Build + deploy ambos**: compilados y redeployados en Docker.
+
+#### Análisis de colas de mensajes
+
+| Aspecto | dgcatra | norbridge |
+|---|---|---|
+| **Cola inbound** | `Map<tel, Promise<void>>` FIFO por usuario (`index.ts:7-16`) | Sin cola — usa flag `procesando` con timeout de 2 min |
+| **Rate limit outbound** | 1 msg cada 2s por usuario (`enviar.ts`) | 1 msg cada 2s por usuario (`whatsapp.ts`) |
+| **Deduplicación** | No | `Set<string>` con TTL 15s |
+| **Orden garantizado** | Sí, secuencial por usuario | Parcial |
+| **Riesgo detección** | Bajo | Bajo (con rate limit agregado) |
+
 ---
 
 ## Pendiente
