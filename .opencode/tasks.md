@@ -36,7 +36,7 @@
 - [x] **Handlers/**: separados en `handlers/registro.ts`, `ticket.ts`, `comandos.ts`
 - [x] **Index.ts**: router delgado que solo despacha al handler correcto (1 sola query a User)
 - [x] **Whatsapp.ts**: limpiado código muerto del typing viejo
-- [ ] **Timeout de sesión**: limpiar context después de 15 min de inactividad
+- [x] **Timeout de sesión**: limpiar context después de 15 min de inactividad
 - [x] **Build + deploy**: compilado, copiado a contenedor, reconectado sin QR
 - [x] **Docker**: volumen `.wwebjs_auth` bind mount para persistir sesión, `shm_size: 2gb`, `dns`, rotación logs, fix `Singleton*`
 - [x] **Cola por usuario**: `Map` en memoria, mensajes del mismo usuario se procesan en orden FIFO

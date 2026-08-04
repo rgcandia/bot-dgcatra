@@ -62,9 +62,11 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | PK auto int | |
-| telefono | string FK | Quién habló |
+| userTelefono | string FK | Teléfono del usuario |
+| ticketId | int FK null | Ticket asociado (se setea al crearlo) |
 | mensaje | string | Texto del mensaje |
-| direccion | enum | entrante / saliente |
+| direccion | enum | inbound / outbound |
+| metadata | JSONB null | Datos extra |
 | createdAt | timestamp | Cuándo |
 
 ---
@@ -77,7 +79,6 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | Backend | Node.js, Express, TypeScript |
 | Base de datos | PostgreSQL + Sequelize |
 | Bot WhatsApp | whatsapp-web.js + Puppeteer (WhatsApp Web, no oficial) |
-| IA | Groq API |
 | Tiempo real | Socket.IO |
 | Exposición segura | Cloudflare Tunnel (cloudflared) |
 | Contenedores | Docker & Docker Compose |

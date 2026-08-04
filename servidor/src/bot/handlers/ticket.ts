@@ -1,5 +1,6 @@
 import { User, Ticket } from '../../models/models.js';
 import { Conversacion } from '../../models/models.js';
+import { Op } from 'sequelize';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 
@@ -109,7 +110,13 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
 
       Conversacion.update(
         { ticketId: ticket.id },
-        { where: { userTelefono: ctx.telefono, ticketId: null } },
+        {
+          where: {
+            userTelefono: ctx.telefono,
+            ticketId: null,
+            createdAt: { [Op.gte]: new Date(Date.now() - 10 * 60 * 1000) },
+          },
+        },
       ).catch(() => {});
 
       await guardarUsuario(ctx.telefono, { context: null });
