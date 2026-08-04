@@ -69,6 +69,13 @@
 
 ---
 
+### 2026-08-04 (6) — Registro de admin con código + selección de rol
+
+- [x] **Paso 5 (rol)**: nuevo paso en el registro por WhatsApp con botones "Agente" / "Admin"
+- [x] **Paso 6 (admin)**: si elige Admin, pide código de autorización (`ADMIN_CODE` runtime)
+- [x] **Flujo completo**: agente → 1 código (base). admin → 2 códigos (base + admin)
+- [x] **Admin code en dashboard**: editable desde 🔐 Configuración (junto con código maestro)
+
 ### 2026-08-04 (5) — Login: OTP real por WhatsApp + código maestro + auto-logout
 
 - [x] **OTP por WhatsApp**: `solicitarCodigo` envía el código al WhatsApp del usuario vía `enviarTexto()` (no más `console.log`)
