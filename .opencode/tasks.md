@@ -69,7 +69,16 @@
 
 ---
 
-### 2026-08-04 (3) — ⚠️ Botones nativos NO funcionan (revertido)
+### 2026-08-04 (5) — Login: OTP real por WhatsApp + código maestro + auto-logout
+
+- [x] **OTP por WhatsApp**: `solicitarCodigo` envía el código al WhatsApp del usuario vía `enviarTexto()` (no más `console.log`)
+- [x] **Código maestro**: `MASTER_CODE` en `.env` como backup si no llega el OTP
+- [x] **Normalizar teléfono**: acepta `1166086509` → normaliza a `5491166086509`
+- [x] **Auto-logout por inactividad**: 30 min sin actividad → cierra sesión automáticamente
+- [x] **JWT 24h**: token expira en 24 horas, renovable al re-loguearse
+- [x] **`.env` limpiado**: removidas variables obsoletas (Redis, Meta API, Groq)
+
+### 2026-08-04 (4) — Fix puntos débiles
 
 > **Lección:** WhatsApp descontinuó el soporte para `Buttons` y `List` nativos de whatsapp-web.js. El `sendMessage()` con estas clases imprime `"Buttons are now deprecated"` y falla silenciosamente — el mensaje nunca se entrega. **NO volver a intentar usar `Buttons`/`List` de whatsapp-web.js.**
 

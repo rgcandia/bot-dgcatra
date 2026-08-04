@@ -171,7 +171,7 @@ Dashboard React con autenticación JWT.
 
 | Ruta | Componente | Descripción |
 |------|-----------|------------|
-| `/login` | `LoginPage` | Autenticación 2 pasos (teléfono → código) |
+| `/login` | `LoginPage` | Login: teléfono → OTP por WhatsApp (backup: código maestro) |
 | `/` | `DashboardHome` | Panel principal |
 | `/tickets` | `TicketsList` | Lista de tickets con filtros (estado, prioridad) |
 | `/tickets/:id` | `TicketDetail` | Detalle del ticket + adoptar/cerrar + historial |
@@ -184,8 +184,19 @@ Dashboard React con autenticación JWT.
 |---|---|
 | `PORT` | Puerto del servidor (4002) |
 | `DATABASE_URL` | Conexión a PostgreSQL |
-| `JWT_SECRET` | Secreto para firmar JWT |
+| `JWT_SECRET` | Secreto para firmar JWT (24h expiración) |
 | `SUPER_ADMIN_PHONE` | Teléfono del super admin (se registra automáticamente como admin) |
+| `MASTER_CODE` | Código maestro de acceso al dashboard (backup si no llega el OTP) |
+
+---
+
+## Login al dashboard
+
+1. Usuario ingresa teléfono (sin 15, sin 0: `1166086509`)
+2. Backend normaliza (`5491166086509`), busca en DB, genera código de 6 dígitos
+3. **Envía el código por WhatsApp** al usuario vía el bot
+4. Código expira en 5 minutos. Como backup, se puede usar `MASTER_CODE`
+5. JWT expira en 24h. Auto-logout si 30 min de inactividad
 
 ---
 
@@ -194,8 +205,8 @@ Dashboard React con autenticación JWT.
 ### Auth (público — rate limited: 5 intentos / 5 min)
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | /api/auth/solicitar-codigo | Solicita código de 6 dígitos |
-| POST | /api/auth/verificar-codigo | Verifica código y devuelve JWT |
+| POST | /api/auth/solicitar-codigo | Envía código de 6 dígitos por WhatsApp al usuario |
+| POST | /api/auth/verificar-codigo | Verifica código (o MASTER_CODE) y devuelve JWT |
 
 ### Dashboard (requiere JWT via `Authorization: Bearer <token>`)
 | Método | Ruta | Descripción |
