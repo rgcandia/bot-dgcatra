@@ -84,6 +84,28 @@ export default function TicketDetail() {
 
       {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</p>}
 
+      {user?.esAdmin && (
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <label style={{ fontWeight: 600, fontSize: '.9rem' }}>Prioridad:</label>
+            <select
+              value={ticket.prioridad}
+              onChange={async e => {
+                try {
+                  const updated = await api.patch<Ticket>(`/api/tickets/${ticket.id}`, { prioridad: e.target.value });
+                  setTicket(updated);
+                } catch { setError('Error al cambiar prioridad'); }
+              }}
+              style={{ padding: '.4rem .6rem', borderRadius: 6, border: '1px solid var(--border)' }}
+            >
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       {puedeAdoptar && (
         <div className="card" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '.8rem' }}>Nadie tomó este caso todavía</p>

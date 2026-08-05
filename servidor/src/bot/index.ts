@@ -5,6 +5,8 @@ import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante, invalidarCach
 import { registrarChatId } from './enviar.js';
 
 const colas = new Map<string, Promise<void>>();
+const mensajesProcesados = new Set<string>();
+const TTL_MENSAJE = 15_000; // 15 segundos
 
 function encolar(telefono: string, fn: () => Promise<void>): Promise<void> {
   const anterior = colas.get(telefono) || Promise.resolve();
@@ -39,6 +41,16 @@ function parsearBotonNumerico(texto: string, lastButtons?: { id: string; title: 
 }
 
 export async function procesarMensaje(msg: any) {
+  const msgId = msg.id?.id || msg.id?._serialized;
+  if (msgId) {
+    if (mensajesProcesados.has(msgId)) {
+      console.log(`🛡️ [Dedup] Mensaje ${msgId} ignorado (duplicado).`);
+      return;
+    }
+    mensajesProcesados.add(msgId);
+    setTimeout(() => mensajesProcesados.delete(msgId), TTL_MENSAJE);
+  }
+
   const rawFrom = msg.from;
   const from = limpiarNumero(rawFrom);
   registrarChatId(from, rawFrom);
