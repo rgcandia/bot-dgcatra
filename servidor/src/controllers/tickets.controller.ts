@@ -112,6 +112,7 @@ export async function update(req: AuthRequest, res: Response) {
     }
 
     ticket.historial = historial;
+    ticket.changed('historial', true);
     await ticket.save();
 
     if (estado && estado !== oldEstado && ticket.userTelefono) {
