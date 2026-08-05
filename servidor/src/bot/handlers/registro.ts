@@ -21,7 +21,6 @@ export async function manejarRegistro(ctx: Ctx): Promise<boolean> {
     case 2: return await paso2Sector(ctx);
     case 3: return await paso3CodigoAdmin(ctx);
     case 4: return await paso4Nombre(ctx);
-    case 5: return await paso5Email(ctx);
     case 6: return await paso6Confirmar(ctx);
     default: return await paso0(ctx);
   }
@@ -200,56 +199,20 @@ async function paso4Nombre(ctx: Ctx): Promise<boolean> {
   const ctxData = (user.context || {}) as any;
   ctxData.nombre = ctx.texto;
 
-  await guardarUsuario(ctx.telefono, { pasoRegistro: 5, context: ctxData });
+  await guardarUsuario(ctx.telefono, { pasoRegistro: 6, context: ctxData });
 
-  return await enviarBotones(ctx.telefono,
-    '📧 ¿Querés registrar un *correo electrónico*?',
-    [
-      { id: 'email_si', title: 'Sí, escribir' },
-      { id: 'email_no', title: 'Omitir' },
-      { id: 'cancelar', title: 'Cancelar' },
-    ],
-  );
-}
-
-async function paso5Email(ctx: Ctx): Promise<boolean> {
-  if (ctx.buttonId === 'cancelar') return await cancelarRegistro(ctx.telefono);
-
-  const user = await obtenerUsuario(ctx.telefono);
-  const ctxData = (user.context || {}) as any;
-
-  if (ctx.buttonId === 'email_si') {
-    return await enviarTexto(ctx.telefono, 'Escribí tu *correo electrónico*:\n\nEscribí *cancelar* para salir.');
-  }
-
-  if (ctx.buttonId === 'email_no') {
-    ctxData.email = '';
-    await guardarUsuario(ctx.telefono, { pasoRegistro: 6, context: ctxData });
-    return await mostrarConfirmacion(ctx.telefono, ctxData);
-  }
-
-  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono);
-
-  if (ctx.texto && ctx.texto.includes('@')) {
-    ctxData.email = ctx.texto;
-    await guardarUsuario(ctx.telefono, { pasoRegistro: 6, context: ctxData });
-    return await mostrarConfirmacion(ctx.telefono, ctxData);
-  }
-
-  await enviarTexto(ctx.telefono, '❌ Eso no parece un email válido. Escribí uno con @ (ej: nombre@correo.com):');
-  return false;
+  return await mostrarConfirmacion(ctx.telefono, ctxData);
 }
 
 async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean> {
-  const rol = ctx.esAdmin ? '🛡️ Admin (Soporte Técnico)' : '👤 Agente';
-  const email = ctx.email ? `📧 ${ctx.email}` : '📧 No registrado';
+  const rol = ctx.esAdmin ? '🛡️ Admin' : '';
+  const rolLine = rol ? `${rol}\n` : '';
   return await enviarBotones(telefono,
     '✅ *Confirmá tus datos:*\n\n' +
     `👤 *Nombre:* ${ctx.nombre}\n` +
     `🏢 *Base:* ${ctx.baseNombre}\n` +
     `⚙️ *Sector:* ${ctx.sectorNombre}\n` +
-    `${rol}\n` +
-    `${email}\n\n` +
+    `${rolLine}` +
     '¿Está todo correcto?',
     [
       { id: 'conf_si', title: 'Confirmar' },
