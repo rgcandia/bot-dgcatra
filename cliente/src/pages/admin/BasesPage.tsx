@@ -38,7 +38,7 @@ export default function BasesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Bases</h2>
         <button className="btn btn-primary" onClick={() => { setEdit({ nombre: '', codigoAcceso: '' }); setShowNew(true); setError(''); }}>
           Nueva base

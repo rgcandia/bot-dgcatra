@@ -108,6 +108,7 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   th, td { padding: .5rem .3rem; }
   .main-content { padding-top: 3rem !important; }
   h2 { text-align: center; }
+  .page-header { flex-direction: column !important; align-items: center !important; gap: .5rem !important; }
 }
 
 @media (max-width: 480px) {

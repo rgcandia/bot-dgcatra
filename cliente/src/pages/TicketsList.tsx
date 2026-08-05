@@ -41,7 +41,7 @@ export default function TicketsList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h2 style={{ margin: 0 }}>Tickets</h2>
         <div style={{ display: 'flex', gap: '.5rem' }}>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
