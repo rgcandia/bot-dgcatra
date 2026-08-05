@@ -11,8 +11,21 @@ router.patch('/admin-code', authMiddleware, adminMiddleware, setAdminCode);
 router.post('/logout-whatsapp', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
     const { client } = await import('../bot/whatsapp.js');
+    const { setBotDisconnected } = await import('../socket/server.js');
+    const fs = await import('fs');
     console.log('🔌 [Logout] Intentando desvincular WhatsApp...');
-    await client.logout();
+    try {
+      await client.logout();
+    } catch (e: any) {
+      console.warn('⚠️ [Logout] logout() falló, forzando destroy:', e.message);
+      try { await client.destroy(); } catch {}
+    }
+    // Limpiar sesión manualmente
+    try {
+      fs.rmSync('.wwebjs_auth/session-dgcatra', { recursive: true, force: true });
+      console.log('  ✓ Sesión borrada del disco');
+    } catch {}
+    setBotDisconnected();
     console.log('✅ [Logout] WhatsApp desvinculado');
     res.json({ ok: true });
   } catch (e: any) {
