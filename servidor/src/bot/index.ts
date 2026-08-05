@@ -3,6 +3,7 @@ import { manejarCreacionTicket } from './handlers/ticket.js';
 import { manejarComandos } from './handlers/comandos.js';
 import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante, invalidarCache } from './session.js';
 import { registrarChatId } from './enviar.js';
+import { User } from '../models/models.js';
 
 const colas = new Map<string, Promise<void>>();
 const mensajesProcesados = new Set<string>();
@@ -54,6 +55,9 @@ export async function procesarMensaje(msg: any) {
   const rawFrom = msg.from;
   const from = limpiarNumero(rawFrom);
   registrarChatId(from, rawFrom);
+
+  // Guardar formato real de WhatsApp (@c.us o @lid) en la DB
+  User.update({ chatId: rawFrom }, { where: { telefono: from } }).catch(() => {});
 
   const text = msg.body || '';
   const buttonId = extraerButtonId(msg);

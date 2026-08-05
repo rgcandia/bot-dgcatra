@@ -1,5 +1,6 @@
 import type { Client } from 'whatsapp-web.js';
 import { registrarMensajeSaliente, guardarUltimosBotones } from './session.js';
+import { User } from '../models/models.js';
 
 let _client: Client | null = null;
 let _ready = false;
@@ -17,13 +18,15 @@ export function registrarChatId(numeroLimpio: string, chatId: string) {
   chatIdCache.set(numeroLimpio, chatId);
 }
 
-function formatearChatId(telefono: string): string {
+async function resolverChatId(telefono: string): Promise<string> {
   if (chatIdCache.has(telefono)) return chatIdCache.get(telefono)!;
-  if (telefono.includes('@')) return telefono;
-  let num = telefono.replace(/[^\d]/g, '');
-  if (num.startsWith('+')) num = num.slice(1);
+  const num = telefono.replace(/[^\d]/g, '');
   if (chatIdCache.has(num)) return chatIdCache.get(num)!;
-  if (num.length > 15) return `${num}@lid`;
+  const user = await User.findByPk(num, { attributes: ['chatId'] });
+  if (user?.chatId) {
+    chatIdCache.set(num, user.chatId);
+    return user.chatId;
+  }
   return `${num}@c.us`;
 }
 
@@ -70,7 +73,7 @@ export interface BtnDef {
 
 export async function enviarTexto(to: string, texto: string, ticketId?: number | null): Promise<boolean> {
   try {
-    const chatId = formatearChatId(to);
+    const chatId = await resolverChatId(to);
     await simularEscritura(chatId, texto);
 
     const client = await esperarCliente();
@@ -92,7 +95,7 @@ export async function enviarBotones(to: string, body: string, buttons: BtnDef[],
     const msg = `${body}\n\n${opts}`;
 
     guardarUltimosBotones(to, buttons);
-    const chatId = formatearChatId(to);
+    const chatId = await resolverChatId(to);
     await simularEscritura(chatId, msg);
 
     const client = await esperarCliente();
@@ -115,7 +118,7 @@ export async function enviarLista(
   ticketId?: number | null,
 ): Promise<boolean> {
   try {
-    const chatId = formatearChatId(to);
+    const chatId = await resolverChatId(to);
     const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣', '🔟'];
 
     let msg = `${body}\n\n`;
