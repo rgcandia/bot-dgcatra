@@ -97,6 +97,8 @@ export default function SettingsPage() {
                     setUnlinkError(e.message);
                   }
                   setAskingUnlink(false);
+                setWaitingQR(true);
+                setBotConnected(false);
                 }}>Sí</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => setAskingUnlink(false)}>No</button>
               </div>
