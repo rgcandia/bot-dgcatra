@@ -70,7 +70,6 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       await guardarUsuario(ctx.telefono, { context: ctxData });
 
       const descripcion = ctxData.descripcion?.substring(0, 80);
-      await guardarUsuario(ctx.telefono, { context: ctxData });
 
       return await enviarTexto(ctx.telefono,
         '📋 *Confirmá el ticket:*\n\n' +
