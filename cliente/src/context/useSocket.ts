@@ -4,12 +4,7 @@ import { useAuth } from './AuthContext';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
-interface TicketEvent {
-  id: number;
-  asunto: string;
-  estado: string;
-  userTelefono: string;
-}
+interface TicketEvent { id: number; asunto: string; estado: string; userTelefono: string; }
 
 export function useSocket() {
   const { user } = useAuth();
@@ -19,31 +14,18 @@ export function useSocket() {
   useEffect(() => {
     if (!user?.token) return;
 
-    const socket = io(SOCKET_URL, {
-      auth: { token: user.token },
-      transports: ['websocket', 'polling'],
-    });
-
-    socket.on('connect', () => {
-      console.log('🔌 Socket conectado');
-    });
+    const socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
 
     socket.on('ticket-creado', (ticket: TicketEvent) => {
-      if (ticket.userTelefono !== user.telefono) {
-        setNotificacion(`🎫 Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
-      }
+      if (ticket.userTelefono !== user.telefono)
+        setNotificacion(`Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
     });
 
     socket.on('ticket-actualizado', (ticket: TicketEvent) => {
-      setNotificacion(`🔄 Ticket #${ticket.id} actualizado (${ticket.estado})`);
-    });
-
-    socket.on('disconnect', () => {
-      console.log('🔌 Socket desconectado');
+      setNotificacion(`Ticket #${ticket.id} actualizado (${ticket.estado.replace('_',' ')})`);
     });
 
     socketRef.current = socket;
-
     return () => { socket.disconnect(); };
   }, [user?.token]);
 

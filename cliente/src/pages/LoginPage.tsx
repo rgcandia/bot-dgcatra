@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { MessageCircle, ShieldCheck } from 'lucide-react';
 
 interface AdminInfo { id: string; nombre: string; }
 
@@ -54,7 +55,7 @@ export default function LoginPage() {
 
   if (!loaded) return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#1A2C3F' }}>
-      <span style={{ color:'#B6FF18' }}>Cargando...</span>
+      <span className="spinner" />
     </div>
   );
 
@@ -86,7 +87,7 @@ export default function LoginPage() {
                 </select>
                 {sending && (
                   <p style={{ color: '#1A2C3F', fontSize: '.85rem', textAlign: 'center', marginBottom: '.5rem' }}>
-                    ⏳ Enviando código...
+                    <span className="spinner" style={{ marginRight: 6, verticalAlign: 'middle' }} /> Enviando código...
                   </p>
                 )}
                 <button type="button" className="btn btn-ghost" style={{ width: '100%', fontSize: '.8rem', marginTop: '.25rem' }}
@@ -114,11 +115,11 @@ export default function LoginPage() {
           <form onSubmit={handleCode}>
             {step === 'code' ? (
               <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                📱 Código enviado a <strong>{selectedNombre}</strong>
+                <MessageCircle size={14} style={{ marginBottom: -2, marginRight: 4 }} /> Código enviado a <strong>{selectedNombre}</strong>
               </p>
             ) : (
               <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                🔐 Ingresá el código maestro de acceso
+                <ShieldCheck size={14} style={{ marginBottom: -2, marginRight: 4 }} /> Ingresá el código maestro de acceso
               </p>
             )}
             {message && <p style={{ color: '#1A2C3F', marginBottom: '1rem', fontSize: '.85rem', textAlign: 'center' }}>{message}</p>}
