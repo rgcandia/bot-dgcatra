@@ -60,7 +60,7 @@ export async function verificarCodigo(req: Request, res: Response) {
         config.jwt.secret,
         { expiresIn: '24h' },
       );
-      return res.json({ token, esAdmin: true, nombre: 'Admin' });
+      return res.json({ token, esAdmin: true, superAdmin: true, nombre: 'Admin' });
     }
 
     const almacenado = codigos.get(`auth:${telefono}`);
@@ -77,7 +77,7 @@ export async function verificarCodigo(req: Request, res: Response) {
       { expiresIn: '24h' },
     );
 
-    res.json({ token, esAdmin, nombre: user?.nombreCompleto || 'Admin' });
+    res.json({ token, esAdmin, superAdmin: false, nombre: user?.nombreCompleto || telefono });
   } catch (e) {
     console.error('Error en verificarCodigo:', e);
     res.status(500).json({ error: 'Error interno' });

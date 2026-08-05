@@ -1,6 +1,7 @@
 import { User, Ticket } from '../../models/models.js';
 import { Conversacion } from '../../models/models.js';
 import { Base } from '../../models/models.js';
+import { getIO } from '../../socket/server.js';
 import { Op } from 'sequelize';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
@@ -133,6 +134,18 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       ).catch(() => {});
 
       await guardarUsuario(ctx.telefono, { context: null });
+
+      const io = getIO();
+      if (io) {
+        Ticket.findByPk(ticket.id, {
+          include: [
+            { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
+            { model: Base, as: 'base', attributes: ['nombre'] },
+          ],
+        }).then(fullTicket => {
+          if (fullTicket) io.emit('ticket-creado', fullTicket);
+        }).catch(() => {});
+      }
 
       return await enviarTexto(ctx.telefono,
         `✅ *Ticket #${ticket.id} creado con éxito*\n\n` +

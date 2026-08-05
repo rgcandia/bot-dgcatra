@@ -6,6 +6,20 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
 interface TicketEvent { id: number; asunto: string; estado: string; userTelefono: string; }
 
+function playSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 800;
+    gain.gain.value = 0.1;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch {}
+}
+
 export function useSocket() {
   const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
@@ -18,9 +32,9 @@ export function useSocket() {
     const socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
 
     socket.on('ticket-creado', (ticket: TicketEvent) => {
+      playSound();
       setTick(t => t + 1);
-      if (ticket.userTelefono !== user.telefono)
-        setNotificacion(`Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
+      setNotificacion(`🎫 Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
     });
 
     socket.on('ticket-actualizado', () => {
