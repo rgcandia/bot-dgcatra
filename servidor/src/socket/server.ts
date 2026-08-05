@@ -45,6 +45,7 @@ export function initSocket(httpServer: any) {
 
   io.on('connection', (socket) => {
     console.log(`🔌 Socket conectado: ${(socket as any).user?.telefono}`);
+    socket.emit('bot-status', botStatus);
   });
 
   console.log('🔌 Socket.IO inicializado con autenticación');

@@ -52,27 +52,39 @@ export default function SettingsPage() {
   return (
     <div>
       <h2 style={{ marginBottom: '1.5rem' }}>🔐 Configuración</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: 480 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: 520 }}>
 
-        <div className="card">
-          <h3 style={{ margin: '0 0 .8rem' }}>Estado del Bot</h3>
-          {botConnected === null ? (
-            <p style={{ color: 'var(--text-secondary)' }}>Conectando...</p>
-          ) : botConnected ? (
-            <p style={{ color: 'var(--success)', fontWeight: 600 }}>
-              ✅ Conectado {botPhone && `(${botPhone})`}
-            </p>
-          ) : (
-            <p style={{ color: 'var(--danger)', fontWeight: 600, marginBottom: '.5rem' }}>
-              ⚠️ Desconectado
-            </p>
+        <div className="card" style={{ padding: '1.5rem' }}>
+          <h3 style={{ margin: '0 0 1rem' }}>Estado del Bot</h3>
+          {botConnected !== null && (
+            <div style={{ marginBottom: '.8rem' }}>
+              {botConnected ? (
+                <p style={{ color: 'var(--success)', fontWeight: 600, margin: '0 0 .5rem' }}>
+                  ✅ Conectado {botPhone && `(${botPhone})`}
+                </p>
+              ) : (
+                <p style={{ color: 'var(--danger)', fontWeight: 600, margin: '0 0 .5rem' }}>
+                  ⚠️ Desconectado
+                </p>
+              )}
+            </div>
           )}
+          {botConnected && (
+            <button className="btn btn-danger btn-sm" style={{ marginTop: '.5rem', marginBottom: '.5rem' }}
+              onClick={async () => {
+                if (!confirm('¿Desvincular WhatsApp? Se pedirá un nuevo QR para reconectar.')) return;
+                await api.post('/api/settings/logout-whatsapp');
+              }}>
+              Desvincular WhatsApp
+            </button>
+          )}
+
           {qrCode && (
-            <div style={{ textAlign: 'center', marginTop: '.5rem' }}>
-              <p style={{ fontSize: '.85rem', marginBottom: '.5rem', color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <p style={{ fontSize: '.85rem', marginBottom: '.8rem', color: 'var(--text-secondary)' }}>
                 Escaneá el QR para reconectar:
               </p>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`}
                 alt="QR Code" style={{ border: '1px solid var(--border)', borderRadius: 8 }} />
             </div>
           )}
