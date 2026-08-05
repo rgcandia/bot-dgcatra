@@ -31,7 +31,7 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
     return await mostrarTickets(ctx.telefono);
   }
 
-  return await mostrarNoEntendido(ctx.telefono);
+  return false;
 }
 
 async function mostrarMenu(telefono: string): Promise<boolean> {
