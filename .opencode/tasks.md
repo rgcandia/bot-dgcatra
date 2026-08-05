@@ -76,7 +76,25 @@
 - [x] **DGCATRA** en mayúsculas en login y sidebar
 - [x] **Login con loading**: spinner y botón código maestro deshabilitado mientras se envía OTP
 
-### 2026-08-05 (3) — Sectores globales + mejoras admin
+### 2026-08-05 (4) — UX flujo de tickets + escudo anti-duplicados + chatId persistente
+
+- [x] **Escudo anti-duplicados**: `Set<string>` con TTL 15s en `index.ts` (mismo que norbridge)
+- [x] **Menú simplificado**: sin duplicación de opciones (body no lista, solo botones). Opción "Cancelar" (4)
+- [x] **Ticket creation**: confirmación con texto SI/NO en vez de botones. Ejemplos sin mencionar sector/base
+- [x] **Comandos no reconocidos → ticket**: en vez de "no entendí", inicia creación de ticket automáticamente
+- [x] **`guardarUsuario` duplicado**: removida segunda llamada en `PEDIR_UBICACION`
+- [x] **`chatId` persistente**: columna `chatId` en User, se guarda `msg.from` completo (`@c.us` o `@lid`). `resolverChatId()` busca DB como fallback cuando la cache en memoria está vacía.
+- [x] **Historial JSON**: `ticket.changed('historial', true)` para que Sequelize detecte cambios en columna JSON
+- [x] **Prioridad editable**: selector baja/media/alta en TicketDetail (solo admin)
+
+### 2026-08-05 (5) — Rediseño layout + registro sin email + selects
+
+- [x] **Sidebar**: sin título DGCATRA, usuario y botón Salir al pie
+- [x] **Header**: fondo blanco + logo GCBA largo. Admin badge solo si login con master code
+- [x] **UsuariosPage**: "Teléfono" → "ID WhatsApp", columna Admin muestra true/false
+- [x] **Registro sin email**: eliminado paso 5 (email). Flujo: código base → sector → nombre → confirmar
+- [x] **Confirmación**: muestra "🛡️ Admin" solo si es admin, sin etiqueta de sector extra
+- [x] **Selects**: estilos limpios, foco azul oscuro
 
 - [x] **BaseSector eliminado**: tabla `bases_sectores` removida, sectores son globales (todas las bases comparten los mismos)
 - [x] **Registro simplificado**: `paso1CodigoBase` muestra todos los sectores sin filtrar por base (~2 queries menos)

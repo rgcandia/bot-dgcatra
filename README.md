@@ -141,7 +141,7 @@ bot-dgcatra/
 3. Muestra los **sectores** de esa base (Operativo, Administrativo, Soporte Técnico)
 4. Si elige **Soporte Técnico** → pide código de admin (`admin2024`) → será admin
 5. Si elige otro sector → usuario normal
-6. Nombre completo → email (opcional) → confirmar → ✅
+6. Nombre completo → confirmar → ✅
 
 **Un solo código para todos. Los de Soporte Técnico ponen uno extra.**
 
