@@ -15,7 +15,7 @@ export default function DashboardLayout() {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1rem 0', display: 'flex', flexDirection: 'column' }}>
         <div style={{ textAlign: 'center', padding: '0 1rem 1rem' }}>
-          <img src="/logo-small.png" alt="" style={{ width: 80, height: 'auto', filter: 'brightness(0) invert(1)' }} />
+          <img src="/logo-small.png" alt="" style={{ width: '80%', maxWidth: 140, height: 'auto', filter: 'brightness(0) invert(1)', margin: '0 auto', display: 'block' }} />
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
