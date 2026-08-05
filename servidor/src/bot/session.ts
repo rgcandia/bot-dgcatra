@@ -3,7 +3,7 @@ import { guardarMensaje } from './historial.js';
 
 const cache = new Map<string, { user: User | null; ts: number }>();
 const CACHE_TTL = 60_000;
-const SESION_TTL = 15 * 60_000;
+const SESION_TTL = 60 * 60_000;
 
 export interface SessionUser {
   telefono: string;

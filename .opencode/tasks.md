@@ -86,7 +86,7 @@
 - [x] **UsuariosPage**: búsqueda por nombre/teléfono/base/sector, badges en vez de emojis
 - [x] **LoginPage**: spinner CSS en carga inicial + al enviar código
 - [x] **useSocket**: removidos console.log y emojis
-- [x] **⚠️ Bug recurrente**: timeout de sesión (15 min) resetea `registroCompleto` durante flujos largos. Si el usuario tarda más de 15 min en completar los 6 pasos, pierde el progreso aunque ya haya ingresado códigos válidos.
+- [x] **⚠️ Timeout sesión aumentado**: `SESION_TTL` 15 min → 60 min. El registro de 6 pasos requiere más tiempo.
 
 - [x] **Lucide React**: reemplazados 23 emojis por iconos profesionales (LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, ClipboardCheck, CircleCheckBig, ArrowLeft)
 - [x] **Componentes extraídos**: `<NavItem>`, `<StatCard>` — eliminada duplicación 5x en sidebar y 6x en dashboard
