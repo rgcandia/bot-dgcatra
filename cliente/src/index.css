@@ -78,6 +78,16 @@ h3 { font-size: var(--text-md); font-weight: 600; }
 }
 .input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
+select {
+  padding: .5rem .7rem; border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: .9rem; background: var(--surface);
+  color: var(--text); cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%2364748b'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 2rem;
+}
+select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .7rem .5rem; border-bottom: 1px solid var(--border); }
 th { font-weight: 600; color: var(--text-secondary); font-size: .85rem; }

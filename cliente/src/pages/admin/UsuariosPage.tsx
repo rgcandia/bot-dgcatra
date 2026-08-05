@@ -61,7 +61,7 @@ export default function UsuariosPage() {
       </div>
 
       <table>
-        <thead><tr><th>Teléfono</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th></tr></thead>
+        <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th></tr></thead>
         <tbody>
           {filtrados.map(u => (
             <tr key={u.telefono}>
@@ -74,9 +74,7 @@ export default function UsuariosPage() {
                   {u.registroCompleto ? 'Completo' : 'Pendiente'}
                 </span>
               </td>
-              <td>
-                {u.esAdmin && <span className="badge" style={{ background: 'var(--accent)', color: 'var(--primary)', fontWeight: 700 }}>Admin</span>}
-              </td>
+              <td>{u.esAdmin ? 'true' : 'false'}</td>
               <td>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
               </td>

@@ -13,17 +13,14 @@ export default function DashboardLayout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1rem 0', display: 'flex', flexDirection: 'column' }}>
-        <h2 style={{ padding: '0 1rem', marginBottom: '1.5rem', fontSize: '1rem', fontWeight: 800, letterSpacing: 3, textAlign: 'center' }}>
-          DGCATRA
-        </h2>
+      <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
           <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
 
           {user?.esAdmin && (
             <>
-              <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
+              <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1.5rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
                 Administración
               </div>
               <NavItem to="/admin/bases" icon={<Building2 size={18} />} label="Bases" />
@@ -34,15 +31,24 @@ export default function DashboardLayout() {
           )}
         </nav>
 
-        <div style={{ padding: '1rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 'auto' }}>
-          <img src="/logo-large.png" alt="GCBA" style={{ width: '100%', maxWidth: 140, height: 'auto', opacity: .85 }} />
+        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+          <p style={{ color: '#A2A6AB', fontSize: '.85rem', marginBottom: '.3rem', textAlign: 'center' }}>
+            {user?.nombre || user?.telefono || 'Usuario'}
+          </p>
+          <button className="btn btn-ghost btn-sm" style={{ color: '#FFD700', width: '100%', justifyContent: 'center' }} onClick={handleLogout}>
+            Salir
+          </button>
         </div>
       </aside>
+
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <header style={{ background: '#1A2C3F', padding: '.7rem 1.5rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ color: '#A2A6AB', fontSize: '.9rem' }}>{user?.nombre || user?.telefono}</span>
-          {user?.esAdmin && <span style={{ background: '#B6FF18', color: '#1A2C3F', padding: '.15rem .6rem', borderRadius: 4, fontSize: '.75rem', fontWeight: 700 }}>Admin</span>}
-          <button className="btn btn-ghost btn-sm" style={{ color: '#FFD700' }} onClick={handleLogout}>Salir</button>
+        <header style={{ background: '#fff', padding: '.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+          <img src="/logo-large.png" alt="GCBA" style={{ height: 36, width: 'auto' }} />
+          {user?.esAdmin && user?.nombre === 'Admin' && (
+            <span style={{ background: 'var(--accent)', color: 'var(--primary)', padding: '.15rem .6rem', borderRadius: 4, fontSize: '.75rem', fontWeight: 700 }}>
+              Admin
+            </span>
+          )}
         </header>
         <div style={{ padding: '1.5rem', flex: 1 }}>
           <Outlet />
