@@ -98,10 +98,10 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
 
 /* ——— Responsive ——— */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
-  .sidebar.open { display: flex; position: fixed; inset: 0; z-index: 1000; width: 100%; max-width: 280px; }
+  .sidebar { display: none !important; }
+  .sidebar.open { display: flex !important; position: fixed !important; inset: 0; z-index: 1000; width: 100%; max-width: 280px; }
   .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 999; }
-  .hamburger { display: flex; }
+  .hamburger { display: flex !important; }
   .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .modal { width: 95% !important; max-width: none !important; }
   table { font-size: .8rem; }
