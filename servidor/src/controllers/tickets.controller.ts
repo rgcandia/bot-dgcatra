@@ -115,8 +115,8 @@ export async function update(req: AuthRequest, res: Response) {
 
     // Cambio de estado
     if (estado && estado !== ticket.estado) {
-      // Reabrir: solo superAdmin
-      if (estado === 'abierto' && ticket.estado !== 'abierto') {
+      const esDesasignarYReabrir = estado === 'abierto' && tecnicoAsignado !== undefined && !tecnicoAsignado;
+      if (estado === 'abierto' && ticket.estado !== 'abierto' && !esDesasignarYReabrir) {
         if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reabrir un ticket' });
       }
       historial.push({ accion: `Estado: "${ticket.estado}" → "${estado}"`, autor, timestamp: new Date().toISOString() });
