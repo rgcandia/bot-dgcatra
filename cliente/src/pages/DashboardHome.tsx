@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import StatCard from '../components/StatCard';
+import { useSocket } from '../context/useSocket';
 
 interface StatsResumen {
   total: number; abiertos: number; en_proceso: number;
@@ -16,8 +17,9 @@ export default function DashboardHome() {
   const [stats, setStats] = useState<StatsResumen | null>(null);
   const [porBase, setPorBase] = useState<StatsBase[]>([]);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const { tick } = useSocket();
 
-  useEffect(() => { loadStats(); }, []);
+  useEffect(() => { loadStats(); }, [tick]);
 
   async function loadStats() {
     try {

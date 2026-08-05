@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
+import { useSocket } from '../context/useSocket';
 
 interface Ticket {
   id: number; asunto: string; descripcion: string; ubicacion: string;
@@ -16,6 +17,7 @@ const PRIORIDADES = ['baja', 'media', 'alta'];
 
 export default function TicketsList() {
   const { user } = useAuth();
+  const { tick } = useSocket();
   const navigate = useNavigate();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function TicketsList() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { fetchTickets(); }, [filtroEstado, filtroPrioridad]);
+  useEffect(() => { fetchTickets(); }, [filtroEstado, filtroPrioridad, tick]);
 
   return (
     <div>

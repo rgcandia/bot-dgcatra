@@ -10,6 +10,7 @@ export function useSocket() {
   const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const [notificacion, setNotificacion] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     if (!user?.token) return;
@@ -17,12 +18,13 @@ export function useSocket() {
     const socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
 
     socket.on('ticket-creado', (ticket: TicketEvent) => {
+      setTick(t => t + 1);
       if (ticket.userTelefono !== user.telefono)
         setNotificacion(`Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
     });
 
-    socket.on('ticket-actualizado', (ticket: TicketEvent) => {
-      setNotificacion(`Ticket #${ticket.id} actualizado (${ticket.estado.replace('_',' ')})`);
+    socket.on('ticket-actualizado', () => {
+      setTick(t => t + 1);
     });
 
     socketRef.current = socket;
@@ -31,5 +33,5 @@ export function useSocket() {
 
   const limpiarNotificacion = useCallback(() => setNotificacion(null), []);
 
-  return { notificacion, limpiarNotificacion };
+  return { notificacion, limpiarNotificacion, tick };
 }

@@ -56,7 +56,7 @@ export async function verificarCodigo(req: Request, res: Response) {
 
     if (esMasterCode) {
       const token = jwt.sign(
-        { telefono, esAdmin: true },
+        { telefono, esAdmin: true, nombre: 'Admin' },
         config.jwt.secret,
         { expiresIn: '24h' },
       );
@@ -72,7 +72,7 @@ export async function verificarCodigo(req: Request, res: Response) {
     const user = await User.findByPk(telefono);
     const esAdmin = user?.esAdmin || false;
     const token = jwt.sign(
-      { telefono, esAdmin },
+      { telefono, esAdmin, nombre: user?.nombreCompleto || telefono },
       config.jwt.secret,
       { expiresIn: '24h' },
     );

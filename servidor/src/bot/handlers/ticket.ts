@@ -1,5 +1,6 @@
 import { User, Ticket } from '../../models/models.js';
 import { Conversacion } from '../../models/models.js';
+import { Base } from '../../models/models.js';
 import { Op } from 'sequelize';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
@@ -50,11 +51,18 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
           descripcion: ctx.texto,
         },
       });
-      return await enviarTexto(ctx.telefono,
-        '📍 ¿Dónde ocurre el problema?\n\n' +
-        'Ej: "Oficina 3, primer piso" o "Entrada principal"\n' +
-        'Si es en otra base, aclaralo: "Base Once, recepción"\n\n' +
-        'Escribí *cancelar* para salir.');
+      let msjUbicacion = '📍 ¿Dónde ocurre el problema?\n\n' +
+        'Ej: "Oficina 3, primer piso" o "Entrada principal"';
+      if (user.baseId) {
+        try {
+          const base = await Base.findByPk(user.baseId);
+          if (base) {
+            msjUbicacion += `\nSi es en otra base distinta a *${base.nombre}*, aclaralo. Ej: "Base Once, recepción"`;
+          }
+        } catch {}
+      }
+      msjUbicacion += '\n\nEscribí *cancelar* para salir.';
+      return await enviarTexto(ctx.telefono, msjUbicacion);
     }
 
     case ESTADOS_TICKET.PEDIR_UBICACION: {
