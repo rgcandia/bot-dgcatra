@@ -36,7 +36,7 @@ export default function DashboardLayout() {
         </nav>
 
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
-          <p style={{ color: '#B6FF18', fontSize: '.9rem', fontWeight: 600, marginBottom: '.6rem', textAlign: 'center' }}>
+          <p style={{ color: '#fff', fontSize: '.9rem', fontWeight: 600, marginBottom: '.6rem', textAlign: 'center' }}>
             {user?.nombre || user?.telefono || 'Usuario'}
           </p>
           <button className="btn btn-ghost btn-sm" style={{ color: '#FFD700', width: '100%', justifyContent: 'center' }} onClick={handleLogout}>
