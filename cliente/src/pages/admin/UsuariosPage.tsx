@@ -97,12 +97,12 @@ export default function UsuariosPage() {
               <label>Email</label>
               <input className="input" value={edit.email || ''} onChange={e => setEdit({ ...edit, email: e.target.value })} />
             </div>
-            <div className="form-group">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.3rem' }}>
+            <div style={{ marginTop: '.5rem', marginBottom: '1rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.3rem', cursor: 'pointer', fontWeight: 400 }}>
                 <input type="checkbox" checked={edit.esAdmin} onChange={e => setEdit({ ...edit, esAdmin: e.target.checked })} />
                 Es administrador
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '.4rem', cursor: 'pointer', fontWeight: 400 }}>
                 <input type="checkbox" checked={edit.activo} onChange={e => setEdit({ ...edit, activo: e.target.checked })} />
                 Activo
               </label>
