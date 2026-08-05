@@ -87,7 +87,17 @@
 - [x] **Historial JSON**: `ticket.changed('historial', true)` para que Sequelize detecte cambios en columna JSON
 - [x] **Prioridad editable**: selector baja/media/alta en TicketDetail (solo admin)
 
-### 2026-08-05 (6) — Robustez: graceful shutdown + seguridad + limpieza
+### 2026-08-05 (7) — QR en vivo + desvincular WhatsApp + UX confirmaciones
+
+- [x] **QR en vivo**: Socket.IO emite QR y estado del bot en tiempo real. SettingsPage muestra ✅ Conectado (número) o ⚠️ Desconectado + QR
+- [x] **Desvincular WhatsApp**: botón en Configuración → `client.logout()` → QR nuevo automático
+- [x] **Bloquear OTP**: si el bot está desconectado, `solicitarCodigo` devuelve 503 y obliga a usar código maestro
+- [x] **Eliminados `alert()`/`confirm()`**: reemplazados por componente `<ConfirmButton>` con confirmación inline (Sí/No)
+- [x] **Editar usuario completo**: base y sector editables desde el modal
+- [x] **Sidebar**: DGCATRA + Panel de Control arriba, nombre de usuario + Salir abajo
+- [x] **Tabla tickets reducida**: 6 columnas (sin Usuario ni Técnico, se ven en detalle)
+- [x] **Spinner en loadings**: todas las páginas
+- [x] **CSS vars en stat cards**: `var(--danger)`, `var(--success)`, `var(--warning)`
 
 - [x] **Graceful shutdown**: `SIGTERM`/`SIGINT` cierran HTTP server → Sequelize → Puppeteer en orden. Sin pérdida de sesión WhatsApp.
 - [x] **`GET /api/auth/admins` protegido**: rate limit 5 intentos/5 min (mismo que auth)

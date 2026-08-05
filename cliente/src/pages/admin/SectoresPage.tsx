@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import ConfirmButton from '../../components/ConfirmButton';
 
 interface Sector { id: number; nombre: string; }
 
@@ -29,7 +30,6 @@ export default function SectoresPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('¿Eliminar este sector?')) return;
     try { await api.delete(`/api/sectores/${id}`); await load(); }
     catch (e: any) { setError(e.message); }
   }
@@ -53,7 +53,7 @@ export default function SectoresPage() {
               <td>{s.nombre}</td>
               <td>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(s); setError(''); }}>Editar</button>
-                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(s.id)}>Borrar</button>
+                <ConfirmButton label="Borrar" danger message="¿Eliminar?" onConfirm={() => handleDelete(s.id)} />
               </td>
             </tr>
           ))}

@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [botConnected, setBotConnected] = useState<boolean | null>(null);
   const [botPhone, setBotPhone] = useState('');
   const [qrCode, setQrCode] = useState('');
+  const [askingUnlink, setAskingUnlink] = useState(false);
 
   useEffect(() => {
     api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
@@ -69,14 +70,21 @@ export default function SettingsPage() {
               )}
             </div>
           )}
-          {botConnected && (
+          {botConnected && !askingUnlink && (
             <button className="btn btn-danger btn-sm" style={{ marginTop: '.5rem', marginBottom: '.5rem' }}
-              onClick={async () => {
-                if (!confirm('¿Desvincular WhatsApp? Se pedirá un nuevo QR para reconectar.')) return;
-                await api.post('/api/settings/logout-whatsapp');
-              }}>
+              onClick={() => setAskingUnlink(true)}>
               Desvincular WhatsApp
             </button>
+          )}
+          {askingUnlink && (
+            <div style={{ marginTop: '.5rem', marginBottom: '.5rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+              <span style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>¿Desvincular? Se pedirá QR nuevo.</span>
+              <button className="btn btn-danger btn-sm" onClick={async () => {
+                await api.post('/api/settings/logout-whatsapp');
+                setAskingUnlink(false);
+              }}>Sí</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setAskingUnlink(false)}>No</button>
+            </div>
           )}
 
           {qrCode && (

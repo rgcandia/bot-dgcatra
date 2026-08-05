@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import ConfirmButton from '../../components/ConfirmButton';
 
 interface Base { id: number; nombre: string; codigoAcceso: string; }
 
@@ -29,7 +30,6 @@ export default function BasesPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('¿Eliminar esta base?')) return;
     try { await api.delete(`/api/bases/${id}`); await load(); }
     catch (e: any) { setError(e.message); }
   }
@@ -54,7 +54,7 @@ export default function BasesPage() {
               <td><code>{b.codigoAcceso}</code></td>
               <td>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(b); setError(''); }}>Editar</button>
-                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(b.id)}>Borrar</button>
+                <ConfirmButton label="Borrar" danger message="¿Eliminar?" onConfirm={() => handleDelete(b.id)} />
               </td>
             </tr>
           ))}
