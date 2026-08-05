@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [qrCode, setQrCode] = useState('');
   const [askingUnlink, setAskingUnlink] = useState(false);
   const [unlinkError, setUnlinkError] = useState('');
+  const [waitingQR, setWaitingQR] = useState(false);
 
   useEffect(() => {
     api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
@@ -28,12 +29,14 @@ export default function SettingsPage() {
     socket.on('bot-status', (status: { connected: boolean; phone?: string }) => {
       setBotConnected(status.connected);
       setBotPhone(status.phone || '');
-      if (status.connected) setQrCode('');
+      if (status.connected) { setQrCode(''); setWaitingQR(false); }
+      else setWaitingQR(true);
     });
 
     socket.on('bot-qr', (qr: string) => {
       setQrCode(qr);
       setBotConnected(false);
+      setWaitingQR(false);
     });
 
     return () => { socket.disconnect(); };
@@ -109,6 +112,13 @@ export default function SettingsPage() {
               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`}
                 alt="QR Code" style={{ border: '1px solid var(--border)', borderRadius: 8 }} />
             </div>
+          )}
+
+          {!botConnected && !qrCode && waitingQR && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', marginTop: '.5rem' }}>
+              <span className="spinner spinner-sm" style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              Generando código QR...
+            </p>
           )}
         </div>
 
