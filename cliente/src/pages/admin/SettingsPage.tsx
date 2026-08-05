@@ -93,7 +93,7 @@ export default function SettingsPage() {
         <div className="card" style={{ padding: '1.5rem' }}>
           <div className="form-group" style={{ marginBottom: '0' }}>
             <label>Código maestro de acceso</label>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: '.3rem 0 .6rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: '.5rem 0 1rem' }}>
               Backup para loguearse al dashboard si no llega el OTP por WhatsApp.
             </p>
             <div style={{ display: 'flex', gap: '.5rem' }}>
@@ -106,7 +106,7 @@ export default function SettingsPage() {
         <div className="card" style={{ padding: '1.5rem' }}>
           <div className="form-group" style={{ marginBottom: '0' }}>
             <label>Código de autorización Admin</label>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: '.3rem 0 .6rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: '.5rem 0 1rem' }}>
               Se pide al usuario durante el registro por WhatsApp si selecciona sector "Soporte Técnico".
             </p>
             <div style={{ display: 'flex', gap: '.5rem' }}>
