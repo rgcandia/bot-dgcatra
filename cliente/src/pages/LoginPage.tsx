@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [sending, setSending] = useState(false);
   const { fetchAdmins, login, verify, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -24,11 +25,18 @@ export default function LoginPage() {
     setSelectedId(admin.id);
     setSelectedNombre(admin.nombre);
     setError(''); setMessage('');
+    setSending(true);
     try {
       const msg = await login(admin.id);
       setMessage(msg);
       setStep('code');
     } catch (err: any) { setError(err.message); }
+    finally { setSending(false); }
+  }
+
+  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const admin = admins.find(a => a.id === e.target.value);
+    if (admin) handleSelectAdmin(admin);
   }
 
   async function handleCode(e: FormEvent) {
@@ -44,34 +52,53 @@ export default function LoginPage() {
     } catch (err: any) { setError(err.message); }
   }
 
-  if (!loaded) return <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' }}>Cargando...</div>;
+  if (!loaded) return (
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#1A2C3F' }}>
+      <span style={{ color:'#B6FF18' }}>Cargando...</span>
+    </div>
+  );
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="card" style={{ width: 380 }}>
-        <h1 style={{ marginBottom: 4, fontSize: '1.5rem' }}>DG Catra</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Panel de gestión</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1A2C3F' }}>
+      <div className="card" style={{ width: 400, padding: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <img src="https://e7.pngegg.com/pngimages/637/1019/png-clipart-buenos-aires-city-of-head-of-government-buenos-aires-text-city.png"
+            alt="GCBA" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+        </div>
+        <h1 style={{ marginBottom: 2, fontSize: '1.4rem', textAlign: 'center', fontWeight: 800, letterSpacing: 4, color: '#1A2C3F' }}>DGCATRA</h1>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', textAlign: 'center' }}>Sistema de Gestión de Tickets</p>
 
         {step === 'select' && (
           <div>
             {admins.length > 0 ? (
               <>
-                <p style={{ marginBottom: '1rem' }}>Seleccioná tu usuario:</p>
-                {admins.map(a => (
-                  <button key={a.id} className="btn btn-primary" style={{ width: '100%', marginBottom: '.5rem' }}
-                    onClick={() => handleSelectAdmin(a)} disabled={loading}>
-                    {a.nombre}
-                  </button>
-                ))}
-                <button type="button" className="btn btn-ghost" style={{ width: '100%', fontSize: '.8rem', marginTop: '.5rem' }}
-                  onClick={() => { setStep('master'); setCode(''); }}>
+                <p style={{ marginBottom: '.5rem', fontWeight: 500 }}>Seleccioná tu usuario:</p>
+                <select
+                  value={selectedId}
+                  onChange={handleSelectChange}
+                  disabled={sending}
+                  style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', marginBottom: '.5rem', fontSize: '.95rem' }}
+                >
+                  <option value="">-- Elegir --</option>
+                  {admins.map(a => (
+                    <option key={a.id} value={a.id}>{a.nombre}</option>
+                  ))}
+                </select>
+                {sending && (
+                  <p style={{ color: '#1A2C3F', fontSize: '.85rem', textAlign: 'center', marginBottom: '.5rem' }}>
+                    ⏳ Enviando código...
+                  </p>
+                )}
+                <button type="button" className="btn btn-ghost" style={{ width: '100%', fontSize: '.8rem', marginTop: '.25rem' }}
+                  onClick={() => { setStep('master'); setCode(''); }}
+                  disabled={sending}>
                   Usar código maestro
                 </button>
               </>
             ) : (
               <>
-                <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                  No hay administradores registrados. Ingresá el código maestro.
+                <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                  No hay administradores registrados.
                 </p>
                 <button className="btn btn-primary" style={{ width: '100%' }}
                   onClick={() => setStep('master')}>
@@ -79,27 +106,27 @@ export default function LoginPage() {
                 </button>
               </>
             )}
-            {error && <p style={{ color: 'var(--danger)', marginTop: '1rem' }}>{error}</p>}
+            {error && <p style={{ color: 'var(--danger)', marginTop: '1rem', textAlign: 'center' }}>{error}</p>}
           </div>
         )}
 
         {(step === 'code' || step === 'master') && (
           <form onSubmit={handleCode}>
             {step === 'code' ? (
-              <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)' }}>
+              <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
                 📱 Código enviado a <strong>{selectedNombre}</strong>
               </p>
             ) : (
-              <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)' }}>
+              <p style={{ marginBottom: '.5rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
                 🔐 Ingresá el código maestro de acceso
               </p>
             )}
-            {message && <p style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '.85rem' }}>{message}</p>}
+            {message && <p style={{ color: '#1A2C3F', marginBottom: '1rem', fontSize: '.85rem', textAlign: 'center' }}>{message}</p>}
             <div className="form-group">
               <label>Código</label>
               <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="123456" autoFocus />
             </div>
-            {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</p>}
+            {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem', textAlign: 'center' }}>{error}</p>}
             <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
               {loading ? 'Verificando...' : 'Ingresar'}
             </button>

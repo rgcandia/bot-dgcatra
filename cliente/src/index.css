@@ -1,9 +1,12 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #f1f5f9;
+  --bg: #f5f6f8;
   --surface: #ffffff;
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
+  --primary: #1A2C3F;
+  --primary-dark: #0f1a26;
+  --accent: #B6FF18;
+  --gold: #FFD700;
+  --silver: #A2A6AB;
   --text: #1e293b;
   --text-secondary: #64748b;
   --border: #e2e8f0;
@@ -30,6 +33,7 @@ input, select, textarea { font: inherit; }
 .btn-danger:hover { background: #b91c1c; }
 .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
 .btn-ghost:hover { background: var(--bg); }
+.btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
 .btn-sm { padding: .3rem .7rem; font-size: .85rem; }
 
 .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; }
@@ -39,7 +43,7 @@ input, select, textarea { font: inherit; }
 .form-group input, .form-group select, .form-group textarea {
   width: 100%; padding: .5rem .7rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem;
 }
-.form-group input:focus, .form-group select:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.form-group input:focus, .form-group select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 .badge {
   display: inline-block; padding: .15rem .5rem; border-radius: 999px; font-size: .8rem; font-weight: 600;

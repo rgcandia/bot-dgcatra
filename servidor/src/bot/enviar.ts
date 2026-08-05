@@ -23,6 +23,7 @@ function formatearChatId(telefono: string): string {
   let num = telefono.replace(/[^\d]/g, '');
   if (num.startsWith('+')) num = num.slice(1);
   if (chatIdCache.has(num)) return chatIdCache.get(num)!;
+  if (num.length > 15) return `${num}@lid`;
   return `${num}@c.us`;
 }
 
