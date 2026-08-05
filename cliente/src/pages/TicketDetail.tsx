@@ -102,7 +102,7 @@ export default function TicketDetail() {
         <div className="card" style={{ marginBottom: '1.5rem' }}>
 
           {user?.superAdmin && (
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: puedeActuar ? '1rem' : '0', paddingBottom: puedeActuar ? '1rem' : '0', borderBottom: puedeActuar ? '1px solid var(--border)' : 'none' }}>
               <div>
                 <label style={{ fontWeight: 600, fontSize: '.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Estado</label>
                 <select value={ticket.estado} onChange={e => patch({ estado: e.target.value })}>
@@ -119,13 +119,15 @@ export default function TicketDetail() {
                   <option value="alta">Alta</option>
                 </select>
               </div>
-              <div>
-                <label style={{ fontWeight: 600, fontSize: '.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Técnico</label>
-                <select value={ticket.tecnicoAsignado || ''} onChange={e => patch({ tecnicoAsignado: e.target.value || null })}>
-                  <option value="">— Sin asignar —</option>
-                  {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
-                </select>
-              </div>
+              {!puedeActuar && (
+                <div>
+                  <label style={{ fontWeight: 600, fontSize: '.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Técnico</label>
+                  <select value={ticket.tecnicoAsignado || ''} onChange={e => patch({ tecnicoAsignado: e.target.value || null })}>
+                    <option value="">— Sin asignar —</option>
+                    {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
