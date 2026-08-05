@@ -58,7 +58,12 @@ export default function SettingsPage() {
 
         <div className="card" style={{ padding: '1.5rem' }}>
           <h3 style={{ margin: '0 0 1rem' }}>Estado del Bot</h3>
-          {botConnected !== null && (
+          {botConnected === null ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '.9rem', marginBottom: '.8rem' }}>
+              <span className="spinner spinner-sm" style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              Conectando con el servidor...
+            </p>
+          ) : (
             <div style={{ marginBottom: '.8rem' }}>
               {botConnected ? (
                 <p style={{ color: 'var(--success)', fontWeight: 600, margin: '0 0 .5rem' }}>
