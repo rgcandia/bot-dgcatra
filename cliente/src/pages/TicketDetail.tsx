@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ClipboardCheck, CircleCheckBig } from 'lucide-react';
+import { ClipboardCheck, CircleCheckBig, UserPlus, Save, X } from 'lucide-react';
 import { api } from '../api/client';
 
 interface Ticket {
@@ -12,21 +12,47 @@ interface Ticket {
   base: { nombre: string }; sector: { nombre: string } | null;
 }
 
+interface Tecnico { id: string; nombre: string; }
+
 export default function TicketDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
   const [loading, setLoading] = useState(true);
   const [solucion, setSolucion] = useState('');
   const [error, setError] = useState('');
+  const [editTecnico, setEditTecnico] = useState(false);
+  const [techSel, setTechSel] = useState('');
 
   useEffect(() => {
-    api.get<Ticket>(`/api/tickets/${id}`)
-      .then(setTicket)
+    Promise.all([
+      api.get<Ticket>(`/api/tickets/${id}`),
+      api.get<Tecnico[]>('/api/auth/admins'),
+    ]).then(([t, a]) => { setTicket(t); setTecnicos(a); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function guardarCambios(payload: Record<string, any>) {
+    setError('');
+    try {
+      const updated = await api.patch<Ticket>(`/api/tickets/${id}`, payload);
+      setTicket(updated);
+      setEditTecnico(false);
+    } catch (e: any) { setError(e.message); }
+  }
+
+  async function adoptar() {
+    const nombre = user?.nombre || user?.telefono || 'Admin';
+    guardarCambios({ estado: 'en_proceso', tecnicoAsignado: nombre });
+  }
+
+  async function derivar() {
+    if (!techSel) return;
+    guardarCambios({ estado: 'en_proceso', tecnicoAsignado: techSel });
+  }
 
   async function cerrar() {
     if (!solucion.trim()) return;
@@ -41,18 +67,10 @@ export default function TicketDetail() {
   if (loading) return <div className="empty"><span className="spinner" /><br />Cargando ticket...</div>;
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
-  const puedeAdoptar = user?.esAdmin && ticket!.estado === 'abierto';
-  const puedeCerrar = user?.esAdmin && ticket!.estado === 'en_proceso';
-  const puedeReabrir = user?.superAdmin && ticket!.estado === 'cerrado';
-  const historial: any[] = Array.isArray(ticket!.historial) ? ticket!.historial : [];
-
-  async function cambiarEstado(nuevoEstado: string) {
-    setError('');
-    try {
-      const updated = await api.patch<Ticket>(`/api/tickets/${ticket!.id}`, { estado: nuevoEstado, tecnicoAsignado: nuevoEstado === 'en_proceso' ? (user?.nombre || user?.telefono) : undefined });
-      setTicket(updated);
-    } catch (e: any) { setError(e.message); }
-  }
+  const puedeAdoptar = user?.esAdmin && ticket.estado === 'abierto';
+  const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso';
+  const puedeReabrir = user?.superAdmin && ticket.estado === 'cerrado';
+  const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
 
   return (
     <div style={{ maxWidth: 800 }}>
@@ -86,12 +104,13 @@ export default function TicketDetail() {
 
       {user?.esAdmin && (
         <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '.8rem' }}>
+
           {user?.superAdmin && (
             <>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div>
                   <label style={{ fontWeight: 600, fontSize: '.85rem', marginRight: '.5rem' }}>Estado:</label>
-                  <select value={ticket.estado} onChange={e => cambiarEstado(e.target.value)}>
+                  <select value={ticket.estado} onChange={e => guardarCambios({ estado: e.target.value })}>
                     <option value="abierto">Abierto</option>
                     <option value="en_proceso">En proceso</option>
                     <option value="cerrado">Cerrado</option>
@@ -99,41 +118,58 @@ export default function TicketDetail() {
                 </div>
                 <div>
                   <label style={{ fontWeight: 600, fontSize: '.85rem', marginRight: '.5rem' }}>Prioridad:</label>
-                  <select
-                    value={ticket.prioridad}
-                    onChange={async e => {
-                      try { setTicket(await api.patch<Ticket>(`/api/tickets/${ticket.id}`, { prioridad: e.target.value })); }
-                      catch (e: any) { setError(e.message); }
-                    }}>
+                  <select value={ticket.prioridad} onChange={e => guardarCambios({ prioridad: e.target.value })}>
                     <option value="baja">Baja</option>
                     <option value="media">Media</option>
                     <option value="alta">Alta</option>
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={{ fontWeight: 600, fontSize: '.85rem', marginRight: '.5rem' }}>Técnico:</label>
-                <input
-                  value={ticket.tecnicoAsignado || ''}
-                  onChange={e => {
-                    setTicket({ ...ticket, tecnicoAsignado: e.target.value });
-                  }}
-                  onBlur={async () => {
-                    try {
-                      setTicket(await api.patch<Ticket>(`/api/tickets/${ticket.id}`, { tecnicoAsignado: ticket.tecnicoAsignado }));
-                    } catch (e: any) { setError(e.message); }
-                  }}
-                  placeholder="Nombre del técnico"
-                  style={{ padding: '.4rem .6rem', borderRadius: 6, border: '1px solid var(--border)', width: 200 }}
-                />
-              </div>
+
+              {!editTecnico ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                  <span style={{ fontWeight: 600, fontSize: '.85rem' }}>Técnico:</span>
+                  <span style={{ fontSize: '.9rem' }}>{ticket.tecnicoAsignado || '—'}</span>
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setTechSel(ticket.tecnicoAsignado || ''); setEditTecnico(true); }}>
+                    Cambiar
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
+                  <label style={{ fontWeight: 600, fontSize: '.85rem' }}>Técnico:</label>
+                  <select value={techSel} onChange={e => setTechSel(e.target.value)}>
+                    <option value="">— Sin asignar —</option>
+                    {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
+                  </select>
+                  <button className="btn btn-primary btn-sm" onClick={() => guardarCambios({ tecnicoAsignado: techSel || null })}>
+                    <Save size={14} /> Guardar
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setEditTecnico(false)}>
+                    <X size={14} /> Cancelar
+                  </button>
+                </div>
+              )}
             </>
           )}
 
           {puedeAdoptar && (
-            <button className="btn btn-primary" onClick={() => cambiarEstado('en_proceso')}>
-              <ClipboardCheck size={18} /> Adoptar caso
-            </button>
+            <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button className="btn btn-primary" onClick={adoptar}>
+                <ClipboardCheck size={18} /> Adoptar caso
+              </button>
+              {user?.superAdmin && (
+                <>
+                  <span style={{ color: 'var(--text-secondary)' }}>o derivar a:</span>
+                  <select value={techSel} onChange={e => setTechSel(e.target.value)} style={{ width: 160 }}>
+                    <option value="">— Elegir —</option>
+                    {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
+                  </select>
+                  <button className="btn btn-primary" onClick={derivar} disabled={!techSel}>
+                    <UserPlus size={18} /> Derivar
+                  </button>
+                </>
+              )}
+            </div>
           )}
           {puedeCerrar && (
             <div>
@@ -145,7 +181,7 @@ export default function TicketDetail() {
             </div>
           )}
           {puedeReabrir && (
-            <button className="btn btn-primary" onClick={() => cambiarEstado('abierto')}>
+            <button className="btn btn-primary" onClick={() => guardarCambios({ estado: 'abierto' })}>
               <ClipboardCheck size={18} /> Reabrir ticket
             </button>
           )}

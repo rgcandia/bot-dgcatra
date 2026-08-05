@@ -116,7 +116,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         estado: 'abierto',
         prioridad: 'media',
         historial: [{
-          accion: 'Ticket creado por WhatsApp',
+          accion: `Ticket creado por: ${user.nombreCompleto || ctx.telefono}`,
           autor: user.nombreCompleto || ctx.telefono,
           timestamp: new Date().toISOString(),
         }],
