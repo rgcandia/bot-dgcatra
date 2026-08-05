@@ -161,7 +161,7 @@ export default function TicketDetail() {
                 <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}>
                   <CircleCheckBig size={18} /> Cerrar ticket
                 </button>
-                <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null })} style={{ color: 'var(--danger)' }}>
+                <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} style={{ color: 'var(--danger)' }}>
                   <UserX size={18} /> Dejar caso
                 </button>
               </div>
@@ -175,7 +175,7 @@ export default function TicketDetail() {
           )}
 
           {soyElTecnico && ticket.estado === 'en_proceso' && !puedeCerrar && (
-            <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null })} style={{ color: 'var(--danger)' }}>
+            <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} style={{ color: 'var(--danger)' }}>
               <UserX size={18} /> Dejar caso
             </button>
           )}
