@@ -14,6 +14,12 @@ export default function DashboardLayout() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '0 1rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: '.5rem' }}>
+          <img src="/logo-small.png" alt="" style={{ width: 85, height: 'auto', filter: 'brightness(0) invert(1)', marginBottom: '.5rem' }} />
+          <p style={{ color: '#A2A6AB', fontSize: '.85rem' }}>
+            {user?.nombre || user?.telefono || 'Usuario'}
+          </p>
+        </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
           <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
@@ -32,12 +38,6 @@ export default function DashboardLayout() {
         </nav>
 
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '.5rem' }}>
-            <img src="/logo-small.png" alt="" style={{ width: 85, height: 'auto', filter: 'brightness(0) invert(1)' }} />
-          </div>
-          <p style={{ color: '#A2A6AB', fontSize: '.85rem', marginBottom: '.3rem', textAlign: 'center' }}>
-            {user?.nombre || user?.telefono || 'Usuario'}
-          </p>
           <button className="btn btn-ghost btn-sm" style={{ color: '#FFD700', width: '100%', justifyContent: 'center' }} onClick={handleLogout}>
             Salir
           </button>
