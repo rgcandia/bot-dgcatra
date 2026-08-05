@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User } from 'lucide-react';
+import { ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User, UserX } from 'lucide-react';
 import { api } from '../api/client';
 
 interface Ticket {
@@ -62,8 +62,9 @@ export default function TicketDetail() {
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
   const puedeActuar = user?.esAdmin && ticket.estado === 'abierto';
-  const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso';
+  const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso' && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
   const puedeReabrir = user?.superAdmin && ticket.estado === 'cerrado';
+  const soyElTecnico = ticket.tecnicoAsignado && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
   const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
 
   return (
@@ -156,9 +157,14 @@ export default function TicketDetail() {
               <label style={{ fontWeight: 600, fontSize: '.85rem', marginBottom: '.3rem', display: 'block' }}>Solución</label>
               <textarea value={solucion} onChange={e => setSolucion(e.target.value)} placeholder="Describí la solución..." rows={3}
                 style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical', marginBottom: '.5rem' }} />
-              <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}>
-                <CircleCheckBig size={18} /> Cerrar ticket
-              </button>
+              <div style={{ display: 'flex', gap: '.5rem' }}>
+                <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}>
+                  <CircleCheckBig size={18} /> Cerrar ticket
+                </button>
+                <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null })} style={{ color: 'var(--danger)' }}>
+                  <UserX size={18} /> Dejar caso
+                </button>
+              </div>
             </div>
           )}
 
@@ -168,7 +174,13 @@ export default function TicketDetail() {
             </button>
           )}
 
-          {!puedeActuar && !puedeCerrar && !puedeReabrir && user?.esAdmin && !user?.superAdmin && (
+          {soyElTecnico && ticket.estado === 'en_proceso' && !puedeCerrar && (
+            <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null })} style={{ color: 'var(--danger)' }}>
+              <UserX size={18} /> Dejar caso
+            </button>
+          )}
+
+          {!puedeActuar && !puedeCerrar && !puedeReabrir && !soyElTecnico && user?.esAdmin && !user?.superAdmin && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', textAlign: 'center' }}>
               Este ticket está {ticket.estado === 'cerrado' ? 'cerrado' : 'en proceso'}. Solo el administrador principal puede modificar su estado.
             </p>

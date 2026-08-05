@@ -104,8 +104,11 @@ export async function update(req: AuthRequest, res: Response) {
       ticket.prioridad = prioridad;
     }
     if (tecnicoAsignado !== undefined && tecnicoAsignado !== ticket.tecnicoAsignado) {
-      if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reasignar el técnico' });
-      historial.push({ accion: `Técnico asignado: ${tecnicoAsignado}`, autor, timestamp: new Date().toISOString() });
+      const esAutoAsignacion = tecnicoAsignado === autor;
+      if (!isSuperAdmin && !esAutoAsignacion) {
+        return res.status(403).json({ error: 'Solo el administrador puede reasignar el técnico' });
+      }
+      historial.push({ accion: tecnicoAsignado ? `Técnico asignado: ${tecnicoAsignado}` : 'Técnico desvinculado', autor, timestamp: new Date().toISOString() });
       ticket.tecnicoAsignado = tecnicoAsignado || null;
     }
 
