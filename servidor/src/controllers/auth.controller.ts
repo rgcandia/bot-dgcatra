@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/models.js';
 import { config } from '../config/index.js';
 import { getSetting } from '../config/settings.js';
+import { getBotStatus } from '../socket/server.js';
 
 const codigos = new Map<string, { codigo: string; expires: number }>();
 const OTP_EXPIRY = 5 * 60 * 1000; // 5 minutos
@@ -20,6 +21,11 @@ export async function solicitarCodigo(req: Request, res: Response) {
   try {
     const { telefono } = req.body;
     if (!telefono) return res.status(400).json({ error: 'ID requerido' });
+
+    const bot = getBotStatus();
+    if (!bot.connected) {
+      return res.status(503).json({ error: 'Bot de WhatsApp desconectado. Usá el código maestro para ingresar.' });
+    }
 
     const user = await User.findByPk(telefono);
     if (!user || !user.registroCompleto) {

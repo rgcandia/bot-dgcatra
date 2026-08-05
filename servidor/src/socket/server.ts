@@ -3,11 +3,30 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 
 let io: SocketServer | null = null;
+let botStatus: { connected: boolean; phone?: string } = { connected: false };
+
+export function setBotConnected(phone?: string) {
+  botStatus = { connected: true, phone };
+  if (io) io.emit('bot-status', botStatus);
+}
+
+export function setBotDisconnected() {
+  botStatus = { connected: false };
+  if (io) io.emit('bot-status', botStatus);
+}
+
+export function emitQR(qr: string) {
+  if (io) io.emit('bot-qr', qr);
+}
+
+export function getBotStatus() {
+  return botStatus;
+}
 
 export function initSocket(httpServer: any) {
   io = new SocketServer(httpServer, {
     cors: {
-      origin: ['https://dgcatra.alejndrogcandia.online', 'http://localhost:5173'],
+      origin: ['https://dgcatra.alejndrogcandia.online', 'http://localhost:5173', 'http://172.17.0.202:5173'],
       methods: ['GET', 'POST'],
     },
   });
