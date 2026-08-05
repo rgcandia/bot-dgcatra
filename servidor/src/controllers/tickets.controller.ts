@@ -17,6 +17,7 @@ export async function getAll(req: AuthRequest, res: Response) {
     if (req.query.prioridad) where.prioridad = req.query.prioridad;
     if (req.query.baseId) where.baseId = req.query.baseId;
     if (req.query.sectorId) where.sectorId = req.query.sectorId;
+    if (req.query.tecnicoAsignado) where.tecnicoAsignado = req.query.tecnicoAsignado;
 
     const tickets = await Ticket.findAll({
       where,

@@ -30,7 +30,7 @@ export default function TicketsList() {
     const params = new URLSearchParams();
     if (filtroEstado) params.set('estado', filtroEstado);
     if (filtroPrioridad) params.set('prioridad', filtroPrioridad);
-    if (soloMios && user?.telefono) params.set('asignado', user.nombre || user.telefono);
+    if (soloMios && user?.nombre) params.set('tecnicoAsignado', user.nombre);
     api.get<Ticket[]>(`/api/tickets?${params}`)
       .then(setTickets)
       .catch(() => {})
