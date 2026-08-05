@@ -94,6 +94,7 @@ export async function update(req: AuthRequest, res: Response) {
     const isSuperAdmin = req.user?.superAdmin || false;
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
     const oldEstado = ticket.estado;
+    const oldTecnico = ticket.tecnicoAsignado;
 
     // Solo superAdmin puede cambiar prioridad y reasignar
     if (prioridad && prioridad !== ticket.prioridad) {
@@ -144,7 +145,12 @@ export async function update(req: AuthRequest, res: Response) {
     });
 
     const io = getIO();
-    if (io) io.emit('ticket-actualizado', updated);
+    if (io) {
+      io.emit('ticket-actualizado', updated);
+      if (tecnicoAsignado && tecnicoAsignado !== oldTecnico) {
+        io.emit('ticket-asignado', { ...updated!.toJSON(), tecnicoAsignado });
+      }
+    }
 
     res.json(updated);
   } catch (e) {

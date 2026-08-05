@@ -6,13 +6,13 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
 interface TicketEvent { id: number; asunto: string; estado: string; userTelefono: string; }
 
-function playSound() {
+function playBeep(freq = 800) {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 800;
+    osc.frequency.value = freq;
     gain.gain.value = 0.1;
     osc.start();
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
@@ -32,9 +32,18 @@ export function useSocket() {
     const socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
 
     socket.on('ticket-creado', (ticket: TicketEvent) => {
-      playSound();
+      playBeep(800);
       setTick(t => t + 1);
       setNotificacion(`🎫 Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
+    });
+
+    socket.on('ticket-asignado', (ticket: any) => {
+      setTick(t => t + 1);
+      if (user?.nombre && ticket.tecnicoAsignado === user.nombre) {
+        playBeep(1200);
+        setTimeout(() => playBeep(1200), 150);
+        setNotificacion(`📋 Se te asignó el ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
+      }
     });
 
     socket.on('ticket-actualizado', () => {
