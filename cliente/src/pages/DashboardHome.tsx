@@ -41,7 +41,7 @@ export default function DashboardHome() {
       </p>}
 
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+        <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
           <StatCard value={stats.total} label="Total tickets" />
           <StatCard value={stats.abiertos} label="Abiertos" color="var(--danger)" />
           <StatCard value={stats.en_proceso} label="En proceso" color="var(--warning)" />

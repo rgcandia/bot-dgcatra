@@ -96,6 +96,30 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
 
 .spinner-sm { width: 14px; height: 14px; border-width: 1.5px; }
 
+/* ——— Responsive ——— */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .sidebar.open { display: flex; position: fixed; inset: 0; z-index: 1000; width: 100%; max-width: 280px; }
+  .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 999; }
+  .hamburger { display: flex; }
+  .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .modal { width: 95% !important; max-width: none !important; }
+  table { font-size: .8rem; }
+  th, td { padding: .5rem .3rem; }
+}
+
+@media (max-width: 480px) {
+  .card-grid { grid-template-columns: 1fr !important; }
+  .hide-mobile { display: none; }
+}
+
+.hamburger {
+  display: none; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border: none; background: none; color: var(--text);
+  font-size: 1.4rem; cursor: pointer; padding: 0;
+}
+.table-wrap { overflow-x: auto; width: 100%; }
+
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 100;
 }

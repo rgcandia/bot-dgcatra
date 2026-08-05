@@ -68,7 +68,7 @@ export default function TicketsList() {
       ) : tickets.length === 0 ? (
         <p className="empty">No hay tickets</p>
       ) : (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>#</th>
@@ -93,7 +93,7 @@ export default function TicketsList() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );

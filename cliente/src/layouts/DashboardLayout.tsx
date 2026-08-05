@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
 import NavItem from '../components/NavItem';
@@ -8,12 +9,19 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { notificacion, limpiarNotificacion } = useSocket();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function handleLogout() { logout(); navigate('/login', { replace: true }); }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
+      {/* Hamburger button — mobile only */}
+      <button className="hamburger" onClick={() => setMenuOpen(true)} style={{ position: 'fixed', top: 12, left: 12, zIndex: 1100 }}>
+        <Menu size={24} />
+      </button>
+
+      {/* Sidebar — visible on desktop, hidden on mobile until toggled */}
+      <aside className={`sidebar${menuOpen ? ' open' : ''}`} style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ textAlign: 'center', padding: '0 1rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: '.5rem' }}>
           <p style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: 3, color: '#fff', margin: 0 }}>DGCATRA</p>
           <p style={{ color: '#A2A6AB', fontSize: '.8rem', marginTop: '.2rem' }}>Panel de Control</p>
@@ -21,7 +29,6 @@ export default function DashboardLayout() {
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
           <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
-
           {user?.superAdmin && (
             <>
               <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1.5rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
@@ -34,7 +41,6 @@ export default function DashboardLayout() {
             </>
           )}
         </nav>
-
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
           <p style={{ color: '#fff', fontSize: '.9rem', fontWeight: 600, marginBottom: '.6rem', textAlign: 'center' }}>
             {user?.nombre || user?.telefono || 'Usuario'}
@@ -45,7 +51,11 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      {/* Mobile overlay */}
+      {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)} />}
+
+      {/* Main content */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ padding: '1.5rem', flex: 1 }}>
           <Outlet />
         </div>

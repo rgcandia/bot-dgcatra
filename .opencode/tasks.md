@@ -87,7 +87,19 @@
 - [x] **Historial JSON**: `ticket.changed('historial', true)` para que Sequelize detecte cambios en columna JSON
 - [x] **Prioridad editable**: selector baja/media/alta en TicketDetail (solo admin)
 
-### 2026-08-05 (8) — QR en vivo + desvincular WhatsApp + UX final
+### 2026-08-05 (9) — Roles, permisos, derivación, responsive
+
+- [x] **Roles superAdmin/admin**: JWT incluye `superAdmin: true` para login con código maestro
+- [x] **Permisos**: superAdmin puede reasignar, reabrir, cambiar prioridad. Admin común solo adoptar, cerrar, dejar caso
+- [x] **Derivar tickets**: superAdmin selecciona técnico de lista de admins registrados
+- [x] **Adoptar caso**: cualquier admin puede auto-asignarse
+- [x] **Dejar caso**: botón para desvincularse del ticket, vuelve a "abierto" automáticamente
+- [x] **Filtro "Mis tickets"**: checkbox filtra por `tecnicoAsignado` en backend
+- [x] **Socket `ticket-asignado`**: notificación con doble beep cuando te derivan un ticket
+- [x] **Historial**: "Ticket creado por: Ale Candia" en vez de "Ticket creado por WhatsApp"
+- [x] **Técnico dropdown**: select con admins registrados + Guardar/Cancelar explícito
+- [x] **TicketDetail rediseñado**: más limpio, estado/prioridad/técnico en una línea, adoptar/derivar sin redundancia
+- [x] **Responsive**: hamburger menu, sidebar colapsable en mobile, tablas adaptables, stat cards grid
 
 - [x] **QR en vivo**: Socket.IO emite QR y estado del bot. SettingsPage muestra ✅ Conectado (número) o ⚠️ Desconectado + QR
 - [x] **Desvincular WhatsApp**: botón en Configuración → `client.logout()` + fallback `destroy()` + borrado de sesión en disco
