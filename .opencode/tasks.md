@@ -76,7 +76,17 @@
 - [x] **DGCATRA** en mayúsculas en login y sidebar
 - [x] **Login con loading**: spinner y botón código maestro deshabilitado mientras se envía OTP
 
-### 2026-08-05 (2) — Lucide icons + componentes reutilizables + fixes
+### 2026-08-05 (3) — Sectores globales + mejoras admin
+
+- [x] **BaseSector eliminado**: tabla `bases_sectores` removida, sectores son globales (todas las bases comparten los mismos)
+- [x] **Registro simplificado**: `paso1CodigoBase` muestra todos los sectores sin filtrar por base (~2 queries menos)
+- [x] **SectoresPage**: sin columna de bases asignadas, sin modal de asignación (más simple)
+- [x] **Seed actualizado**: 3 sectores fijos (Operativo, Administrativo, Soporte Técnico)
+- [x] **Admin pages**: `alert()` → estado `error` inline, `.form-group` wrappers en modales
+- [x] **UsuariosPage**: búsqueda por nombre/teléfono/base/sector, badges en vez de emojis
+- [x] **LoginPage**: spinner CSS en carga inicial + al enviar código
+- [x] **useSocket**: removidos console.log y emojis
+- [x] **⚠️ Bug recurrente**: timeout de sesión (15 min) resetea `registroCompleto` durante flujos largos. Si el usuario tarda más de 15 min en completar los 6 pasos, pierde el progreso aunque ya haya ingresado códigos válidos.
 
 - [x] **Lucide React**: reemplazados 23 emojis por iconos profesionales (LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, ClipboardCheck, CircleCheckBig, ArrowLeft)
 - [x] **Componentes extraídos**: `<NavItem>`, `<StatCard>` — eliminada duplicación 5x en sidebar y 6x en dashboard
