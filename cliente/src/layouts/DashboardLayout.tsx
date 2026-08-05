@@ -33,7 +33,7 @@ export default function DashboardLayout() {
 
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
           <div style={{ textAlign: 'center', marginBottom: '.5rem' }}>
-            <img src="/logo-small.png" alt="" style={{ width: 70, height: 'auto', filter: 'brightness(0) invert(1)' }} />
+            <img src="/logo-small.png" alt="" style={{ width: 85, height: 'auto', filter: 'brightness(0) invert(1)' }} />
           </div>
           <p style={{ color: '#A2A6AB', fontSize: '.85rem', marginBottom: '.3rem', textAlign: 'center' }}>
             {user?.nombre || user?.telefono || 'Usuario'}

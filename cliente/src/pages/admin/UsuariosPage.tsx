@@ -4,12 +4,18 @@ import { api } from '../../api/client';
 
 interface User {
   telefono: string; nombreCompleto: string | null; email: string | null;
-  base: { nombre: string } | null; sector: { nombre: string } | null;
+  base: { id: number; nombre: string } | null; sector: { id: number; nombre: string } | null;
+  baseId?: number | null; sectorId?: number | null;
   registroCompleto: boolean; esAdmin: boolean; activo: boolean;
 }
 
+interface Base { id: number; nombre: string; }
+interface Sector { id: number; nombre: string; }
+
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [bases, setBases] = useState<Base[]>([]);
+  const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<User | null>(null);
   const [search, setSearch] = useState('');
@@ -18,8 +24,14 @@ export default function UsuariosPage() {
   useEffect(() => { load(); }, []);
 
   async function load() {
-    try { setUsuarios(await api.get<User[]>('/api/usuarios')); }
-    finally { setLoading(false); }
+    try {
+      const [users, bs, secs] = await Promise.all([
+        api.get<User[]>('/api/usuarios'),
+        api.get<Base[]>('/api/bases'),
+        api.get<Sector[]>('/api/sectores'),
+      ]);
+      setUsuarios(users); setBases(bs); setSectores(secs);
+    } finally { setLoading(false); }
   }
 
   async function handleSave() {
@@ -29,6 +41,7 @@ export default function UsuariosPage() {
       await api.patch(`/api/usuarios/${edit.telefono}`, {
         nombreCompleto: edit.nombreCompleto, email: edit.email,
         esAdmin: edit.esAdmin, activo: edit.activo,
+        baseId: edit.baseId, sectorId: edit.sectorId,
       });
       setEdit(null); await load();
     } catch (e: any) { setError(e.message); }
@@ -96,6 +109,20 @@ export default function UsuariosPage() {
             <div className="form-group">
               <label>Email</label>
               <input className="input" value={edit.email || ''} onChange={e => setEdit({ ...edit, email: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Base</label>
+              <select value={edit.base?.id || edit.baseId || ''} onChange={e => setEdit({ ...edit, baseId: Number(e.target.value) || null })}>
+                <option value="">Sin base</option>
+                {bases.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Sector</label>
+              <select value={edit.sector?.id || edit.sectorId || ''} onChange={e => setEdit({ ...edit, sectorId: Number(e.target.value) || null })}>
+                <option value="">Sin sector</option>
+                {sectores.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+              </select>
             </div>
             <div style={{ marginTop: '.5rem', marginBottom: '1rem' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.3rem', cursor: 'pointer', fontWeight: 400 }}>
