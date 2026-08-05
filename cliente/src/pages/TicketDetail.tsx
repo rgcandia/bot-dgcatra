@@ -1,23 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const API = import.meta.env.VITE_API_URL || '';
+import { ClipboardCheck, CircleCheckBig, ArrowLeft } from 'lucide-react';
+import { api } from '../api/client';
 
 interface Ticket {
-  id: number;
-  asunto: string;
-  descripcion: string;
-  ubicacion: string;
-  estado: string;
-  prioridad: string;
-  tecnicoAsignado: string | null;
-  solucion: string | null;
-  historial: any[];
-  createdAt: string;
+  id: number; asunto: string; descripcion: string; ubicacion: string;
+  estado: string; prioridad: string; tecnicoAsignado: string | null;
+  solucion: string | null; historial: any[]; createdAt: string;
   usuario: { nombreCompleto: string; telefono: string };
-  base: { nombre: string };
-  sector: { nombre: string } | null;
+  base: { nombre: string }; sector: { nombre: string } | null;
 }
 
 export default function TicketDetail() {
@@ -27,35 +19,32 @@ export default function TicketDetail() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [solucion, setSolucion] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`${API}/api/tickets/${id}`, {
-      headers: { Authorization: `Bearer ${user?.token}` },
-    })
-      .then(r => r.json())
+    api.get<Ticket>(`/api/tickets/${id}`)
       .then(setTicket)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
 
   async function adoptar() {
+    setError('');
     const nombre = user?.nombre || user?.telefono || '';
-    await fetch(`${API}/api/tickets/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.token}` },
-      body: JSON.stringify({ estado: 'en_proceso', tecnicoAsignado: nombre }),
-    });
-    window.location.reload();
+    try {
+      const updated = await api.patch<Ticket>(`/api/tickets/${id}`, { estado: 'en_proceso', tecnicoAsignado: nombre });
+      setTicket(updated);
+    } catch (e: any) { setError(e.message); }
   }
 
   async function cerrar() {
     if (!solucion.trim()) return;
-    await fetch(`${API}/api/tickets/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.token}` },
-      body: JSON.stringify({ estado: 'cerrado', solucion: solucion.trim() }),
-    });
-    window.location.reload();
+    setError('');
+    try {
+      const updated = await api.patch<Ticket>(`/api/tickets/${id}`, { estado: 'cerrado', solucion: solucion.trim() });
+      setTicket(updated);
+      setSolucion('');
+    } catch (e: any) { setError(e.message); }
   }
 
   if (loading) return <p className="empty">Cargando...</p>;
@@ -67,8 +56,8 @@ export default function TicketDetail() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')} style={{ marginBottom: '1rem' }}>
-        ← Volver
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tickets')} style={{ marginBottom: '1rem' }}>
+        <ArrowLeft size={16} /> Volver
       </button>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
@@ -81,13 +70,7 @@ export default function TicketDetail() {
           </div>
           <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
             <span className={`badge badge-${ticket.estado}`}>{ticket.estado.replace('_', ' ')}</span>
-            <span style={{
-              background: ticket.prioridad === 'alta' ? '#fef2f2' : ticket.prioridad === 'media' ? '#fff7ed' : '#f9fafb',
-              color: ticket.prioridad === 'alta' ? '#dc2626' : ticket.prioridad === 'media' ? '#e76f51' : '#6b7280',
-              padding: '.2rem .5rem', borderRadius: 4, fontSize: '.75rem', fontWeight: 600,
-            }}>
-              {ticket.prioridad.toUpperCase()}
-            </span>
+            <span className={`badge badge-${ticket.prioridad}`}>{ticket.prioridad.toUpperCase()}</span>
           </div>
         </div>
         <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
@@ -99,11 +82,13 @@ export default function TicketDetail() {
         </div>
       </div>
 
+      {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</p>}
+
       {puedeAdoptar && (
         <div className="card" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '.8rem' }}>Nadie tomó este caso todavía</p>
           <button className="btn btn-primary" onClick={adoptar}>
-            📋 Adoptar caso
+            <ClipboardCheck size={18} /> Adoptar caso
           </button>
         </div>
       )}
@@ -119,14 +104,16 @@ export default function TicketDetail() {
             style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical' }}
           />
           <button className="btn btn-primary" style={{ marginTop: '.6rem' }} onClick={cerrar} disabled={!solucion.trim()}>
-            ✅ Cerrar ticket
+            <CircleCheckBig size={18} /> Cerrar ticket
           </button>
         </div>
       )}
 
       {ticket.solucion && (
         <div className="card" style={{ marginBottom: '1.5rem', background: '#f0fdf4' }}>
-          <h3 style={{ margin: '0 0 .5rem', color: '#16a34a' }}>✅ Solución</h3>
+          <h3 style={{ margin: '0 0 .5rem', color: '#16a34a' }}>
+            <CircleCheckBig size={16} /> Solución
+          </h3>
           <p style={{ whiteSpace: 'pre-wrap' }}>{ticket.solucion}</p>
         </div>
       )}

@@ -1,27 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const API = import.meta.env.VITE_API_URL || '';
+import { api } from '../api/client';
 
 interface Ticket {
-  id: number;
-  asunto: string;
-  descripcion: string;
-  ubicacion: string;
-  estado: string;
-  prioridad: string;
-  createdAt: string;
+  id: number; asunto: string; descripcion: string; ubicacion: string;
+  estado: string; prioridad: string; createdAt: string;
   tecnicoAsignado: string | null;
   usuario: { nombreCompleto: string; telefono: string };
-  base: { nombre: string };
-  sector: { nombre: string } | null;
+  base: { nombre: string }; sector: { nombre: string } | null;
 }
 
 const ESTADOS = ['abierto', 'en_proceso', 'cerrado'];
 const PRIORIDADES = ['baja', 'media', 'alta'];
-const PRIORIDAD_COLORS: Record<string, string> = { baja: '#6b7280', media: '#e76f51', alta: '#dc2626' };
-const ESTADO_COLORS: Record<string, string> = { abierto: '#dc2626', en_proceso: '#e76f51', cerrado: '#16a34a' };
 
 export default function TicketsList() {
   const { user } = useAuth();
@@ -36,10 +27,7 @@ export default function TicketsList() {
     const params = new URLSearchParams();
     if (filtroEstado) params.set('estado', filtroEstado);
     if (filtroPrioridad) params.set('prioridad', filtroPrioridad);
-    fetch(`${API}/api/tickets?${params}`, {
-      headers: { Authorization: `Bearer ${user?.token}` },
-    })
-      .then(r => r.json())
+    api.get<Ticket[]>(`/api/tickets?${params}`)
       .then(setTickets)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -70,38 +58,30 @@ export default function TicketsList() {
       ) : tickets.length === 0 ? (
         <p className="empty">No hay tickets</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table>
           <thead>
-            <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-              <th style={{ padding: '.6rem .4rem' }}>ID</th>
-              <th style={{ padding: '.6rem .4rem' }}>Asunto</th>
-              <th style={{ padding: '.6rem .4rem' }}>Usuario</th>
-              <th style={{ padding: '.6rem .4rem' }}>Base</th>
-              <th style={{ padding: '.6rem .4rem' }}>Estado</th>
-              <th style={{ padding: '.6rem .4rem' }}>Prioridad</th>
-              <th style={{ padding: '.6rem .4rem' }}>Técnico</th>
-              <th style={{ padding: '.6rem .4rem' }}>Fecha</th>
+            <tr>
+              <th>ID</th>
+              <th>Asunto</th>
+              <th>Usuario</th>
+              <th>Base</th>
+              <th>Estado</th>
+              <th>Prioridad</th>
+              <th>Técnico</th>
+              <th>Fecha</th>
             </tr>
           </thead>
           <tbody>
             {tickets.map(t => (
-              <tr key={t.id}
-                style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
-                onClick={() => navigate(`/tickets/${t.id}`)}>
-                <td style={{ padding: '.6rem .4rem' }}>#{t.id}</td>
-                <td style={{ padding: '.6rem .4rem', fontWeight: 500 }}>{t.asunto}</td>
-                <td style={{ padding: '.6rem .4rem' }}>{t.usuario?.nombreCompleto || t.usuario?.telefono}</td>
-                <td style={{ padding: '.6rem .4rem' }}>{t.base?.nombre}</td>
-                <td style={{ padding: '.6rem .4rem' }}>
-                  <span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span>
-                </td>
-                <td style={{ padding: '.6rem .4rem' }}>
-                  <span style={{ color: PRIORIDAD_COLORS[t.prioridad] || '#6b7280', fontWeight: 600, fontSize: '.8rem' }}>
-                    {t.prioridad.toUpperCase()}
-                  </span>
-                </td>
-                <td style={{ padding: '.6rem .4rem' }}>{t.tecnicoAsignado || '—'}</td>
-                <td style={{ padding: '.6rem .4rem', fontSize: '.85rem', color: 'var(--text-secondary)' }}>
+              <tr key={t.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/tickets/${t.id}`)}>
+                <td>#{t.id}</td>
+                <td style={{ fontWeight: 500 }}>{t.asunto}</td>
+                <td>{t.usuario?.nombreCompleto || t.usuario?.telefono}</td>
+                <td>{t.base?.nombre}</td>
+                <td><span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span></td>
+                <td><span className={`badge badge-${t.prioridad}`}>{t.prioridad.toUpperCase()}</span></td>
+                <td>{t.tecnicoAsignado || '—'}</td>
+                <td style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>
                   {new Date(t.createdAt).toLocaleDateString('es-AR')}
                 </td>
               </tr>

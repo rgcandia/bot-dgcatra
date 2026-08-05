@@ -15,11 +15,28 @@
   --danger: #dc2626;
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0,0,0,.1);
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.85rem;
+  --text-md: 0.95rem;
+  --text-lg: 1.1rem;
+  --text-xl: 1.4rem;
+  --text-2xl: 2rem;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
 }
 html { font-size: 14px; }
-body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 button { cursor: pointer; font: inherit; }
 input, select, textarea { font: inherit; }
+
+
+h1 { font-size: var(--text-xl); font-weight: 700; }
+h2 { font-size: var(--text-lg); font-weight: 700; }
+h3 { font-size: var(--text-md); font-weight: 600; }
 
 .btn {
   display: inline-flex; align-items: center; gap: .5rem;
@@ -49,12 +66,22 @@ input, select, textarea { font: inherit; }
   display: inline-block; padding: .15rem .5rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
 }
 .badge-abierto { background: #dbeafe; color: #1d4ed8; }
-.badge-en_proceso { background: #fef3c7; color: #92400e; }
+.badge-en_proceso { background: #fef3c7; color: var(--warning); }
 .badge-cerrado { background: #dcfce7; color: #166534; }
+.badge-alta { background: #fef2f2; color: #dc2626; }
+.badge-media { background: #fff7ed; color: var(--warning); }
+.badge-baja { background: #f9fafb; color: #6b7280; }
+
+.input {
+  width: 100%; padding: .5rem .7rem; border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 1rem;
+}
+.input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .7rem .5rem; border-bottom: 1px solid var(--border); }
 th { font-weight: 600; color: var(--text-secondary); font-size: .85rem; }
+tr:hover { background: var(--bg); }
 
 .empty { text-align: center; padding: 3rem; color: var(--text-secondary); }
 

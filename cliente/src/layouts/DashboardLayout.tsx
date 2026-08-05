@@ -1,6 +1,8 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
+import NavItem from '../components/NavItem';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -16,67 +18,24 @@ export default function DashboardLayout() {
           DGCATRA
         </h2>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
-          <NavLink to="/" end style={({ isActive }) => ({
-            display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
-            textDecoration: 'none', color: isActive ? '#B6FF18' : '#A2A6AB',
-            background: isActive ? 'rgba(182,255,24,.08)' : 'transparent',
-            borderLeft: isActive ? '3px solid #B6FF18' : '3px solid transparent',
-          })}>
-            📊 Inicio
-          </NavLink>
-          <NavLink to="/tickets" style={({ isActive }) => ({
-            display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
-            textDecoration: 'none', color: isActive ? '#B6FF18' : '#A2A6AB',
-            background: isActive ? 'rgba(182,255,24,.08)' : 'transparent',
-            borderLeft: isActive ? '3px solid #B6FF18' : '3px solid transparent',
-          })}>
-            🎫 Tickets
-          </NavLink>
+          <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
+          <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
 
           {user?.esAdmin && (
             <>
               <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
                 Administración
               </div>
-              <NavLink to="/admin/bases" style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
-                textDecoration: 'none', color: isActive ? '#B6FF18' : '#A2A6AB',
-                background: isActive ? 'rgba(182,255,24,.08)' : 'transparent',
-                borderLeft: isActive ? '3px solid #B6FF18' : '3px solid transparent',
-              })}>
-                🏢 Bases
-              </NavLink>
-              <NavLink to="/admin/sectores" style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
-                textDecoration: 'none', color: isActive ? '#B6FF18' : '#A2A6AB',
-                background: isActive ? 'rgba(182,255,24,.08)' : 'transparent',
-                borderLeft: isActive ? '3px solid #B6FF18' : '3px solid transparent',
-              })}>
-                ⚙️ Sectores
-              </NavLink>
-              <NavLink to="/admin/usuarios" style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
-                textDecoration: 'none', color: isActive ? '#B6FF18' : '#A2A6AB',
-                background: isActive ? 'rgba(182,255,24,.08)' : 'transparent',
-                borderLeft: isActive ? '3px solid #B6FF18' : '3px solid transparent',
-              })}>
-                👥 Usuarios
-              </NavLink>
-              <NavLink to="/admin/settings" style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.6rem 1rem',
-                textDecoration: 'none', color: isActive ? '#B6FF18' : '#A2A6AB',
-                background: isActive ? 'rgba(182,255,24,.08)' : 'transparent',
-                borderLeft: isActive ? '3px solid #B6FF18' : '3px solid transparent',
-              })}>
-                🔐 Configuración
-              </NavLink>
+              <NavItem to="/admin/bases" icon={<Building2 size={18} />} label="Bases" />
+              <NavItem to="/admin/sectores" icon={<Settings2 size={18} />} label="Sectores" />
+              <NavItem to="/admin/usuarios" icon={<Users size={18} />} label="Usuarios" />
+              <NavItem to="/admin/settings" icon={<ShieldCheck size={18} />} label="Configuración" />
             </>
           )}
         </nav>
 
         <div style={{ padding: '1rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 'auto' }}>
-          <img src="/logo-large.png"
-            alt="GCBA" style={{ width: '100%', maxWidth: 140, height: 'auto', opacity: .85 }} />
+          <img src="/logo-large.png" alt="GCBA" style={{ width: '100%', maxWidth: 140, height: 'auto', opacity: .85 }} />
         </div>
       </aside>
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

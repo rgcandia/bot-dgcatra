@@ -69,7 +69,22 @@
 
 ---
 
-### 2026-08-04 (7) — Simplificación: sector Soporte Técnico = admin
+### 2026-08-05 — Rediseño frontend: logos GCBA, paleta de colores, lucide-react
+
+- [x] **Logos GCBA**: descargados de Google Drive, fondo removido con sharp (análisis de color dominante en esquinas)
+- [x] **Paleta de colores GCBA**: `#1A2C3F` (azul noche), `#B6FF18` (verde lima), `#A2A6AB` (gris plata), `#FFD700` (amarillo vial)
+- [x] **DGCATRA** en mayúsculas en login y sidebar
+- [x] **Login con loading**: spinner y botón código maestro deshabilitado mientras se envía OTP
+
+### 2026-08-05 (2) — Lucide icons + componentes reutilizables + fixes
+
+- [x] **Lucide React**: reemplazados 23 emojis por iconos profesionales (LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, ClipboardCheck, CircleCheckBig, ArrowLeft)
+- [x] **Componentes extraídos**: `<NavItem>`, `<StatCard>` — eliminada duplicación 5x en sidebar y 6x en dashboard
+- [x] **Fix `TicketDetail`**: `navigate('/')` → `navigate('/tickets')` + eliminado `window.location.reload()` + errores con try/catch
+- [x] **Fix `TicketsList`**: migrado `fetch()` → `api.get()`, badges de prioridad usan clases CSS en vez de inline
+- [x] **Fix `DashboardHome`**: migrado a `StatCard`, badges en tabla de bases
+- [x] **Fix CSS**: agregadas clases faltantes (`.input`, `.badge-alta/media/baja`), `tr:hover`, color `--warning` unificado
+- [x] **Colores inconsistentes**: `#e76f51` → `var(--warning)` en en_proceso y prioridad media
 
 - [x] **Eliminado paso de rol separado**: el sector "Soporte Técnico" es automáticamente admin (pide código `admin2024`)
 - [x] **Sectores renombrados**: Operativo, Administrativo, Soporte Técnico
