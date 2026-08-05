@@ -75,8 +75,8 @@ export default function DashboardLayout() {
         </nav>
 
         <div style={{ padding: '1rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 'auto' }}>
-          <img src="https://w7.pngwing.com/pngs/630/424/png-transparent-buenos-aires-museum-of-modern-art-isc-instituto-superior-de-la-carrera-mexico-city-tuv-s-a-buenos-aires-text-trademark-city.png"
-            alt="GCBA" style={{ width: 48, height: 48, objectFit: 'contain', opacity: .7, marginBottom: '.5rem' }} />
+          <img src="/logo-large.png"
+            alt="GCBA" style={{ width: '100%', maxWidth: 160, height: 'auto', objectFit: 'contain', opacity: .85, marginBottom: '.5rem' }} />
         </div>
       </aside>
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

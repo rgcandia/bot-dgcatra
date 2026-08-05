@@ -62,8 +62,8 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1A2C3F' }}>
       <div className="card" style={{ width: 400, padding: '2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <img src="https://e7.pngegg.com/pngimages/637/1019/png-clipart-buenos-aires-city-of-head-of-government-buenos-aires-text-city.png"
-            alt="GCBA" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+          <img src="/logo-small.png"
+            alt="GCBA" style={{ width: 100, height: 'auto', objectFit: 'contain' }} />
         </div>
         <h1 style={{ marginBottom: 2, fontSize: '1.4rem', textAlign: 'center', fontWeight: 800, letterSpacing: 4, color: '#1A2C3F' }}>DGCATRA</h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', textAlign: 'center' }}>Sistema de Gestión de Tickets</p>
