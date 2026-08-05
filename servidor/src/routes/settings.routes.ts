@@ -11,10 +11,13 @@ router.patch('/admin-code', authMiddleware, adminMiddleware, setAdminCode);
 router.post('/logout-whatsapp', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
     const { client } = await import('../bot/whatsapp.js');
+    console.log('🔌 [Logout] Intentando desvincular WhatsApp...');
     await client.logout();
+    console.log('✅ [Logout] WhatsApp desvinculado');
     res.json({ ok: true });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    console.error('❌ [Logout] Error:', e.message);
+    res.status(500).json({ error: e.message || 'Error al desvincular' });
   }
 });
 

@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [botPhone, setBotPhone] = useState('');
   const [qrCode, setQrCode] = useState('');
   const [askingUnlink, setAskingUnlink] = useState(false);
+  const [unlinkError, setUnlinkError] = useState('');
 
   useEffect(() => {
     api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
@@ -77,13 +78,21 @@ export default function SettingsPage() {
             </button>
           )}
           {askingUnlink && (
-            <div style={{ marginTop: '.5rem', marginBottom: '.5rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-              <span style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>¿Desvincular? Se pedirá QR nuevo.</span>
-              <button className="btn btn-danger btn-sm" onClick={async () => {
-                await api.post('/api/settings/logout-whatsapp');
-                setAskingUnlink(false);
-              }}>Sí</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setAskingUnlink(false)}>No</button>
+            <div style={{ marginTop: '.5rem', marginBottom: '.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                <span style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>¿Desvincular? Se pedirá QR nuevo.</span>
+                <button className="btn btn-danger btn-sm" onClick={async () => {
+                  setUnlinkError('');
+                  try {
+                    await api.post('/api/settings/logout-whatsapp');
+                  } catch (e: any) {
+                    setUnlinkError(e.message);
+                  }
+                  setAskingUnlink(false);
+                }}>Sí</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setAskingUnlink(false)}>No</button>
+              </div>
+              {unlinkError && <p style={{ color: 'var(--danger)', fontSize: '.85rem', marginTop: '.3rem' }}>{unlinkError}</p>}
             </div>
           )}
 
