@@ -40,11 +40,13 @@ async function mostrarMenu(telefono: string): Promise<boolean> {
     'Escribí el número de la opción:\n\n' +
     '1⃣ *Nuevo ticket* — Reportar un problema\n' +
     '2⃣ *Mis tickets* — Ver tus reportes\n' +
-    '3⃣ *Ayuda* — Ver este menú',
+    '3⃣ *Ayuda* — Ver este menú\n' +
+    '4⃣ *Cancelar* — Salir',
     [
       { id: 'cmd_ticket', title: '1. Nuevo ticket' },
       { id: 'cmd_mis_tickets', title: '2. Mis tickets' },
       { id: 'cmd_ayuda', title: '3. Ayuda' },
+      { id: 'cancelar', title: '4. Cancelar' },
     ],
   );
 }
