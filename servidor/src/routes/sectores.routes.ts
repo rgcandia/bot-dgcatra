@@ -7,12 +7,9 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/', sectores.getAll);
-router.get('/base/:baseId', sectores.getSectoresDeBase);
 router.get('/:id', sectores.getById);
 router.post('/', adminMiddleware, sectores.create);
 router.patch('/:id', adminMiddleware, sectores.update);
 router.delete('/:id', adminMiddleware, sectores.remove);
-router.post('/asignar', adminMiddleware, sectores.asignarSectorABase);
-router.delete('/base/:baseId/sector/:sectorId', adminMiddleware, sectores.removerSectorDeBase);
 
 export default router;

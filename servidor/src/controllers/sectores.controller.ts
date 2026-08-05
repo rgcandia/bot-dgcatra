@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
-import { Sector, Base, BaseSector } from '../models/models.js';
+import { Sector } from '../models/models.js';
 
 export async function getAll(_req: AuthRequest, res: Response) {
   try {
@@ -57,42 +57,5 @@ export async function remove(req: AuthRequest, res: Response) {
   } catch (e) {
     console.error('Error en remove sector:', e);
     res.status(500).json({ error: 'Error al eliminar sector' });
-  }
-}
-
-export async function getSectoresDeBase(req: AuthRequest, res: Response) {
-  try {
-    const baseId = req.params.baseId;
-    const base = await Base.findByPk(baseId, {
-      include: [{ model: Sector, as: 'sectores' }]
-    });
-    if (!base) return res.status(404).json({ error: 'Base no encontrada' });
-    res.json((base as any).sectores);
-  } catch (e) {
-    console.error('Error en getSectoresDeBase:', e);
-    res.status(500).json({ error: 'Error al obtener sectores' });
-  }
-}
-
-export async function asignarSectorABase(req: AuthRequest, res: Response) {
-  try {
-    const { baseId, sectorId } = req.body;
-    if (!baseId || !sectorId) return res.status(400).json({ error: 'baseId y sectorId requeridos' });
-    await BaseSector.create({ baseId, sectorId });
-    res.status(201).json({ message: 'Asignado' });
-  } catch (e) {
-    console.error('Error en asignarSectorABase:', e);
-    res.status(500).json({ error: 'Error al asignar sector' });
-  }
-}
-
-export async function removerSectorDeBase(req: AuthRequest, res: Response) {
-  try {
-    const { baseId, sectorId } = req.params;
-    await BaseSector.destroy({ where: { baseId, sectorId } });
-    res.json({ message: 'Removido' });
-  } catch (e) {
-    console.error('Error en removerSectorDeBase:', e);
-    res.status(500).json({ error: 'Error al remover sector' });
   }
 }

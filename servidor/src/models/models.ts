@@ -1,23 +1,9 @@
 import { sequelize } from '../config/database.js';
 import { Base } from './Base.js';
 import { Sector } from './Sector.js';
-import { BaseSector } from './BaseSector.js';
 import { User } from './User.js';
 import { Ticket } from './Ticket.js';
 import { Conversacion } from './Conversacion.js';
-
-Base.belongsToMany(Sector, {
-  through: BaseSector,
-  foreignKey: 'baseId',
-  otherKey: 'sectorId',
-  as: 'sectores',
-});
-Sector.belongsToMany(Base, {
-  through: BaseSector,
-  foreignKey: 'sectorId',
-  otherKey: 'baseId',
-  as: 'bases',
-});
 
 User.belongsTo(Base, { foreignKey: 'baseId', as: 'base' });
 Base.hasMany(User, { foreignKey: 'baseId', as: 'usuarios' });
@@ -41,7 +27,6 @@ export {
   sequelize,
   Base,
   Sector,
-  BaseSector,
   User,
   Ticket,
   Conversacion,

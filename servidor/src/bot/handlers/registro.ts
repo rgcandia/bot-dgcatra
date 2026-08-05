@@ -1,4 +1,4 @@
-import { User, Base, Sector, BaseSector } from '../../models/models.js';
+import { User, Base, Sector } from '../../models/models.js';
 import { enviarTexto, enviarBotones, enviarLista } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { config } from '../../config/index.js';
@@ -67,12 +67,10 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
     return false;
   }
 
-  const baseSectors = await BaseSector.findAll({ where: { baseId: base.id } });
-  const sectorIds = baseSectors.map(bs => bs.sectorId);
-  const sectores = await Sector.findAll({ where: { id: sectorIds }, order: [['nombre', 'ASC']] });
+  const sectores = await Sector.findAll({ order: [['nombre', 'ASC']] });
 
   if (sectores.length === 0) {
-    await enviarTexto(ctx.telefono, '❌ No hay sectores en esta base. Contactá al administrador.');
+    await enviarTexto(ctx.telefono, '❌ No hay sectores disponibles. Contactá al administrador.');
     return false;
   }
 
