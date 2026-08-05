@@ -20,12 +20,16 @@ router.post('/logout-whatsapp', authMiddleware, adminMiddleware, async (_req, re
       console.warn('⚠️ [Logout] logout() falló, forzando destroy:', e.message);
       try { await client.destroy(); } catch {}
     }
-    // Limpiar sesión manualmente
+    // Limpiar sesión y reiniciar
     try {
       fs.rmSync('.wwebjs_auth/session-dgcatra', { recursive: true, force: true });
       console.log('  ✓ Sesión borrada del disco');
     } catch {}
     setBotDisconnected();
+    // Reiniciar el cliente para que genere QR nuevo
+    setTimeout(async () => {
+      try { await client.initialize(); console.log('  ✓ Cliente reiniciado'); } catch {}
+    }, 2000);
     console.log('✅ [Logout] WhatsApp desvinculado');
     res.json({ ok: true });
   } catch (e: any) {
