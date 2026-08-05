@@ -106,6 +106,7 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   .modal { width: 95% !important; max-width: none !important; }
   table { font-size: .8rem; }
   th, td { padding: .5rem .3rem; }
+  .main-content { padding-top: 3rem !important; }
 }
 
 @media (max-width: 480px) {

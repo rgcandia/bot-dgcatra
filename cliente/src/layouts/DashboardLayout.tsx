@@ -56,7 +56,7 @@ export default function DashboardLayout() {
 
       {/* Main content */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <div style={{ padding: '1.5rem', flex: 1 }}>
+        <div className="main-content" style={{ padding: '1.5rem', flex: 1 }}>
           <Outlet />
         </div>
       </main>
