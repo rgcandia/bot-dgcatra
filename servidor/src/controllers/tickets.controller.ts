@@ -90,7 +90,7 @@ export async function update(req: AuthRequest, res: Response) {
     if (!ticket) return res.status(404).json({ error: 'No encontrado' });
 
     const { estado, prioridad, tecnicoAsignado, solucion } = req.body;
-    const autor = req.user?.telefono || 'Sistema';
+    const autor = req.user?.nombre || req.user?.telefono || 'Sistema';
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
     const oldEstado = ticket.estado;
 
