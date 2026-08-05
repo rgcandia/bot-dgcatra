@@ -15,7 +15,7 @@ export default function DashboardLayout() {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
         <div style={{ textAlign: 'center', padding: '0 1rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: '.5rem' }}>
-          <p style={{ fontSize: '.95rem', fontWeight: 800, letterSpacing: 3, color: '#fff', margin: 0 }}>DGCATRA</p>
+          <p style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: 3, color: '#fff', margin: 0 }}>DGCATRA</p>
           <p style={{ color: '#A2A6AB', fontSize: '.7rem', marginTop: '.2rem' }}>Panel de Control</p>
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
