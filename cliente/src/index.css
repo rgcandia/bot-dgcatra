@@ -107,6 +107,7 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   table { font-size: .8rem; }
   th, td { padding: .5rem .3rem; }
   .main-content { padding-top: 3rem !important; }
+  h2 { text-align: center; }
 }
 
 @media (max-width: 480px) {
