@@ -12,7 +12,7 @@ const codeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.get('/admins', listarAdmins);
+router.get('/admins', codeLimiter, listarAdmins);
 router.post('/solicitar-codigo', codeLimiter, solicitarCodigo);
 router.post('/verificar-codigo', codeLimiter, verificarCodigo);
 

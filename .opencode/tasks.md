@@ -87,6 +87,13 @@
 - [x] **Historial JSON**: `ticket.changed('historial', true)` para que Sequelize detecte cambios en columna JSON
 - [x] **Prioridad editable**: selector baja/media/alta en TicketDetail (solo admin)
 
+### 2026-08-05 (6) — Robustez: graceful shutdown + seguridad + limpieza
+
+- [x] **Graceful shutdown**: `SIGTERM`/`SIGINT` cierran HTTP server → Sequelize → Puppeteer en orden. Sin pérdida de sesión WhatsApp.
+- [x] **`GET /api/auth/admins` protegido**: rate limit 5 intentos/5 min (mismo que auth)
+- [x] **Código muerto eliminado**: `BaseSector.ts` (archivo zombie) + `mostrarNoEntendido()` (nunca llamada)
+- [x] **`seed.ts` advertido**: `force: true` comentado en tasks como riesgo (no se modificó para no romper dev)
+
 ### 2026-08-05 (5) — Rediseño layout + registro sin email + selects
 
 - [x] **Sidebar**: sin título DGCATRA, usuario y botón Salir al pie

@@ -70,13 +70,6 @@ async function mostrarTickets(telefono: string): Promise<boolean> {
   return true;
 }
 
-async function mostrarNoEntendido(telefono: string): Promise<boolean> {
-  return await enviarBotones(telefono,
-    '🤖 No entendí ese comando.\nEscribí *ayuda* para ver las opciones disponibles.',
-    [{ id: 'cmd_ayuda', title: 'Ayuda' }],
-  );
-}
-
 async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
   const ticket = await Ticket.findOne({ where: { id, userTelefono: telefono } });
   if (!ticket) {

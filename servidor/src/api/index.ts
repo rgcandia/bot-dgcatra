@@ -13,6 +13,7 @@ import settingsRoutes from '../routes/settings.routes.js';
 import { config } from '../config/index.js';
 import { initSettings } from '../config/settings.js';
 import '../bot/whatsapp.js';
+import { sequelize } from '../config/database.js';
 
 initSettings();
 
@@ -52,3 +53,19 @@ const PORT = config.port;
 server.listen(PORT, () => {
   console.log(`🚪 API escuchando en puerto ${PORT}`);
 });
+
+// --- Graceful shutdown ---
+async function shutdown(signal: string) {
+  console.log(`\n🛑 [${signal}] Iniciando cierre ordenado...`);
+  server.close(() => console.log('  ✓ HTTP server cerrado'));
+  try { await sequelize.close(); console.log('  ✓ DB cerrada'); } catch {}
+  try {
+    const { client } = await import('../bot/whatsapp.js');
+    if (client) { await client.destroy(); console.log('  ✓ WhatsApp cerrado'); }
+  } catch {}
+  console.log('👋 Chau');
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
