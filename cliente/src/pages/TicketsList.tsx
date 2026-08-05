@@ -23,19 +23,21 @@ export default function TicketsList() {
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroPrioridad, setFiltroPrioridad] = useState('');
+  const [soloMios, setSoloMios] = useState(false);
 
   function fetchTickets() {
     setLoading(true);
     const params = new URLSearchParams();
     if (filtroEstado) params.set('estado', filtroEstado);
     if (filtroPrioridad) params.set('prioridad', filtroPrioridad);
+    if (soloMios && user?.telefono) params.set('asignado', user.nombre || user.telefono);
     api.get<Ticket[]>(`/api/tickets?${params}`)
       .then(setTickets)
       .catch(() => {})
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { fetchTickets(); }, [filtroEstado, filtroPrioridad, tick]);
+  useEffect(() => { fetchTickets(); }, [filtroEstado, filtroPrioridad, soloMios, tick]);
 
   return (
     <div>
@@ -52,6 +54,12 @@ export default function TicketsList() {
             <option value="">Todas las prioridades</option>
             {PRIORIDADES.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
+          {user?.esAdmin && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.85rem', cursor: 'pointer', padding: '.4rem .6rem', border: '1px solid var(--border)', borderRadius: 6, background: soloMios ? 'var(--bg)' : 'transparent' }}>
+              <input type="checkbox" checked={soloMios} onChange={e => setSoloMios(e.target.checked)} />
+              Mis tickets
+            </label>
+          )}
         </div>
       </div>
 
@@ -67,7 +75,7 @@ export default function TicketsList() {
               <th>Asunto</th>
               <th>Base</th>
               <th>Estado</th>
-              <th>Prioridad</th>
+              <th>Técnico</th>
               <th>Fecha</th>
             </tr>
           </thead>
@@ -78,7 +86,7 @@ export default function TicketsList() {
                 <td style={{ fontWeight: 500 }}>{t.asunto}</td>
                 <td>{t.base?.nombre}</td>
                 <td><span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span></td>
-                <td><span className={`badge badge-${t.prioridad}`}>{t.prioridad.toUpperCase()}</span></td>
+                <td style={{ fontSize: '.85rem' }}>{t.tecnicoAsignado || '—'}</td>
                 <td style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>
                   {new Date(t.createdAt).toLocaleDateString('es-AR')}
                 </td>

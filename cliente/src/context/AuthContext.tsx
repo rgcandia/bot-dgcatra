@@ -8,6 +8,7 @@ interface AuthState {
   nombre: string;
   token: string;
   esAdmin: boolean;
+  superAdmin?: boolean;
 }
 
 interface AdminInfo { id: string; nombre: string; }
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Código inválido');
       const data = await res.json();
-      const session: AuthState = { telefono: id, token: data.token, nombre: data.nombre || '', esAdmin: data.esAdmin, _ts: Date.now() } as any;
+      const session: AuthState = { telefono: id, token: data.token, nombre: data.nombre || '', esAdmin: data.esAdmin, superAdmin: data.superAdmin, _ts: Date.now() } as any;
       localStorage.setItem('dgcatra_auth', JSON.stringify(session));
       setUser(session);
     } finally { setLoading(false); }

@@ -28,15 +28,6 @@ export default function TicketDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function adoptar() {
-    setError('');
-    const nombre = user?.nombre || user?.telefono || '';
-    try {
-      const updated = await api.patch<Ticket>(`/api/tickets/${id}`, { estado: 'en_proceso', tecnicoAsignado: nombre });
-      setTicket(updated);
-    } catch (e: any) { setError(e.message); }
-  }
-
   async function cerrar() {
     if (!solucion.trim()) return;
     setError('');
@@ -50,9 +41,18 @@ export default function TicketDetail() {
   if (loading) return <div className="empty"><span className="spinner" /><br />Cargando ticket...</div>;
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
-  const puedeAdoptar = user?.esAdmin && ticket.estado === 'abierto';
-  const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso';
-  const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
+  const puedeAdoptar = user?.esAdmin && ticket!.estado === 'abierto';
+  const puedeCerrar = user?.esAdmin && ticket!.estado === 'en_proceso';
+  const puedeReabrir = user?.superAdmin && ticket!.estado === 'cerrado';
+  const historial: any[] = Array.isArray(ticket!.historial) ? ticket!.historial : [];
+
+  async function cambiarEstado(nuevoEstado: string) {
+    setError('');
+    try {
+      const updated = await api.patch<Ticket>(`/api/tickets/${ticket!.id}`, { estado: nuevoEstado, tecnicoAsignado: nuevoEstado === 'en_proceso' ? (user?.nombre || user?.telefono) : undefined });
+      setTicket(updated);
+    } catch (e: any) { setError(e.message); }
+  }
 
   return (
     <div style={{ maxWidth: 800 }}>
@@ -85,49 +85,70 @@ export default function TicketDetail() {
       {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</p>}
 
       {user?.esAdmin && (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <label style={{ fontWeight: 600, fontSize: '.9rem' }}>Prioridad:</label>
-            <select
-              value={ticket.prioridad}
-              onChange={async e => {
-                try {
-                  const updated = await api.patch<Ticket>(`/api/tickets/${ticket.id}`, { prioridad: e.target.value });
-                  setTicket(updated);
-                } catch { setError('Error al cambiar prioridad'); }
-              }}
-              style={{ padding: '.4rem .6rem', borderRadius: 6, border: '1px solid var(--border)' }}
-            >
-              <option value="baja">Baja</option>
-              <option value="media">Media</option>
-              <option value="alta">Alta</option>
-            </select>
-          </div>
-        </div>
-      )}
+        <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '.8rem' }}>
+          {user?.superAdmin && (
+            <>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontWeight: 600, fontSize: '.85rem', marginRight: '.5rem' }}>Estado:</label>
+                  <select value={ticket.estado} onChange={e => cambiarEstado(e.target.value)}>
+                    <option value="abierto">Abierto</option>
+                    <option value="en_proceso">En proceso</option>
+                    <option value="cerrado">Cerrado</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontWeight: 600, fontSize: '.85rem', marginRight: '.5rem' }}>Prioridad:</label>
+                  <select
+                    value={ticket.prioridad}
+                    onChange={async e => {
+                      try { setTicket(await api.patch<Ticket>(`/api/tickets/${ticket.id}`, { prioridad: e.target.value })); }
+                      catch (e: any) { setError(e.message); }
+                    }}>
+                    <option value="baja">Baja</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={{ fontWeight: 600, fontSize: '.85rem', marginRight: '.5rem' }}>Técnico:</label>
+                <input
+                  value={ticket.tecnicoAsignado || ''}
+                  onChange={e => {
+                    setTicket({ ...ticket, tecnicoAsignado: e.target.value });
+                  }}
+                  onBlur={async () => {
+                    try {
+                      setTicket(await api.patch<Ticket>(`/api/tickets/${ticket.id}`, { tecnicoAsignado: ticket.tecnicoAsignado }));
+                    } catch (e: any) { setError(e.message); }
+                  }}
+                  placeholder="Nombre del técnico"
+                  style={{ padding: '.4rem .6rem', borderRadius: 6, border: '1px solid var(--border)', width: 200 }}
+                />
+              </div>
+            </>
+          )}
 
-      {puedeAdoptar && (
-        <div className="card" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '.8rem' }}>Nadie tomó este caso todavía</p>
-          <button className="btn btn-primary" onClick={adoptar}>
-            <ClipboardCheck size={18} /> Adoptar caso
-          </button>
-        </div>
-      )}
-
-      {puedeCerrar && (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 .8rem' }}>Cerrar ticket</h3>
-          <textarea
-            value={solucion}
-            onChange={e => setSolucion(e.target.value)}
-            placeholder="Describí la solución..."
-            rows={3}
-            style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical' }}
-          />
-          <button className="btn btn-primary" style={{ marginTop: '.6rem' }} onClick={cerrar} disabled={!solucion.trim()}>
-            <CircleCheckBig size={18} /> Cerrar ticket
-          </button>
+          {puedeAdoptar && (
+            <button className="btn btn-primary" onClick={() => cambiarEstado('en_proceso')}>
+              <ClipboardCheck size={18} /> Adoptar caso
+            </button>
+          )}
+          {puedeCerrar && (
+            <div>
+              <textarea value={solucion} onChange={e => setSolucion(e.target.value)} placeholder="Describí la solución..." rows={3}
+                style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical', marginBottom: '.5rem' }} />
+              <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}>
+                <CircleCheckBig size={18} /> Cerrar ticket
+              </button>
+            </div>
+          )}
+          {puedeReabrir && (
+            <button className="btn btn-primary" onClick={() => cambiarEstado('abierto')}>
+              <ClipboardCheck size={18} /> Reabrir ticket
+            </button>
+          )}
         </div>
       )}
 

@@ -22,7 +22,7 @@ export default function DashboardLayout() {
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
           <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
 
-          {user?.esAdmin && (
+          {user?.superAdmin && (
             <>
               <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1.5rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
                 Administración

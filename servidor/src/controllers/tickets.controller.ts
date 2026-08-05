@@ -91,21 +91,32 @@ export async function update(req: AuthRequest, res: Response) {
 
     const { estado, prioridad, tecnicoAsignado, solucion } = req.body;
     const autor = req.user?.nombre || req.user?.telefono || 'Sistema';
+    const isSuperAdmin = req.user?.superAdmin || false;
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
     const oldEstado = ticket.estado;
 
-    if (estado && estado !== ticket.estado) {
-      historial.push({ accion: `Estado: "${ticket.estado}" → "${estado}"`, autor, timestamp: new Date().toISOString() });
-      ticket.estado = estado;
-    }
+    // Solo superAdmin puede cambiar prioridad y reasignar
     if (prioridad && prioridad !== ticket.prioridad) {
+      if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede cambiar la prioridad' });
       historial.push({ accion: `Prioridad: "${ticket.prioridad}" → "${prioridad}"`, autor, timestamp: new Date().toISOString() });
       ticket.prioridad = prioridad;
     }
     if (tecnicoAsignado !== undefined && tecnicoAsignado !== ticket.tecnicoAsignado) {
+      if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reasignar el técnico' });
       historial.push({ accion: `Técnico asignado: ${tecnicoAsignado}`, autor, timestamp: new Date().toISOString() });
       ticket.tecnicoAsignado = tecnicoAsignado || null;
     }
+
+    // Cambio de estado
+    if (estado && estado !== ticket.estado) {
+      // Reabrir: solo superAdmin
+      if (estado === 'abierto' && ticket.estado !== 'abierto') {
+        if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reabrir un ticket' });
+      }
+      historial.push({ accion: `Estado: "${ticket.estado}" → "${estado}"`, autor, timestamp: new Date().toISOString() });
+      ticket.estado = estado;
+    }
+
     if (solucion !== undefined && solucion !== ticket.solucion) {
       historial.push({ accion: `Solución registrada`, autor, timestamp: new Date().toISOString() });
       ticket.solucion = solucion || null;
