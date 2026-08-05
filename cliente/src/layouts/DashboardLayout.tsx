@@ -15,10 +15,8 @@ export default function DashboardLayout() {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
         <div style={{ textAlign: 'center', padding: '0 1rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: '.5rem' }}>
-          <img src="/logo-small.png" alt="" style={{ width: 85, height: 'auto', filter: 'brightness(0) invert(1)', marginBottom: '.5rem' }} />
-          <p style={{ color: '#A2A6AB', fontSize: '.85rem' }}>
-            {user?.nombre || user?.telefono || 'Usuario'}
-          </p>
+          <p style={{ fontSize: '.95rem', fontWeight: 800, letterSpacing: 3, color: '#fff', margin: 0 }}>DGCATRA</p>
+          <p style={{ color: '#A2A6AB', fontSize: '.7rem', marginTop: '.2rem' }}>Panel de Control</p>
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
@@ -38,6 +36,9 @@ export default function DashboardLayout() {
         </nav>
 
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+          <p style={{ color: '#B6FF18', fontSize: '.9rem', fontWeight: 600, marginBottom: '.6rem', textAlign: 'center' }}>
+            {user?.nombre || user?.telefono || 'Usuario'}
+          </p>
           <button className="btn btn-ghost btn-sm" style={{ color: '#FFD700', width: '100%', justifyContent: 'center' }} onClick={handleLogout}>
             Salir
           </button>
