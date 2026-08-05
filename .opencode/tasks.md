@@ -87,7 +87,19 @@
 - [x] **Historial JSON**: `ticket.changed('historial', true)` para que Sequelize detecte cambios en columna JSON
 - [x] **Prioridad editable**: selector baja/media/alta en TicketDetail (solo admin)
 
-### 2026-08-05 (7) — QR en vivo + desvincular WhatsApp + UX confirmaciones
+### 2026-08-05 (8) — QR en vivo + desvincular WhatsApp + UX final
+
+- [x] **QR en vivo**: Socket.IO emite QR y estado del bot. SettingsPage muestra ✅ Conectado (número) o ⚠️ Desconectado + QR
+- [x] **Desvincular WhatsApp**: botón en Configuración → `client.logout()` + fallback `destroy()` + borrado de sesión en disco
+- [x] **Logout fix**: `client.logout()` fallaba con "detached Frame" de Puppeteer. Fix: try/catch → `destroy()` + `rm -rf` + `setBotDisconnected()`
+- [x] **Bloquear OTP**: si bot desconectado, `solicitarCodigo` devuelve 503 → solo código maestro
+- [x] **Rate limit fix**: removido de `verificarCodigo` y `GET /api/auth/admins` (bloqueaba login con código maestro)
+- [x] **ConfirmButton**: componente inline (Sí/No) reemplazando `confirm()` del navegador
+- [x] **Editar usuario completo**: base y sector editables desde modal
+- [x] **Sidebar**: DGCATRA + Panel de Control arriba, nombre + Salir abajo
+- [x] **Tabla tickets**: 6 columnas (sin Usuario/Técnico). Spinner en loadings. CSS vars en stat cards
+- [x] **Login select**: dropdown de admins + spinner "Generando QR..."
+- [x] **Registro sin email**: 4 pasos (código base → sector → nombre → confirmar)
 
 - [x] **QR en vivo**: Socket.IO emite QR y estado del bot en tiempo real. SettingsPage muestra ✅ Conectado (número) o ⚠️ Desconectado + QR
 - [x] **Desvincular WhatsApp**: botón en Configuración → `client.logout()` → QR nuevo automático
