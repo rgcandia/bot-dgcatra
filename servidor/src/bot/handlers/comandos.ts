@@ -37,13 +37,14 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
 async function mostrarMenu(telefono: string): Promise<boolean> {
   return await enviarBotones(telefono,
     '👋 *Hola!* ¿Qué querés hacer?\n\n' +
-    '🎫 *Nuevo ticket* — Reportar un problema\n' +
-    '📋 *Mis tickets* — Ver tus reportes\n' +
-    '❓ *Ayuda* — Ver este menú',
+    'Escribí el número de la opción:\n\n' +
+    '1⃣ *Nuevo ticket* — Reportar un problema\n' +
+    '2⃣ *Mis tickets* — Ver tus reportes\n' +
+    '3⃣ *Ayuda* — Ver este menú',
     [
-      { id: 'cmd_ticket', title: 'Nuevo ticket' },
-      { id: 'cmd_mis_tickets', title: 'Mis tickets' },
-      { id: 'cmd_ayuda', title: 'Ayuda' },
+      { id: 'cmd_ticket', title: '1. Nuevo ticket' },
+      { id: 'cmd_mis_tickets', title: '2. Mis tickets' },
+      { id: 'cmd_ayuda', title: '3. Ayuda' },
     ],
   );
 }

@@ -35,7 +35,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       return await enviarTexto(ctx.telefono,
         '📝 *Nuevo ticket*\n\n' +
         'Describí el problema técnico:\n\n' +
-        'Ej: "La impresora no funciona en el sector legales"\n\n' +
+        'Ej: "La impresora no imprime" o "No tengo acceso a internet"\n\n' +
         'Escribí *cancelar* para salir.');
     }
 
@@ -52,7 +52,8 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       });
       return await enviarTexto(ctx.telefono,
         '📍 ¿Dónde ocurre el problema?\n\n' +
-        'Ej: "Oficina 3, primer piso, Base Piedras"\n\n' +
+        'Ej: "Oficina 3, primer piso" o "Entrada principal"\n' +
+        'Si es en otra base, aclaralo: "Base Once, recepción"\n\n' +
         'Escribí *cancelar* para salir.');
     }
 
@@ -69,20 +70,25 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       await guardarUsuario(ctx.telefono, { context: ctxData });
 
       const descripcion = ctxData.descripcion?.substring(0, 80);
-      return await enviarBotones(ctx.telefono,
+      await guardarUsuario(ctx.telefono, { context: ctxData });
+
+      return await enviarTexto(ctx.telefono,
         '📋 *Confirmá el ticket:*\n\n' +
         `📝 *Problema:* ${descripcion}${(ctxData.descripcion?.length || 0) > 80 ? '...' : ''}\n` +
         `📍 *Ubicación:* ${ctxData.ubicacion}\n\n` +
-        '¿Querés enviarlo?',
-        [
-          { id: 'ticket_confirmar', title: 'Enviar' },
-          { id: 'cancelar', title: 'Cancelar' },
-        ],
-      );
+        'Respondé *SI* para enviarlo o *NO* para cancelar.');
     }
 
     case ESTADOS_TICKET.CONFIRMAR: {
-      if (ctx.buttonId !== 'ticket_confirmar') return false;
+      const textoLower = ctx.texto.toLowerCase().trim();
+      if (['no', 'cancelar', 'cancelo', 'n'].includes(textoLower)) {
+        await guardarUsuario(ctx.telefono, { context: null });
+        return await enviarTexto(ctx.telefono, 'Cancelado. Escribí *ayuda* para ver el menú.');
+      }
+      if (!['si', 'sí', 's', 'dale', 'ok', 'confirmo', 'confirmar'].some(c => textoLower.startsWith(c))) {
+        await enviarTexto(ctx.telefono, 'Respondé *SI* para confirmar o *NO* para cancelar.');
+        return false;
+      }
 
       const ctxData = (user.context || {}) as any;
       const asunto = (ctxData.descripcion || '').substring(0, 100);
