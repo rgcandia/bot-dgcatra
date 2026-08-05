@@ -105,7 +105,8 @@ export async function update(req: AuthRequest, res: Response) {
     }
     if (tecnicoAsignado !== undefined && tecnicoAsignado !== ticket.tecnicoAsignado) {
       const esAutoAsignacion = tecnicoAsignado === autor;
-      if (!isSuperAdmin && !esAutoAsignacion) {
+      const esDesasignarse = !tecnicoAsignado && autor === ticket.tecnicoAsignado;
+      if (!isSuperAdmin && !esAutoAsignacion && !esDesasignarse) {
         return res.status(403).json({ error: 'Solo el administrador puede reasignar el técnico' });
       }
       historial.push({ accion: tecnicoAsignado ? `Técnico asignado: ${tecnicoAsignado}` : 'Técnico desvinculado', autor, timestamp: new Date().toISOString() });
