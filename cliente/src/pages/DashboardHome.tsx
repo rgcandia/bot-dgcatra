@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
-import { ShieldCheck } from 'lucide-react';
 import StatCard from '../components/StatCard';
 
 interface StatsResumen {
@@ -15,9 +13,9 @@ interface StatsBase {
 }
 
 export default function DashboardHome() {
-  const { user } = useAuth();
   const [stats, setStats] = useState<StatsResumen | null>(null);
   const [porBase, setPorBase] = useState<StatsBase[]>([]);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => { loadStats(); }, []);
 
@@ -29,20 +27,24 @@ export default function DashboardHome() {
       ]);
       setStats(resumen);
       setPorBase(baseData);
+      setUpdatedAt(new Date());
     } catch {}
   }
 
   return (
     <div>
       <h2>Panel principal</h2>
+      {updatedAt && <p style={{ color: 'var(--text-secondary)', fontSize: '.8rem' }}>
+        Actualizado {updatedAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+      </p>}
 
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
           <StatCard value={stats.total} label="Total tickets" />
-          <StatCard value={stats.abiertos} label="Abiertos" color="#dc2626" />
+          <StatCard value={stats.abiertos} label="Abiertos" color="var(--danger)" />
           <StatCard value={stats.en_proceso} label="En proceso" color="var(--warning)" />
-          <StatCard value={stats.cerrados} label="Cerrados" color="#16a34a" />
-          <StatCard value={stats.alta_prioridad} label="Alta prioridad" color="#dc2626" />
+          <StatCard value={stats.cerrados} label="Cerrados" color="var(--success)" />
+          <StatCard value={stats.alta_prioridad} label="Alta prioridad" color="var(--danger)" />
           <StatCard value={stats.usuarios_activos} label="Usuarios activos" />
         </div>
       )}
@@ -76,11 +78,9 @@ export default function DashboardHome() {
       )}
 
       {!stats && (
-        <div className="card" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
-          <p>Tu usuario: <strong>{user?.telefono}</strong></p>
-          {user?.esAdmin && <p style={{ color: 'var(--primary)' }}>
-            <ShieldCheck size={16} style={{ marginBottom: -3 }} /> Acceso de administrador
-          </p>}
+        <div className="empty" style={{ marginTop: '2rem' }}>
+          <span className="spinner" style={{ marginBottom: '.5rem' }} /><br />
+          Cargando estadísticas...
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ClipboardCheck, CircleCheckBig, ArrowLeft } from 'lucide-react';
+import { ClipboardCheck, CircleCheckBig } from 'lucide-react';
 import { api } from '../api/client';
 
 interface Ticket {
@@ -47,7 +47,7 @@ export default function TicketDetail() {
     } catch (e: any) { setError(e.message); }
   }
 
-  if (loading) return <p className="empty">Cargando...</p>;
+  if (loading) return <div className="empty"><span className="spinner" /><br />Cargando ticket...</div>;
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
   const puedeAdoptar = user?.esAdmin && ticket.estado === 'abierto';
@@ -57,7 +57,7 @@ export default function TicketDetail() {
   return (
     <div style={{ maxWidth: 800 }}>
       <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tickets')} style={{ marginBottom: '1rem' }}>
-        <ArrowLeft size={16} /> Volver
+        ← Volver a tickets
       </button>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>

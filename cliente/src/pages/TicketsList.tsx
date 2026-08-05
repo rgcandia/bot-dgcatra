@@ -54,33 +54,29 @@ export default function TicketsList() {
       </div>
 
       {loading ? (
-        <p className="empty">Cargando tickets...</p>
+        <div className="empty"><span className="spinner" /><br />Cargando tickets...</div>
       ) : tickets.length === 0 ? (
         <p className="empty">No hay tickets</p>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>ID</th>
+              <th>#</th>
               <th>Asunto</th>
-              <th>Usuario</th>
               <th>Base</th>
               <th>Estado</th>
               <th>Prioridad</th>
-              <th>Técnico</th>
               <th>Fecha</th>
             </tr>
           </thead>
           <tbody>
             {tickets.map(t => (
               <tr key={t.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/tickets/${t.id}`)}>
-                <td>#{t.id}</td>
+                <td style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>#{t.id}</td>
                 <td style={{ fontWeight: 500 }}>{t.asunto}</td>
-                <td>{t.usuario?.nombreCompleto || t.usuario?.telefono}</td>
                 <td>{t.base?.nombre}</td>
                 <td><span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span></td>
                 <td><span className={`badge badge-${t.prioridad}`}>{t.prioridad.toUpperCase()}</span></td>
-                <td>{t.tecnicoAsignado || '—'}</td>
                 <td style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>
                   {new Date(t.createdAt).toLocaleDateString('es-AR')}
                 </td>

@@ -89,8 +89,12 @@ table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .7rem .5rem; border-bottom: 1px solid var(--border); }
 th { font-weight: 600; color: var(--text-secondary); font-size: .85rem; }
 tr:hover { background: var(--bg); }
+tr[style*="cursor: pointer"]:hover { background: var(--bg); }
 
 .empty { text-align: center; padding: 3rem; color: var(--text-secondary); }
+.empty-icon { font-size: 2rem; margin-bottom: .5rem; opacity: .3; }
+
+.spinner-sm { width: 14px; height: 14px; border-width: 1.5px; }
 
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 100;

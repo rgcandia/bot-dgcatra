@@ -13,7 +13,10 @@ export default function DashboardLayout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
+      <aside style={{ width: 220, background: '#1A2C3F', color: '#fff', padding: '1rem 0', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '0 1rem 1rem' }}>
+          <img src="/logo-small.png" alt="" style={{ width: 60, height: 'auto', opacity: .9 }} />
+        </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
           <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
@@ -42,14 +45,6 @@ export default function DashboardLayout() {
       </aside>
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <header style={{ background: '#fff', padding: '.5rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
-          <img src="/logo-large.png" alt="GCBA" style={{ height: 36, width: 'auto' }} />
-          {user?.esAdmin && user?.nombre === 'Admin' && (
-            <span style={{ background: 'var(--accent)', color: 'var(--primary)', padding: '.15rem .6rem', borderRadius: 4, fontSize: '.75rem', fontWeight: 700 }}>
-              Admin
-            </span>
-          )}
-        </header>
         <div style={{ padding: '1.5rem', flex: 1 }}>
           <Outlet />
         </div>
