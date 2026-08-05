@@ -75,10 +75,8 @@ export default function DashboardLayout() {
         </nav>
 
         <div style={{ padding: '1rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 'auto' }}>
-          <div style={{ display: 'inline-block', background: 'rgba(255,255,255,.9)', borderRadius: 6, padding: '.4rem' }}>
-            <img src="/logo-large.png"
-              alt="GCBA" style={{ width: '100%', maxWidth: 140, height: 'auto', display: 'block' }} />
-          </div>
+          <img src="/logo-large.png"
+            alt="GCBA" style={{ width: '100%', maxWidth: 140, height: 'auto', opacity: .85 }} />
         </div>
       </aside>
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
