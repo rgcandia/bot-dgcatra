@@ -27,6 +27,7 @@
     "@types/jsonwebtoken": "^9.0.0",
     "@types/node": "^22.0.0",
     "@types/qrcode-terminal": "^0.12.2",
+    "sharp": "^0.35.3",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
