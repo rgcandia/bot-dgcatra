@@ -3,6 +3,13 @@ import { AuthRequest } from '../middleware/auth.js';
 import { Ticket, User, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 
+async function invalidarCacheUsuario(telefono: string) {
+  try {
+    const { invalidarCache } = await import('../bot/session.js');
+    invalidarCache(telefono);
+  } catch {}
+}
+
 async function enviarPorWhatsApp(telefono: string, texto: string, ticketId: number) {
   try {
     const { enviarTexto } = await import('../bot/enviar.js');
@@ -31,6 +38,8 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
     };
     user.changed('context', true);
     await user.save();
+
+    invalidarCacheUsuario(ticket.userTelefono);
 
     // Timeout: si no hay actividad del admin en 5 min, devolver al bot
     const CHAT_TIMEOUT = 5 * 60 * 1000;
@@ -118,6 +127,8 @@ export async function finalizarChat(req: AuthRequest, res: Response) {
     };
     user.changed('context', true);
     await user.save();
+
+    invalidarCacheUsuario(ticket.userTelefono);
 
     // Avisar al usuario
     enviarPorWhatsApp(
