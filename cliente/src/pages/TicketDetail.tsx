@@ -463,6 +463,11 @@ export default function TicketDetail() {
                         Técnico {m.autor}
                       </div>
                     )}
+                    {m.direccion === 'inbound' && (
+                      <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#374151', marginBottom: '.2rem' }}>
+                        {ticket?.usuario?.nombreCompleto || 'Usuario'}
+                      </div>
+                    )}
                     <div style={{ whiteSpace: 'pre-wrap' }}>{m.mensaje}</div>
                     <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', marginTop: '.2rem', textAlign: 'right' }}>{hora(m.createdAt)}</div>
                   </div>
