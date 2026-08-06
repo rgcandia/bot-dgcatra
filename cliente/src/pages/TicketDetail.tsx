@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
-import { ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User, UserX } from 'lucide-react';
+import {
+  ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User, UserX,
+  Building2, Settings2, MapPin, Calendar, Clock, UserCheck,
+  AlertCircle, Play, ArrowRightCircle, ArrowLeft,
+} from 'lucide-react';
 import { api } from '../api/client';
 
 interface Ticket {
@@ -14,6 +18,43 @@ interface Ticket {
 }
 
 interface Tecnico { id: string; nombre: string; }
+
+const ESTADO_LABEL: Record<string, string> = {
+  abierto: 'Abierto',
+  en_proceso: 'En proceso',
+  cerrado: 'Cerrado',
+};
+
+const PRIORIDAD_COLOR: Record<string, string> = {
+  baja: 'var(--text-secondary)',
+  media: 'var(--warning)',
+  alta: 'var(--danger)',
+};
+
+function formatFecha(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) +
+    ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function iconoHistorial(accion: string) {
+  if (accion.startsWith('Ticket creado')) return <Play size={12} />;
+  if (accion.startsWith('Estado:')) return <ArrowRightCircle size={12} />;
+  if (accion.startsWith('Técnico')) return <UserCheck size={12} />;
+  if (accion.startsWith('Prioridad')) return <AlertCircle size={12} />;
+  if (accion.startsWith('Solución')) return <CircleCheckBig size={12} />;
+  return <Clock size={12} />;
+}
+
+function colorHistorial(accion: string) {
+  if (accion.startsWith('Ticket creado')) return 'var(--primary)';
+  if (accion.includes('→ "cerrado"')) return 'var(--success)';
+  if (accion.includes('→ "en_proceso"')) return 'var(--warning)';
+  if (accion.includes('→ "abierto"')) return 'var(--danger)';
+  if (accion.startsWith('Técnico')) return '#6366f1';
+  if (accion.startsWith('Solución')) return 'var(--success)';
+  return 'var(--text-secondary)';
+}
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -73,47 +114,144 @@ export default function TicketDetail() {
   const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso' && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
   const puedeReabrir = user?.superAdmin && ticket.estado === 'cerrado';
   const soyElTecnico = ticket.tecnicoAsignado && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
-  const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
+  const historial: any[] = Array.isArray(ticket.historial) ? [...ticket.historial].reverse() : [];
 
   return (
-    <div style={{ maxWidth: 800 }}>
-      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tickets')} style={{ marginBottom: '1rem' }}>
-        ← Volver a tickets
+    <div style={{ maxWidth: 780 }}>
+      {/* ── Back button ── */}
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tickets')} style={{ marginBottom: '1.2rem' }}>
+        <ArrowLeft size={16} /> Volver a tickets
       </button>
 
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-          <div>
-            <h2 style={{ margin: 0 }}>#{ticket.id} — {ticket.asunto}</h2>
-            <p style={{ color: 'var(--text-secondary)', margin: '.3rem 0 0', fontSize: '.85rem' }}>
-              {ticket.base?.nombre}{ticket.sector ? ` · ${ticket.sector.nombre}` : ''} · {ticket.ubicacion} · {new Date(ticket.createdAt).toLocaleString('es-AR')}
-            </p>
+      {/* ── Error ── */}
+      {error && (
+        <p style={{ color: 'var(--danger)', marginBottom: '1rem', fontSize: '.9rem' }}>{error}</p>
+      )}
+
+      {/* ═══════════════════════════ Card: Info ═══════════════════════════ */}
+      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: '1.2rem' }}>
+          <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)', marginBottom: '.2rem' }}>
+            Ticket #{ticket.id}
           </div>
-          <div style={{ display: 'flex', gap: '.5rem' }}>
-            <span className={`badge badge-${ticket.estado}`}>{ticket.estado.replace('_', ' ')}</span>
-            <span className={`badge badge-${ticket.prioridad}`}>{ticket.prioridad.toUpperCase()}</span>
+          <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700 }}>{ticket.asunto}</h2>
+        </div>
+
+        {/* Badges */}
+        <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1.2rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Estado
+            </span>
+            <span className={`badge badge-${ticket.estado}`} style={{ alignSelf: 'flex-start' }}>
+              {ESTADO_LABEL[ticket.estado]}
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Prioridad
+            </span>
+            <span className={`badge badge-${ticket.prioridad}`} style={{ alignSelf: 'flex-start', fontWeight: 700 }}>
+              {ticket.prioridad.toUpperCase()}
+            </span>
           </div>
         </div>
 
-        <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, background: 'var(--bg)', padding: '1rem', borderRadius: 6 }}>
-          {ticket.descripcion}
-        </p>
+        {/* Metadata grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: '.8rem',
+          padding: '.8rem',
+          background: 'var(--bg)',
+          borderRadius: 8,
+          marginBottom: '1rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+            <Building2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Base</div>
+              <div style={{ fontWeight: 600 }}>{ticket.base?.nombre || '—'}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+            <Settings2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Sector</div>
+              <div style={{ fontWeight: 600 }}>{ticket.sector?.nombre || '—'}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+            <MapPin size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Ubicación</div>
+              <div style={{ fontWeight: 600 }}>{ticket.ubicacion}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+            <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fecha</div>
+              <div style={{ fontWeight: 600 }}>{formatFecha(ticket.createdAt)}</div>
+            </div>
+          </div>
+        </div>
 
-        <div style={{ marginTop: '.8rem', fontSize: '.85rem', color: 'var(--text-secondary)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-          <span><strong>Reportó:</strong> {ticket.usuario?.nombreCompleto || ticket.usuario?.telefono}</span>
-          {ticket.tecnicoAsignado && <span><User size={14} style={{ marginBottom: -2 }} /> {ticket.tecnicoAsignado}</span>}
+        {/* Descripción */}
+        <div style={{
+          background: 'var(--bg)',
+          borderRadius: 8,
+          padding: '1rem',
+          marginBottom: '1rem',
+        }}>
+          <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.4rem' }}>
+            Descripción del problema
+          </div>
+          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0, fontSize: '.95rem' }}>
+            {ticket.descripcion}
+          </p>
+        </div>
+
+        {/* Footer: reportó + técnico */}
+        <div style={{ display: 'flex', gap: '2rem', fontSize: '.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            <User size={14} />
+            <span style={{ fontWeight: 600, color: 'var(--text)' }}>
+              {ticket.usuario?.nombreCompleto || ticket.usuario?.telefono}
+            </span>
+            <span>reportó</span>
+          </div>
+          {ticket.tecnicoAsignado && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+              <UserCheck size={14} />
+              <span style={{ fontWeight: 600, color: 'var(--text)' }}>{ticket.tecnicoAsignado}</span>
+              <span>asignado</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{error}</p>}
-
+      {/* ═══════════════════════════ Card: Acciones ═══════════════════════════ */}
       {user?.esAdmin && (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.2rem 1.5rem' }}>
+          <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.8rem' }}>
+            Acciones de administrador
+          </div>
 
+          {/* ─── superAdmin controls ─── */}
           {user?.superAdmin && (
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: puedeActuar ? '1rem' : '0', paddingBottom: puedeActuar ? '1rem' : '0', borderBottom: puedeActuar ? '1px solid var(--border)' : 'none' }}>
+            <div style={{
+              display: 'flex', gap: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap',
+              marginBottom: puedeActuar ? '1rem' : '0',
+              paddingBottom: puedeActuar ? '1rem' : '0',
+              borderBottom: puedeActuar ? '1px solid var(--border)' : 'none',
+            }}>
               <div>
-                <label style={{ fontWeight: 600, fontSize: '.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Estado</label>
+                <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>
+                  Estado
+                </label>
                 <select value={ticket.estado} onChange={e => patch({ estado: e.target.value })}>
                   <option value="abierto">Abierto</option>
                   <option value="en_proceso">En proceso</option>
@@ -121,7 +259,9 @@ export default function TicketDetail() {
                 </select>
               </div>
               <div>
-                <label style={{ fontWeight: 600, fontSize: '.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Prioridad</label>
+                <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>
+                  Prioridad
+                </label>
                 <select value={ticket.prioridad} onChange={e => patch({ prioridad: e.target.value })}>
                   <option value="baja">Baja</option>
                   <option value="media">Media</option>
@@ -130,7 +270,9 @@ export default function TicketDetail() {
               </div>
               {!puedeActuar && (
                 <div>
-                  <label style={{ fontWeight: 600, fontSize: '.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Técnico</label>
+                  <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>
+                    Técnico
+                  </label>
                   <select value={ticket.tecnicoAsignado || ''} onChange={e => patch({ tecnicoAsignado: e.target.value || null })}>
                     <option value="">— Sin asignar —</option>
                     {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
@@ -140,14 +282,15 @@ export default function TicketDetail() {
             </div>
           )}
 
+          {/* ─── Adoptar + Derivar ─── */}
           {puedeActuar && (
-            <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={adoptar}>
                 <ClipboardCheck size={18} /> Adoptar caso
               </button>
               {user?.superAdmin && (
                 <>
-                  <span style={{ color: 'var(--text-secondary)', margin: '0 .2rem' }}>o</span>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>o</span>
                   <select value={techSel} onChange={e => setTechSel(e.target.value)} style={{ width: 160 }}>
                     <option value="">Derivar a...</option>
                     {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
@@ -160,11 +303,19 @@ export default function TicketDetail() {
             </div>
           )}
 
+          {/* ─── Cerrar ─── */}
           {puedeCerrar && (
             <div>
-              <label style={{ fontWeight: 600, fontSize: '.85rem', marginBottom: '.3rem', display: 'block' }}>Solución</label>
-              <textarea value={solucion} onChange={e => setSolucion(e.target.value)} placeholder="Describí la solución..." rows={3}
-                style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical', marginBottom: '.5rem' }} />
+              <div className="form-group" style={{ marginBottom: '.75rem' }}>
+                <label>Solución</label>
+                <textarea
+                  value={solucion}
+                  onChange={e => setSolucion(e.target.value)}
+                  placeholder="Describí cómo se resolvió el problema..."
+                  rows={3}
+                  style={{ width: '100%', padding: '.6rem', borderRadius: 6, border: '1px solid var(--border)', resize: 'vertical' }}
+                />
+              </div>
               <div style={{ display: 'flex', gap: '.5rem' }}>
                 <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}>
                   <CircleCheckBig size={18} /> Cerrar ticket
@@ -176,48 +327,93 @@ export default function TicketDetail() {
             </div>
           )}
 
+          {/* ─── Reabrir ─── */}
           {puedeReabrir && (
             <button className="btn btn-primary" onClick={() => patch({ estado: 'abierto' })}>
               <RotateCcw size={18} /> Reabrir ticket
             </button>
           )}
 
+          {/* ─── Dejar caso (técnico sin permiso de cerrar) ─── */}
           {soyElTecnico && ticket.estado === 'en_proceso' && !puedeCerrar && (
             <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} style={{ color: 'var(--danger)' }}>
               <UserX size={18} /> Dejar caso
             </button>
           )}
 
-          {!puedeActuar && !puedeCerrar && !puedeReabrir && !soyElTecnico && user?.esAdmin && !user?.superAdmin && (
-            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', textAlign: 'center' }}>
-              Este ticket está {ticket.estado === 'cerrado' ? 'cerrado' : 'en proceso'}. Solo el administrador principal puede modificar su estado.
+          {/* ─── Sin acciones disponibles ─── */}
+          {!puedeActuar && !puedeCerrar && !puedeReabrir && !soyElTecnico && !user?.superAdmin && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', textAlign: 'center', margin: 0 }}>
+              {ticket.estado === 'cerrado'
+                ? 'Este ticket está cerrado. Solo el administrador principal puede reabrirlo.'
+                : 'Este ticket está en proceso. Solo el técnico asignado puede cerrarlo.'}
             </p>
           )}
         </div>
       )}
 
+      {/* ═══════════════════════════ Card: Solución ═══════════════════════════ */}
       {ticket.solucion && (
-        <div className="card" style={{ marginBottom: '1.5rem', background: '#f0fdf4' }}>
-          <h3 style={{ margin: '0 0 .5rem', color: '#16a34a' }}>
-            <CircleCheckBig size={16} style={{ marginBottom: -3 }} /> Solución
-          </h3>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{ticket.solucion}</p>
+        <div className="card" style={{ marginBottom: '1.5rem', background: '#f0fdf4', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', color: 'var(--success)', marginBottom: '.5rem' }}>
+            <CircleCheckBig size={18} />
+            <h3 style={{ margin: 0, fontSize: '1rem' }}>Solución</h3>
+          </div>
+          <p style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.7, fontSize: '.95rem' }}>{ticket.solucion}</p>
         </div>
       )}
 
+      {/* ═══════════════════════════ Card: Historial ═══════════════════════════ */}
       {historial.length > 0 && (
-        <div className="card">
-          <h3 style={{ margin: '0 0 .8rem' }}>Historial</h3>
-          {historial.map((h, i) => (
-            <div key={i} style={{
-              padding: '.5rem 0', borderBottom: i < historial.length - 1 ? '1px solid var(--border)' : 'none',
-              fontSize: '.85rem', color: 'var(--text-secondary)',
-            }}>
-              <span style={{ color: '#1e293b' }}>{h.accion}</span>
-              {h.autor && <> · <strong>{h.autor}</strong></>}
-              {h.timestamp && <> · {new Date(h.timestamp).toLocaleString('es-AR')}</>}
-            </div>
-          ))}
+        <div className="card" style={{ padding: '1.5rem' }}>
+          <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            <Clock size={16} style={{ color: 'var(--text-secondary)' }} /> Historial
+          </h3>
+          <div style={{ position: 'relative', paddingLeft: '1rem' }}>
+            {/* Timeline line */}
+            <div style={{
+              position: 'absolute', left: 4, top: 4, bottom: 4,
+              width: 2, background: 'var(--border)',
+            }} />
+            {historial.map((h, i) => {
+              const color = colorHistorial(h.accion);
+              const fecha = h.timestamp ? formatFecha(h.timestamp) : '';
+              return (
+                <div key={i} style={{
+                  position: 'relative',
+                  paddingLeft: '1.2rem',
+                  paddingBottom: i < historial.length - 1 ? '1rem' : 0,
+                }}>
+                  {/* Timeline dot */}
+                  <div style={{
+                    position: 'absolute', left: -11, top: 3,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: 'var(--surface)',
+                    border: `2px solid ${color}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color,
+                  }}>
+                    {iconoHistorial(h.accion)}
+                  </div>
+
+                  <div style={{ marginBottom: 2 }}>
+                    <span style={{ fontWeight: 600, fontSize: '.9rem', color: 'var(--text)' }}>
+                      {h.accion}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '.4rem' }}>
+                    {h.autor && <span>{h.autor}</span>}
+                    {fecha && (
+                      <>
+                        <span style={{ opacity: .4 }}>·</span>
+                        <span>{fecha}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

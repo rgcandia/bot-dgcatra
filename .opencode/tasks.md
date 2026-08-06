@@ -199,7 +199,6 @@
 ## Pendiente (real)
 
 ### 🔴 Bloqueantes
-- [ ] **Deploy frontend en Vercel**
 
 ### 🟡 Alta prioridad
 - [ ] **Tests** — 0 unitarios, 0 integración
@@ -221,6 +220,21 @@
 ---
 
 ## Historial (completado)
+
+### 2026-08-06 — Rediseño UX TicketDetail
+- [x] **Header**: `Ticket #N` + asunto como título, badges con labels ESTADO/PRIORIDAD
+- [x] **Metadata grid**: 4 columnas con íconos (Base 🏢, Sector ⚙️, Ubicación 📍, Fecha 📅)
+- [x] **Descripción**: card con label "Descripción del problema"
+- [x] **Reportó / Técnico**: separados claramente con verbos ("reportó" / "asignado")
+- [x] **Acciones**: solo se muestran los controles relevantes al rol y estado actual
+- [x] **Historial timeline**: línea vertical, dots con color por tipo de acción, íconos semánticos
+- [x] **Solución**: layout consistente con el resto de cards
+
+### 2026-08-06 — Deploy Vercel + real-time TicketDetail + repo GitHub
+- [x] **Repo GitHub**: creado `rgcandia/bot-dgcatra`, branch `main`. Token reutilizado de bot-norbridge
+- [x] **Deploy Vercel**: `vercel.json` en `cliente/`, `VITE_API_URL` apuntando a backend, `FRONTEND_URL` en servidor para CORS. Dominio: `bot-dgcatra.vercel.app`
+- [x] **TicketDetail real-time**: `useSocket` expone `ticketActualizado`, `TicketDetail` actualiza estado directamente cuando el ID coincide (sin re-fetch HTTP)
+- [x] **Tareas pendientes agregadas**: rate limit en verificar-codigo, reconexión automática del bot, SQL type-safety en stats, context Zod
 
 ### 2026-08-04 — Fix typing + rate limit + colas
 - [x] **Typing**: inyección directa `WAWebChatStateBridge.sendChatStateComposing()` via `pupPage.evaluate()`
