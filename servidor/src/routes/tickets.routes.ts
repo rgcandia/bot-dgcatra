@@ -8,6 +8,7 @@ router.use(authMiddleware);
 
 router.get('/', tickets.getAll);
 router.get('/:id', tickets.getById);
+router.get('/:id/conversacion', tickets.getConversacion);
 router.post('/', tickets.create);
 router.patch('/:id', adminMiddleware, tickets.update);
 

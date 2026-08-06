@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
-import { Ticket, User, Base, Sector } from '../models/models.js';
+import { Ticket, User, Base, Sector, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 
 async function notificarAgente(telefono: string, mensaje: string) {
@@ -161,5 +161,23 @@ export async function update(req: AuthRequest, res: Response) {
   } catch (e) {
     console.error('Error en update ticket:', e);
     res.status(500).json({ error: 'Error al actualizar ticket' });
+  }
+}
+
+export async function getConversacion(req: AuthRequest, res: Response) {
+  try {
+    const ticketId = parseInt(req.params.id);
+    if (isNaN(ticketId)) return res.status(400).json({ error: 'ID inválido' });
+
+    const mensajes = await Conversacion.findAll({
+      where: { ticketId },
+      order: [['createdAt', 'ASC']],
+      attributes: ['id', 'mensaje', 'direccion', 'createdAt'],
+    });
+
+    res.json(mensajes);
+  } catch (e) {
+    console.error('Error en getConversacion:', e);
+    res.status(500).json({ error: 'Error al obtener conversación' });
   }
 }

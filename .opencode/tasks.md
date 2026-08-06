@@ -221,6 +221,13 @@
 
 ## Historial (completado)
 
+### 2026-08-06 — UX refinements + conversación WhatsApp
+- [x] **Descripción oculta si `asunto === descripcion`**: evita duplicar info cuando el usuario escribe poco
+- [x] **Labels**: `Reportado por: Ale Candia` / `Técnico asignado: Ale Candia` (verbos antes del nombre)
+- [x] **Historial simplificado**: 3 colores (verde=cerrado/solución, violeta=cambio estado, gris=resto), texto siempre `var(--text)`
+- [x] **Endpoint `GET /api/tickets/:id/conversacion`**: devuelve mensajes inbound/outbound asociados al ticket
+- [x] **Sección Conversación WhatsApp**: burbujas estilo chat (agente a la izq, bot a la der) debajo del timeline
+
 ### 2026-08-06 — Rediseño UX TicketDetail
 - [x] **Header**: `Ticket #N` + asunto como título, badges con labels ESTADO/PRIORIDAD
 - [x] **Metadata grid**: 4 columnas con íconos (Base 🏢, Sector ⚙️, Ubicación 📍, Fecha 📅)

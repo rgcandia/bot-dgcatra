@@ -5,7 +5,7 @@ import { useSocket } from '../context/useSocket';
 import {
   ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User, UserX,
   Building2, Settings2, MapPin, Calendar, Clock, UserCheck,
-  AlertCircle, Play, ArrowRightCircle, ArrowLeft,
+  AlertCircle, Play, ArrowRightCircle, ArrowLeft, MessageCircle,
 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -18,6 +18,8 @@ interface Ticket {
 }
 
 interface Tecnico { id: string; nombre: string; }
+
+interface Msg { id: number; mensaje: string; direccion: string; createdAt: string; }
 
 const ESTADO_LABEL: Record<string, string> = {
   abierto: 'Abierto',
@@ -47,12 +49,8 @@ function iconoHistorial(accion: string) {
 }
 
 function colorHistorial(accion: string) {
-  if (accion.startsWith('Ticket creado')) return 'var(--primary)';
-  if (accion.includes('→ "cerrado"')) return 'var(--success)';
-  if (accion.includes('→ "en_proceso"')) return 'var(--warning)';
-  if (accion.includes('→ "abierto"')) return 'var(--danger)';
-  if (accion.startsWith('Técnico')) return '#6366f1';
-  if (accion.startsWith('Solución')) return 'var(--success)';
+  if (accion.includes('→ "cerrado"') || accion.startsWith('Solución')) return 'var(--success)';
+  if (accion.includes('→ "en_proceso"') || accion.includes('→ "abierto"')) return '#6366f1';
   return 'var(--text-secondary)';
 }
 
@@ -67,6 +65,7 @@ export default function TicketDetail() {
   const [solucion, setSolucion] = useState('');
   const [error, setError] = useState('');
   const [techSel, setTechSel] = useState('');
+  const [conversacion, setConversacion] = useState<Msg[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -75,6 +74,12 @@ export default function TicketDetail() {
     ]).then(([t, a]) => { setTicket(t); setTecnicos(a); })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    api.get<Msg[]>(`/api/tickets/${id}/conversacion`)
+      .then(setConversacion)
+      .catch(() => {});
   }, [id]);
 
   useEffect(() => {
@@ -199,35 +204,37 @@ export default function TicketDetail() {
           </div>
         </div>
 
-        {/* Descripción */}
-        <div style={{
-          background: 'var(--bg)',
-          borderRadius: 8,
-          padding: '1rem',
-          marginBottom: '1rem',
-        }}>
-          <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.4rem' }}>
-            Descripción del problema
+        {/* Descripción — solo si difiere del asunto */}
+        {ticket.descripcion !== ticket.asunto && (
+          <div style={{
+            background: 'var(--bg)',
+            borderRadius: 8,
+            padding: '1rem',
+            marginBottom: '1rem',
+          }}>
+            <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.4rem' }}>
+              Descripción del problema
+            </div>
+            <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0, fontSize: '.95rem' }}>
+              {ticket.descripcion}
+            </p>
           </div>
-          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0, fontSize: '.95rem' }}>
-            {ticket.descripcion}
-          </p>
-        </div>
+        )}
 
         {/* Footer: reportó + técnico */}
         <div style={{ display: 'flex', gap: '2rem', fontSize: '.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             <User size={14} />
+            <span>Reportado por:</span>
             <span style={{ fontWeight: 600, color: 'var(--text)' }}>
               {ticket.usuario?.nombreCompleto || ticket.usuario?.telefono}
             </span>
-            <span>reportó</span>
           </div>
           {ticket.tecnicoAsignado && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
               <UserCheck size={14} />
+              <span>Técnico asignado:</span>
               <span style={{ fontWeight: 600, color: 'var(--text)' }}>{ticket.tecnicoAsignado}</span>
-              <span>asignado</span>
             </div>
           )}
         </div>
@@ -413,6 +420,45 @@ export default function TicketDetail() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════ Card: Conversación WhatsApp ═══════════════════════════ */}
+      {conversacion.length > 0 && (
+        <div className="card" style={{ padding: '1.5rem' }}>
+          <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            <MessageCircle size={16} style={{ color: 'var(--success)' }} /> Conversación WhatsApp
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+            {conversacion.map((m) => (
+              <div key={m.id} style={{
+                display: 'flex',
+                justifyContent: m.direccion === 'inbound' ? 'flex-start' : 'flex-end',
+              }}>
+                <div style={{
+                  maxWidth: '75%',
+                  padding: '.6rem .9rem',
+                  borderRadius: 12,
+                  borderBottomRightRadius: m.direccion === 'outbound' ? 4 : undefined,
+                  borderBottomLeftRadius: m.direccion === 'inbound' ? 4 : undefined,
+                  background: m.direccion === 'inbound' ? '#e5e7eb' : '#dcfce7',
+                  color: 'var(--text)',
+                  fontSize: '.9rem',
+                  lineHeight: 1.5,
+                }}>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{m.mensaje}</div>
+                  <div style={{
+                    fontSize: '.7rem',
+                    color: 'var(--text-secondary)',
+                    marginTop: '.3rem',
+                    textAlign: m.direccion === 'inbound' ? 'left' : 'right',
+                  }}>
+                    {new Date(m.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
