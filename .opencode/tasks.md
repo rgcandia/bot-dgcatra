@@ -256,6 +256,24 @@
 - [x] **Historial timeline**: línea vertical, dots con color por tipo de acción, íconos semánticos
 - [x] **Solución**: layout consistente con el resto de cards
 
+### 2026-08-06 — Chat takeover, UX fixes, socket global, DB seed fresco
+- [x] **Chat takeover**: tabs Historial/Conversación, admin toma control, pausa bot, envía mensajes por WhatsApp con prefijo `💬 Técnico Nombre:`, usuario responde y aparece en dashboard en tiempo real vía socket
+- [x] **Timeout chat**: 5 min sin actividad del admin → devuelve al bot automáticamente, notifica al usuario
+- [x] **Notificaciones sistema**: `📢` para iniciar/finalizar chat, `💬` para mensajes del técnico
+- [x] **Chat persistente**: mensajes inbound/outbound se guardan en `conversaciones`, históricos visibles al cargar la página
+- [x] **Chat UI**: burbujas laterales (usuario izq gris, técnico der verde), nombres arriba, scroll automático al último mensaje, spinner al enviar
+- [x] **Fix**: invalidar caché de sesión al iniciar/finalizar chat para que el bot detecte el estado correctamente
+- [x] **Fix**: rutas chat 404 por orden de registro en Express (antes de ticketsRoutes)
+- [x] **Fix**: regex de limpieza de prefijo en mensajes históricos (usar `|` en vez de `[]` para emojis)
+- [x] **Historial humanizado**: `Ale Candia cerró el ticket` en vez de `El agente cerró el ticket`
+- [x] **Quitar # en CTAs**: comandos aceptan números sin `#`, sugerencias actualizadas
+- [x] **Super admin en lista**: `listarAdmins` incluye al super admin aunque no tenga `esAdmin` en DB
+- [x] **Botón Tomar caso**: visible para cualquier admin cuando el ticket no tiene técnico asignado
+- [x] **Socket global**: todas las páginas (dashboard, tickets, bases, sectores, usuarios) se actualizan en tiempo real vía socket
+- [x] **Sidebar sticky**: altura 100vh fija, no se estira con el contenido
+- [x] **Stat cards compactas**: íconos + layout horizontal, gráficos Recharts
+- [x] **DB fresca**: 13 usuarios (1 admin + 12 agentes), 100 tickets con descripciones realistas y largas
+
 ### 2026-08-06 — Deploy Vercel + real-time TicketDetail + repo GitHub
 - [x] **Repo GitHub**: creado `rgcandia/bot-dgcatra`, branch `main`. Token reutilizado de bot-norbridge
 - [x] **Deploy Vercel**: `vercel.json` en `cliente/`, `VITE_API_URL` apuntando a backend, `FRONTEND_URL` en servidor para CORS. Dominio: `bot-dgcatra.vercel.app`
