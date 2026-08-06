@@ -10,6 +10,7 @@ import usuariosRoutes from '../routes/usuarios.routes.js';
 import ticketsRoutes from '../routes/tickets.routes.js';
 import statsRoutes from '../routes/stats.routes.js';
 import settingsRoutes from '../routes/settings.routes.js';
+import chatRoutes from '../routes/chat.routes.js';
 import { config } from '../config/index.js';
 import { initSettings } from '../config/settings.js';
 import '../bot/whatsapp.js';
@@ -40,6 +41,7 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/tickets', chatRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.get('/health/bot', (_req, res) => {

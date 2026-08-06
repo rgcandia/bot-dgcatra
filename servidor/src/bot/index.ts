@@ -5,6 +5,7 @@ import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante, invalidarCach
 import { registrarChatId } from './enviar.js';
 import { User } from '../models/models.js';
 import { logger } from '../config/logger.js';
+import { getIO } from '../socket/server.js';
 
 const colas = new Map<string, Promise<void>>();
 const mensajesProcesados = new Set<string>();
@@ -90,6 +91,21 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
   }
 
   const user = await obtenerUsuario(from);
+
+  // Chat con admin activo → forward mensajes al dashboard
+  const chatAdmin = (user.context as any)?.chatConAdmin;
+  if (chatAdmin?.adminId) {
+    const io = getIO();
+    if (io) {
+      io.emit('chat-mensaje-entrante', {
+        userTelefono: from,
+        mensaje: text || '(multimedia)',
+        timestamp: new Date().toISOString(),
+        adminId: chatAdmin.adminId,
+      });
+    }
+    return;
+  }
 
   const numericoId = parsearBotonNumerico(text, (user.context || {})?._lastButtons);
   const finalButtonId = buttonId || numericoId;
