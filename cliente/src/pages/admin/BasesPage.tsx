@@ -42,7 +42,7 @@ export default function BasesPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Bases</h2>
-          <button className="btn btn-primary" onClick={() => { setEdit({ nombre: '', direccion: '', codigoAcceso: '' }); setShowNew(true); setError(''); }}>
+          <button className="btn btn-primary btn-sm" onClick={() => { setEdit({ nombre: '', direccion: '', codigoAcceso: '' }); setShowNew(true); setError(''); }}>
           Nueva base
         </button>
       </div>
@@ -82,8 +82,8 @@ export default function BasesPage() {
               <input className="input" value={edit?.codigoAcceso || ''} onChange={e => setEdit({ ...edit, codigoAcceso: e.target.value })} />
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>
-              <button className="btn btn-primary" onClick={handleSave}>Guardar</button>
-              <button className="btn btn-ghost" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>
             </div>
           </div>
         </div>

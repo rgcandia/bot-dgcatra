@@ -42,7 +42,7 @@ export default function SectoresPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Sectores</h2>
-        <button className="btn btn-primary" onClick={() => { setEdit({ nombre: '' }); setShowNew(true); setError(''); }}>
+        <button className="btn btn-primary btn-sm" onClick={() => { setEdit({ nombre: '' }); setShowNew(true); setError(''); }}>
           Nuevo sector
         </button>
       </div>
@@ -72,8 +72,8 @@ export default function SectoresPage() {
               <input className="input" value={edit?.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} />
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>
-              <button className="btn btn-primary" onClick={handleSave}>Guardar</button>
-              <button className="btn btn-ghost" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>
             </div>
           </div>
         </div>

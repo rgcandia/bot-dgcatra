@@ -148,8 +148,8 @@ export default function UsuariosPage() {
               </label>
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>
-              <button className="btn btn-primary" onClick={handleSave}>Guardar</button>
-              <button className="btn btn-ghost" onClick={() => setEdit(null)}>Cancelar</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEdit(null)}>Cancelar</button>
             </div>
           </div>
         </div>
