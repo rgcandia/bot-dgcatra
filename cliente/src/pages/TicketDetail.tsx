@@ -133,15 +133,11 @@ export default function TicketDetail() {
 
   useEffect(() => {
     if (conversacion.length > 0) {
-      setChatMsgs(conversacion.map(m => {
-        let texto = m.mensaje;
-        texto = texto.replace(/^(💬|🛡️|📢) \*Técnico .+?:[*]?\s*/, '');
-        return {
-          direccion: m.direccion as 'inbound' | 'outbound',
-          mensaje: texto,
-          createdAt: m.createdAt,
-        };
-      }));
+      setChatMsgs(conversacion.map(m => ({
+        direccion: m.direccion as 'inbound' | 'outbound',
+        mensaje: m.mensaje,
+        createdAt: m.createdAt,
+      })));
     }
   }, [conversacion]);
 
@@ -185,7 +181,8 @@ export default function TicketDetail() {
     setChatEnviando(true);
     try {
       const res = await api.post<{ ok: boolean; mensaje: string; autor: string; timestamp: string }>(`/api/tickets/${id}/chat/enviar`, { mensaje: txt });
-      setChatMsgs(prev => [...prev, { direccion: 'admin', mensaje: txt, createdAt: res.timestamp, autor: res.autor }]);
+      const displayText = `💬 *Técnico ${user?.nombre || 'Admin'}:* ${txt}`;
+      setChatMsgs(prev => [...prev, { direccion: 'admin', mensaje: displayText, createdAt: res.timestamp, autor: res.autor }]);
     } catch (e: any) { setError(e.message); }
     finally { setChatEnviando(false); }
   }
@@ -462,16 +459,6 @@ export default function TicketDetail() {
                     background: m.direccion === 'inbound' ? '#e5e7eb' : m.direccion === 'admin' ? '#dcfce7' : '#dcfce7',
                     color: 'var(--text)', fontSize: '.88rem', lineHeight: 1.5,
                   }}>
-                    {m.direccion === 'admin' && m.autor && (
-                      <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#166534', marginBottom: '.2rem' }}>
-                        Técnico {m.autor}
-                      </div>
-                    )}
-                    {m.direccion === 'inbound' && (
-                      <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#374151', marginBottom: '.2rem' }}>
-                        {ticket?.usuario?.nombreCompleto || 'Usuario'}
-                      </div>
-                    )}
                     <div style={{ whiteSpace: 'pre-wrap' }}>{m.mensaje}</div>
                     <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', marginTop: '.2rem', textAlign: 'right' }}>{hora(m.createdAt)}</div>
                   </div>
