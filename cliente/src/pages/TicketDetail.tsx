@@ -135,8 +135,7 @@ export default function TicketDetail() {
     if (conversacion.length > 0) {
       setChatMsgs(conversacion.map(m => {
         let texto = m.mensaje;
-        // Limpiar prefijos de técnico almacenados en la DB
-        texto = texto.replace(/^[🛡️💬] \*Técnico .+?:[*]?\s*/, '');
+        texto = texto.replace(/^(💬|🛡️|📢) \*Técnico .+?:[*]?\s*/, '');
         return {
           direccion: m.direccion as 'inbound' | 'outbound',
           mensaje: texto,
