@@ -36,7 +36,7 @@ export function useSocket() {
     socket.on('ticket-creado', (ticket: TicketEvent) => {
       playBeep(800);
       setTick(t => t + 1);
-      setNotificacion(`🎫 Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
+      setNotificacion(`Nuevo ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
     });
 
     socket.on('ticket-asignado', (ticket: any) => {
@@ -44,7 +44,7 @@ export function useSocket() {
       if (user?.nombre && ticket.tecnicoAsignado === user.nombre) {
         playBeep(1200);
         setTimeout(() => playBeep(1200), 150);
-        setNotificacion(`📋 Se te asignó el ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
+        setNotificacion(`Se te asignó el ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
       }
     });
 

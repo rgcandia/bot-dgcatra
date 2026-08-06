@@ -8,6 +8,7 @@
 - [x] **Fix crear base**: faltaba campo `direccion` en el formulario del frontend (`BasesPage.tsx`). Backend exigía `nombre`, `direccion`, `codigoAcceso` pero el front solo mandaba `nombre` y `codigoAcceso` → error 400 "Faltan campos requeridos". Agregado input Dirección, columna en tabla, y en POST/PATCH.
 - [x] **Master code 6 dígitos**: input de código maestro en SettingsPage reemplazado por 6 cajitas numéricas individuales (mismo diseño que login). Solo dígitos, autofocus, soporte pegado.
 - [x] **Refinamiento SettingsPage**: input master code compacto (una sola caja + botón Guardar al costado, igual que admin code). Solo dígitos, max 6 caracteres. Fix MassDeleteButton: al cancelar/aceptar, ambos botones vuelven a verse (antes quedaban ocultos). Notificación de éxito ahora es un toast flotante abajo a la derecha (igual que notificaciones de ticket nuevo).
+- [x] **Migración emojis → lucide-react**: eliminados todos los emojis de SettingsPage (`🔐 ✅ ⚠️ ✓`) y useSocket (`🎫 📋`). Reemplazados por `ShieldCheck`, `CheckCircle`, `AlertTriangle`. Layout consistente con el resto del frontend.
 
 ### 2026-07-31 — Restructuración del bot: botones nativos, typing humano, historial
 

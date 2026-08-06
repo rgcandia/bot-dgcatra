@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { ShieldCheck, CheckCircle, AlertTriangle } from 'lucide-react';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
@@ -94,7 +95,10 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: '1.5rem' }}>🔐 Configuración</h2>
+      <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+        <ShieldCheck size={22} />
+        Configuración
+      </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: 520 }}>
 
         <div className="card" style={{ padding: '1.5rem' }}>
@@ -107,12 +111,14 @@ export default function SettingsPage() {
           ) : (
             <div style={{ marginBottom: '.8rem' }}>
               {botConnected ? (
-                <p style={{ color: 'var(--success)', fontWeight: 600, margin: '0 0 .5rem' }}>
-                  ✅ Conectado {botPhone && `(${botPhone})`}
+                <p style={{ color: 'var(--success)', fontWeight: 600, margin: '0 0 .5rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+                  <CheckCircle size={16} />
+                  Conectado {botPhone && <span style={{ fontWeight: 400 }}>({botPhone})</span>}
                 </p>
               ) : (
-                <p style={{ color: 'var(--danger)', fontWeight: 600, margin: '0 0 .5rem' }}>
-                  ⚠️ Desconectado
+                <p style={{ color: 'var(--danger)', fontWeight: 600, margin: '0 0 .5rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+                  <AlertTriangle size={16} />
+                  Desconectado
                 </p>
               )}
             </div>
@@ -190,7 +196,7 @@ export default function SettingsPage() {
                   />
                 ))}
               </div>
-              <button className="btn btn-primary" onClick={saveMaster}>{savedMaster ? '✓' : 'Guardar'}</button>
+              <button className="btn btn-primary" onClick={saveMaster}>{savedMaster ? 'Guardado' : 'Guardar'}</button>
             </div>
           </div>
         </div>
@@ -203,13 +209,16 @@ export default function SettingsPage() {
             </p>
             <div style={{ display: 'flex', gap: '.5rem' }}>
               <input value={adminCode} onChange={e => setAdminCode(e.target.value)} placeholder="admin2024" style={{ flex: 1 }} />
-              <button className="btn btn-primary" onClick={saveAdmin}>{savedAdmin ? '✓' : 'Guardar'}</button>
+              <button className="btn btn-primary" onClick={saveAdmin}>{savedAdmin ? 'Guardado' : 'Guardar'}</button>
             </div>
           </div>
         </div>
 
         <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--danger)' }}>
-          <h3 style={{ margin: '0 0 .5rem', color: 'var(--danger)' }}>⚠️ Zona de peligro</h3>
+          <h3 style={{ margin: '0 0 .5rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+            <AlertTriangle size={18} />
+            Zona de peligro
+          </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', marginBottom: '1rem' }}>
             Estas acciones son irreversibles. Eliminan datos masivamente.
           </p>
@@ -226,9 +235,10 @@ export default function SettingsPage() {
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
           background: '#1A2C3F', color: '#B6FF18', padding: '.8rem 1.2rem',
           borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,.3)', cursor: 'pointer',
-          maxWidth: 360,
+          maxWidth: 360, display: 'flex', alignItems: 'center', gap: '.5rem',
         }}>
-          ✅ {toast}
+          <CheckCircle size={16} />
+          {toast}
         </div>
       )}
     </div>
