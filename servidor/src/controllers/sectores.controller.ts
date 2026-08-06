@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
 import { Sector } from '../models/models.js';
+import { getIO } from '../socket/server.js';
 
 export async function getAll(_req: AuthRequest, res: Response) {
   try {
@@ -28,6 +29,7 @@ export async function create(req: AuthRequest, res: Response) {
     const { nombre } = req.body;
     if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
     const sector = await Sector.create({ nombre });
+    const io = getIO(); if (io) io.emit('datos-actualizados');
     res.status(201).json(sector);
   } catch (e) {
     console.error('Error en create sector:', e);
@@ -41,6 +43,7 @@ export async function update(req: AuthRequest, res: Response) {
     if (!sector) return res.status(404).json({ error: 'No encontrado' });
     const { nombre } = req.body;
     await sector.update({ nombre });
+    const io = getIO(); if (io) io.emit('datos-actualizados');
     res.json(sector);
   } catch (e) {
     console.error('Error en update sector:', e);
@@ -53,6 +56,7 @@ export async function remove(req: AuthRequest, res: Response) {
     const sector = await Sector.findByPk(req.params.id);
     if (!sector) return res.status(404).json({ error: 'No encontrado' });
     await sector.destroy();
+    const io = getIO(); if (io) io.emit('datos-actualizados');
     res.json({ message: 'Eliminado' });
   } catch (e) {
     console.error('Error en remove sector:', e);

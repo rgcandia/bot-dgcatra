@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import { useSocket } from '../../context/useSocket';
 import ConfirmButton from '../../components/ConfirmButton';
 
 interface Sector { id: number; nombre: string; }
@@ -10,8 +11,9 @@ export default function SectoresPage() {
   const [edit, setEdit] = useState<Partial<Sector> | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [error, setError] = useState('');
+  const { tick } = useSocket();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [tick]);
 
   async function load() {
     try { setSectores(await api.get<Sector[]>('/api/sectores')); }

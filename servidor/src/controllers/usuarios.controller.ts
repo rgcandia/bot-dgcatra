@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
 import { User, Base, Sector } from '../models/models.js';
+import { getIO } from '../socket/server.js';
 
 export async function getAll(_req: AuthRequest, res: Response) {
   try {
@@ -50,6 +51,8 @@ export async function update(req: AuthRequest, res: Response) {
     }
 
     await user.update(payload);
+
+    const io = getIO(); if (io) io.emit('datos-actualizados');
 
     const updated = await User.findByPk(req.params.telefono, {
       include: [

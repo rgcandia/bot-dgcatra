@@ -57,6 +57,10 @@ export function useSocket() {
       setTick(t => t + 1);
     });
 
+    socket.on('datos-actualizados', () => {
+      setTick(t => t + 1);
+    });
+
     socketRef.current = socket;
     return () => { socket.disconnect(); };
   }, [user?.token]);
