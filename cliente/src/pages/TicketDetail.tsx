@@ -133,11 +133,16 @@ export default function TicketDetail() {
 
   useEffect(() => {
     if (conversacion.length > 0) {
-      setChatMsgs(conversacion.map(m => ({
-        direccion: m.direccion as 'inbound' | 'outbound',
-        mensaje: m.mensaje,
-        createdAt: m.createdAt,
-      })));
+      setChatMsgs(conversacion.map(m => {
+        let texto = m.mensaje;
+        // Limpiar prefijos de técnico almacenados en la DB
+        texto = texto.replace(/^[🛡️💬] \*Técnico .+?:[*]?\s*/, '');
+        return {
+          direccion: m.direccion as 'inbound' | 'outbound',
+          mensaje: texto,
+          createdAt: m.createdAt,
+        };
+      }));
     }
   }, [conversacion]);
 
