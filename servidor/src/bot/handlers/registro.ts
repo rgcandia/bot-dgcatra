@@ -220,7 +220,7 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
     `🏢 *Base:* ${ctx.baseNombre}\n` +
     `⚙️ *Sector:* ${ctx.sectorNombre}\n` +
     `${rolLine}` +
-    '¿Está todo correcto?',
+    '¿Está todo correcto?\nRespondé *SI* o *NO*.',
     [
       { id: 'conf_si', title: 'Confirmar' },
       { id: 'conf_no', title: 'Cancelar' },
@@ -229,10 +229,12 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
 }
 
 async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
-  if (ctx.buttonId === 'conf_no' || ctx.buttonId === 'cancelar') {
-    return await cancelarRegistro(ctx.telefono, 6);
-  }
-  if (ctx.buttonId !== 'conf_si') return false;
+  const textoLower = ctx.texto.toLowerCase().trim();
+  const confirma = ctx.buttonId === 'conf_si' || ['si', 'sí', 's', 'dale', 'ok', 'confirmo'].some(c => textoLower === c || textoLower.startsWith(c));
+  const cancela = ctx.buttonId === 'conf_no' || ctx.buttonId === 'cancelar' || ['no', 'cancelar', 'n', 'cancelo'].some(c => textoLower === c || textoLower.startsWith(c));
+
+  if (cancela) return await cancelarRegistro(ctx.telefono, 6);
+  if (!confirma) return false;
 
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;

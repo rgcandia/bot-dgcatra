@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { MessageCircle, ShieldCheck, ArrowLeft } from 'lucide-react';
 
@@ -25,6 +26,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchAdmins().then(list => { setAdmins(list); setLoaded(true); });
+    const SOCKET_URL = import.meta.env.VITE_API_URL || '';
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    socket.on('usuario-registrado', () => fetchAdmins().then(setAdmins));
+    socket.on('datos-actualizados', () => fetchAdmins().then(setAdmins));
+    return () => { socket.disconnect(); };
   }, [fetchAdmins]);
 
   useEffect(() => {
@@ -150,24 +156,29 @@ export default function LoginPage() {
               >
                 {sending ? <><span className="spinner spinner-sm" style={{ marginRight: 6 }} />Enviando...</> : 'Enviar código'}
               </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                style={{ width: '100%', fontSize: '.8rem', marginTop: '.5rem' }}
-                onClick={() => { setStep('master'); setCode(['', '', '', '', '', '']); }}
-                disabled={sending}
-              >
-                Usar código maestro
-              </button>
+              <div style={{ textAlign: 'center', marginTop: '.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ fontSize: '.8rem' }}
+                  onClick={() => { setStep('master'); setCode(['', '', '', '', '', '']); }}
+                  disabled={sending}
+                >
+                  Usar código maestro
+                </button>
+              </div>
             </>
           ) : (
             <>
-              <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '.9rem' }}>
+              <p style={{ marginBottom: '.75rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '.9rem' }}>
                 No hay administradores registrados.
               </p>
-              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setStep('master')}>
-                Ingresar código maestro
-              </button>
+              <div style={{ textAlign: 'center' }}>
+                <button className="btn btn-ghost btn-sm" style={{ fontSize: '.8rem' }}
+                  onClick={() => setStep('master')}>
+                  Usar código maestro
+                </button>
+              </div>
             </>
           )}
           {error && <p style={{ color: 'var(--danger)', marginTop: '.75rem', textAlign: 'center', fontSize: '.85rem' }}>{error}</p>}
