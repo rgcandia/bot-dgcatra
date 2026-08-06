@@ -194,7 +194,7 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
   function cancelar() { setStep(0); }
 
   return (
-    <div style={{ display: otherActive ? 'none' : 'block' }}>
+    <div>
       {step === 0 && (
         <button className="btn btn-danger btn-sm" onClick={iniciar}>{label}</button>
       )}
