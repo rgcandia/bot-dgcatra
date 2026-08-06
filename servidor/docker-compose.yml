@@ -16,6 +16,7 @@ services:
         condition: service_healthy
     environment:
       - CHROME_CRASHPAD_HANDLER=/dev/null
+      - TZ=America/Argentina/Buenos_Aires
     shm_size: '2gb'
     dns:
       - 8.8.8.8
