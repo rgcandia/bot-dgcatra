@@ -90,8 +90,20 @@ export async function listarAdmins(_req: Request, res: Response) {
     attributes: ['telefono', 'nombreCompleto'],
     order: [['nombreCompleto', 'ASC']],
   });
-  res.json(admins.map(u => ({
+
+  const lista = admins.map(u => ({
     id: u.telefono,
     nombre: u.nombreCompleto || 'Admin',
-  })));
+  }));
+
+  // Incluir al super admin si no está en la lista
+  if (config.superAdminPhone && !lista.find(a => a.id === config.superAdminPhone)) {
+    const sa = await User.findByPk(config.superAdminPhone, { attributes: ['telefono', 'nombreCompleto'] });
+    lista.unshift({
+      id: config.superAdminPhone,
+      nombre: sa?.nombreCompleto || 'Super Admin',
+    });
+  }
+
+  res.json(lista);
 }

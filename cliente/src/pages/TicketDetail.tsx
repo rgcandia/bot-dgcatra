@@ -195,6 +195,7 @@ export default function TicketDetail() {
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
   const puedeActuar = user?.esAdmin && ticket.estado === 'abierto';
+  const ticketSinTecnico = user?.esAdmin && !ticket.tecnicoAsignado && ticket.estado !== 'cerrado';
   const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso' && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
   const puedeReabrir = user?.superAdmin && ticket.estado === 'cerrado';
   const soyElTecnico = ticket.tecnicoAsignado && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
@@ -302,7 +303,15 @@ export default function TicketDetail() {
           {puedeActuar && (
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={adoptar}><ClipboardCheck size={18} /> Adoptar caso</button>
-              {user?.superAdmin && (
+          {ticketSinTecnico && !puedeActuar && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button className="btn btn-primary" onClick={adoptar}>
+                <ClipboardCheck size={18} /> Tomar caso
+              </button>
+            </div>
+          )}
+
+          {user?.superAdmin && (
                 <>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>o</span>
                   <select value={techSel} onChange={e => setTechSel(e.target.value)} style={{ width: 160 }}>
