@@ -99,12 +99,10 @@ export default function UsuariosPage() {
                   <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
                 </td>
                 <td>
-                  {!u.esAdmin && (
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
-                      onClick={() => { if (confirm(`¿Eliminar a ${u.nombreCompleto || u.telefono}?`)) handleDelete(u.telefono); }}>
-                      <Trash2 size={14} />
-                    </button>
-                  )}
+                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
+                    onClick={() => { if (confirm(`¿Eliminar a ${u.nombreCompleto || u.telefono}?`)) handleDelete(u.telefono); }}>
+                    <Trash2 size={14} />
+                  </button>
                 </td>
             </tr>
           ))}

@@ -71,7 +71,6 @@ export async function remove(req: AuthRequest, res: Response) {
   try {
     const user = await User.findByPk(req.params.telefono);
     if (!user) return res.status(404).json({ error: 'No encontrado' });
-    if (user.esAdmin) return res.status(403).json({ error: 'No se puede eliminar un administrador' });
     await user.destroy();
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.json({ message: 'Usuario eliminado' });
