@@ -207,6 +207,10 @@
 - [ ] **Manejar email duplicado** — upsert en `guardarUsuario()` puede fallar silenciosamente
 - [ ] **Graceful shutdown** — cerrar Puppeteer + DB en SIGTERM
 - [ ] **Endpoint `/health/bot`** — verificar `client.info?.wid`
+- [ ] **Rate limit en `verificar-codigo`** — solo `solicitar-codigo` tiene rate limit (5/5min), pero `verificar-codigo` no tiene protección contra brute-force del OTP de 6 dígitos
+- [ ] **Reconexión automática del bot** — si WhatsApp se desconecta (`disconnected` event), no hay reintento automático ni notificación al dashboard. Depende de escanear QR manualmente desde Configuración
+- [ ] **SQL crudo sin type-safety** — `stats.controller.ts` usa `sequelize.query()` con strings interpolados. Migrar a aggregates de Sequelize o queries parametrizadas
+- [ ] **Context JSON sin validación** — `User.context` es `any`. Typo en `ticketPaso` o `_lastButtons` no lo detecta TypeScript. Agregar schema Zod para los contexts de registro y ticket
 
 ### 🟢 Media prioridad
 - [ ] **Endpoint historial conversaciones** — `GET /api/conversaciones?telefono=X`
