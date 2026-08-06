@@ -41,7 +41,7 @@ export default function UsuariosPage() {
     catch (e: any) { alert(e.message); }
   }
 
-  async function handleSave() { {
+  async function handleSave() {
     if (!edit) return;
     setError('');
     try {
