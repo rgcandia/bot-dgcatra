@@ -204,7 +204,7 @@
 - [ ] **Tests** — 0 unitarios, 0 integración
 - [ ] **Renombrar creds DB** — `norbridge` → `dgcatra` en docker-compose.yml y seed.ts
 - [ ] **Manejar email duplicado** — upsert en `guardarUsuario()` puede fallar silenciosamente
-- [ ] **Graceful shutdown** — cerrar Puppeteer + DB en SIGTERM
+- [x] **Graceful shutdown** — cerrar Puppeteer + DB en SIGTERM
 - [ ] **Endpoint `/health/bot`** — verificar `client.info?.wid`
 - [ ] **Rate limit en `verificar-codigo`** — solo `solicitar-codigo` tiene rate limit (5/5min), pero `verificar-codigo` no tiene protección contra brute-force del OTP de 6 dígitos
 - [ ] **Reconexión automática del bot** — si WhatsApp se desconecta (`disconnected` event), no hay reintento automático ni notificación al dashboard. Depende de escanear QR manualmente desde Configuración
