@@ -249,9 +249,7 @@ export default function TicketDetail() {
           {user?.superAdmin && (
             <div style={{
               display: 'flex', gap: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap',
-              marginBottom: puedeActuar ? '1rem' : '0',
-              paddingBottom: puedeActuar ? '1rem' : '0',
-              borderBottom: puedeActuar ? '1px solid var(--border)' : 'none',
+              marginBottom: '1.2rem',
             }}>
               <div>
                 <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>
@@ -334,9 +332,11 @@ export default function TicketDetail() {
 
           {/* ─── Reabrir ─── */}
           {puedeReabrir && (
-            <button className="btn btn-primary" onClick={() => patch({ estado: 'abierto' })}>
-              <RotateCcw size={18} /> Reabrir ticket
-            </button>
+            <div style={{ marginTop: '.5rem' }}>
+              <button className="btn btn-primary" onClick={() => patch({ estado: 'abierto' })}>
+                <RotateCcw size={18} /> Reabrir ticket
+              </button>
+            </div>
           )}
 
           {/* ─── Dejar caso (técnico sin permiso de cerrar) ─── */}
