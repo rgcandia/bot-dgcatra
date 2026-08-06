@@ -187,12 +187,13 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
       });
       const data = await res.json();
       setMsg(data.ok ? data.mensaje : data.error);
+      if (data.ok) setTimeout(() => setMsg(''), 3000);
     } catch { setMsg('Error de conexión'); }
-    finally { setLoading(false); setStep(0); }
+    finally { setLoading(false); setStep(0); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: null })); }
   }
 
   function iniciar() { setStep(1); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: id })); }
-  function cancelar() { setStep(0); }
+  function cancelar() { setStep(0); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: null })); }
 
   return (
     <div style={{ display: oculto ? 'none' : 'block' }}>
@@ -208,7 +209,7 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
           <button className="btn btn-ghost btn-sm" onClick={cancelar}>No</button>
         </div>
       )}
-      {msg && <p style={{ fontSize: '.85rem', marginTop: '.4rem', color: 'var(--success)' }}>{msg}</p>}
+      {msg && <p style={{ fontSize: '.85rem', marginTop: '.4rem', color: 'var(--success)', fontWeight: 600 }}>✅ {msg}</p>}
     </div>
   );
 }
