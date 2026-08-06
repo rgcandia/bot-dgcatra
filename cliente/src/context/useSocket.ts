@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
 interface TicketEvent { id: number; asunto: string; estado: string; userTelefono: string; }
+interface TicketFull { id: number; asunto: string; estado: string; descripcion: string; ubicacion: string; prioridad: string; tecnicoAsignado: string | null; solucion: string | null; historial: any[]; createdAt: string; usuario: { nombreCompleto: string; telefono: string }; base: { nombre: string }; sector: { nombre: string } | null; }
 
 function playBeep(freq = 800) {
   try {
@@ -25,6 +26,7 @@ export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
   const [notificacion, setNotificacion] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const [ticketActualizado, setTicketActualizado] = useState<TicketFull | null>(null);
 
   useEffect(() => {
     if (!user?.token) return;
@@ -46,8 +48,9 @@ export function useSocket() {
       }
     });
 
-    socket.on('ticket-actualizado', () => {
+    socket.on('ticket-actualizado', (ticket: TicketFull) => {
       setTick(t => t + 1);
+      setTicketActualizado(ticket);
     });
 
     socketRef.current = socket;
@@ -56,5 +59,5 @@ export function useSocket() {
 
   const limpiarNotificacion = useCallback(() => setNotificacion(null), []);
 
-  return { notificacion, limpiarNotificacion, tick };
+  return { notificacion, limpiarNotificacion, tick, ticketActualizado };
 }

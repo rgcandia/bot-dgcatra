@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/useSocket';
 import { ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User, UserX } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -17,6 +18,7 @@ interface Tecnico { id: string; nombre: string; }
 export default function TicketDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { ticketActualizado } = useSocket();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
@@ -33,6 +35,12 @@ export default function TicketDetail() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (ticketActualizado && ticketActualizado.id === Number(id)) {
+      setTicket(ticketActualizado);
+    }
+  }, [ticketActualizado, id]);
 
   async function patch(payload: Record<string, any>) {
     setError('');
