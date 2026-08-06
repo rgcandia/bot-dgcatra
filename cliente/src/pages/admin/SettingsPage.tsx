@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
@@ -17,17 +17,11 @@ export default function SettingsPage() {
   const [askingUnlink, setAskingUnlink] = useState(false);
   const [unlinkError, setUnlinkError] = useState('');
   const [waitingQR, setWaitingQR] = useState(false);
-  const [masterDigits, setMasterDigits] = useState(['', '', '', '', '', '']);
-  const masterRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
-      .then((d) => {
-        setMasterCode(d.masterCode);
-        const digits = (d.masterCode || '').padEnd(6, '').slice(0, 6).split('');
-        setMasterDigits(digits);
-        setAdminCode(d.adminCode);
-      })
+      .then((d) => { setMasterCode(d.masterCode); setAdminCode(d.adminCode); })
       .catch(() => {});
 
     if (!user?.token) return;
@@ -49,33 +43,8 @@ export default function SettingsPage() {
     return () => { socket.disconnect(); };
   }, [user?.token]);
 
-  function handleMasterDigit(index: number, value: string) {
-    const digit = value.replace(/\D/g, '').slice(0, 1);
-    const newDigits = [...masterDigits];
-    newDigits[index] = digit;
-    setMasterDigits(newDigits);
-    if (digit && index < 5) masterRefs.current[index + 1]?.focus();
-  }
-
-  function handleMasterKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === 'Backspace' && !masterDigits[index] && index > 0) {
-      masterRefs.current[index - 1]?.focus();
-    }
-  }
-
-  function handleMasterPaste(e: React.ClipboardEvent) {
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length > 0) {
-      const digits = pasted.padEnd(6, '').split('');
-      setMasterDigits(digits);
-      masterRefs.current[Math.min(pasted.length, 5)]?.focus();
-    }
-  }
-
   async function saveMaster() {
-    const codigo = masterDigits.join('');
-    await api.patch('/api/settings/master-code', { masterCode: codigo });
-    setMasterCode(codigo);
+    await api.patch('/api/settings/master-code', { masterCode });
     setSavedMaster(true);
     setTimeout(() => setSavedMaster(false), 2000);
   }
@@ -84,6 +53,11 @@ export default function SettingsPage() {
     await api.patch('/api/settings/admin-code', { adminCode });
     setSavedAdmin(true);
     setTimeout(() => setSavedAdmin(false), 2000);
+  }
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(''), 4000);
   }
 
   return (
@@ -162,28 +136,17 @@ export default function SettingsPage() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: '.5rem 0 1rem' }}>
               Backup para loguearse al dashboard si no llega el OTP por WhatsApp.
             </p>
-            <div style={{ display: 'flex', gap: '.4rem', marginBottom: '1rem' }}>
-              {masterDigits.map((d, i) => (
-                <input
-                  key={i}
-                  ref={el => masterRefs.current[i] = el}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={e => handleMasterDigit(i, e.target.value)}
-                  onKeyDown={e => handleMasterKeyDown(i, e)}
-                  onPaste={i === 0 ? handleMasterPaste : undefined}
-                  style={{
-                    width: 44, height: 52, textAlign: 'center',
-                    fontSize: '1.3rem', fontWeight: 700,
-                    borderRadius: 8, border: `1.5px solid ${d ? 'var(--primary)' : 'var(--border)'}`,
-                    outline: 'none', background: d ? '#f0f9ff' : 'var(--surface)',
-                  }}
-                />
-              ))}
+            <div style={{ display: 'flex', gap: '.5rem' }}>
+              <input
+                value={masterCode}
+                onChange={e => setMasterCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                style={{ flex: 1 }}
+              />
+              <button className="btn btn-primary" onClick={saveMaster}>{savedMaster ? '✓' : 'Guardar'}</button>
             </div>
-            <button className="btn btn-primary" onClick={saveMaster} style={{ width: '100%' }}>{savedMaster ? '✓ Guardado' : 'Guardar'}</button>
           </div>
         </div>
 
@@ -206,24 +169,34 @@ export default function SettingsPage() {
             Estas acciones son irreversibles. Eliminan datos masivamente.
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" id="del-tickets" />
-            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" id="del-usuarios" />
+            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" id="del-tickets" onDone={showToast} />
+            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" id="del-usuarios" onDone={showToast} />
           </div>
         </div>
 
       </div>
+
+      {toast && (
+        <div onClick={() => setToast('')} style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+          background: '#1A2C3F', color: '#B6FF18', padding: '.8rem 1.2rem',
+          borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,.3)', cursor: 'pointer',
+          maxWidth: 360,
+        }}>
+          ✅ {toast}
+        </div>
+      )}
     </div>
   );
 }
 
-function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: string; id: string }) {
+function MassDeleteButton({ label, endpoint, id, onDone }: { label: string; endpoint: string; id: string; onDone: (msg: string) => void }) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
   const [oculto, setOculto] = useState(false);
 
   useEffect(() => {
-    const handler = (e: CustomEvent) => setOculto(e.detail !== id);
+    const handler = (e: CustomEvent) => setOculto(!!e.detail && e.detail !== id);
     window.addEventListener('mass-delete-active', handler as any);
     return () => window.removeEventListener('mass-delete-active', handler as any);
   }, [id]);
@@ -236,9 +209,8 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
         headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('dgcatra_auth') || '{}').token}` },
       });
       const data = await res.json();
-      setMsg(data.ok ? data.mensaje : data.error);
-      if (data.ok) setTimeout(() => setMsg(''), 3000);
-    } catch { setMsg('Error de conexión'); }
+      if (data.ok) onDone(data.mensaje);
+    } catch { onDone('Error de conexión'); }
     finally { setLoading(false); setStep(0); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: null })); }
   }
 
@@ -259,7 +231,6 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
           <button className="btn btn-ghost btn-sm" onClick={cancelar}>No</button>
         </div>
       )}
-      {msg && <p style={{ fontSize: '.85rem', marginTop: '.4rem', color: 'var(--success)', fontWeight: 600 }}>✅ {msg}</p>}
     </div>
   );
 }
