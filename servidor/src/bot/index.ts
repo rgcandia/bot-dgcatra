@@ -111,7 +111,13 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
     const paso = (await obtenerUsuario(from)).pasoRegistro ?? 0;
     if (paso === 0) {
       const { enviarTexto } = await import('./enviar.js');
-      await enviarTexto(from, '👋 Escribí *hola* para comenzar el registro.');
+      if (text.length > 10) {
+        await enviarTexto(from,
+          '👋 ¡Hola! Parece que tenés un problema y todavía no estás registrado.\n\n' +
+          'Escribí *hola* para registrarte en 1 minuto y crear tu ticket.');
+      } else {
+        await enviarTexto(from, '👋 Escribí *hola* para comenzar el registro.');
+      }
     }
   }
 }

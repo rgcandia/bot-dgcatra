@@ -212,8 +212,8 @@
 - [ ] **Context JSON sin validación** — `User.context` es `any`. Typo en `ticketPaso` o `_lastButtons` no lo detecta TypeScript. Agregar schema Zod para los contexts de registro y ticket
 
 ### 🟢 Media prioridad
-- [ ] **Comandos por palabras sueltas** — que el bot entienda "tickets", "cerrar", "ayuda", "hola" sin formato `/comando`. Analizar juntos antes de implementar
-- [ ] **Mensaje contextual para no registrados** — si un usuario no registrado escribe un problema largo, sugerir registro en vez del mensaje fijo "escribí hola"
+- [x] **Comandos por palabras sueltas** — el bot entiende "cerrar", "reabrir", "ticket", "tickets", "cancelar ticket" sin formato. Si falta el número, lo pide y queda en estado pendiente. "cancelar" aborta el pendiente
+- [x] **Mensaje contextual para no registrados** — si un usuario no registrado escribe un problema largo (>10 chars), el bot sugiere registrarse con empatía en vez del mensaje fijo
 - [ ] **Endpoint historial conversaciones** — `GET /api/conversaciones?telefono=X`
 - [ ] **Gráficos Recharts** en dashboard home (ya instalado, sin usar)
 - [ ] **Logging estructurado** — reemplazar `console.log` por pino/winston
@@ -222,6 +222,12 @@
 ---
 
 ## Historial (completado)
+
+### 2026-08-06 — Comandos sueltos + mensaje contextual no registrados
+- [x] **Comandos sin formato**: `cerrar`, `reabrir`, `ticket`, `cancelar ticket` (funcionan solos o con número)
+- [x] **Estado pendiente**: si se escribe un comando sin número, el bot pide el número y queda a la espera. `cancelar` aborta
+- [x] **No registrados con empatía**: si escriben un problema largo (>10 chars), el bot responde "Parece que tenés un problema... escribí hola para registrarte"
+- [x] **Ayuda actualizada**: lista los comandos sueltos y explica que se puede escribir sin número
 
 ### 2026-08-06 — Mejoras en mensajes del bot y comandos
 - [x] **Ticket creado**: mensaje simplificado (sin repetir descripción/ID/ubicación), CTA de cancelar
