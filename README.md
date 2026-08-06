@@ -259,7 +259,7 @@ El frontend se deploya desde el directorio `cliente/`. El `vercel.json` ya está
 **En el servidor**, agregar el dominio de Vercel a la variable `FRONTEND_URL` (CORS):
 
 ```env
-FRONTEND_URL=https://tu-proyecto.vercel.app
+FRONTEND_URL=https://bot-dgcatra.vercel.app
 ```
 
 ---
