@@ -14,6 +14,7 @@ import { config } from '../config/index.js';
 import { initSettings } from '../config/settings.js';
 import '../bot/whatsapp.js';
 import { sequelize } from '../config/database.js';
+import { logger } from '../config/logger.js';
 
 initSettings();
 
@@ -41,17 +42,23 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/settings', settingsRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/health/bot', (_req, res) => {
+  import('../bot/whatsapp.js').then(({ client }) => {
+    const connected = !!(client as any)?.info?.wid;
+    const phone = connected ? (client as any).info.wid._serialized?.split('@')[0] : null;
+    res.json({ connected, phone });
+  }).catch(() => res.json({ connected: false, phone: null }));
+});
 
 // --- Global Error Handler ---
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('❌ Error no manejado:', err.message);
-  console.error(err.stack);
+  logger.error({ err: err.message }, 'Error no manejado');
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
 const PORT = config.port;
 server.listen(PORT, () => {
-  console.log(`🚪 API escuchando en puerto ${PORT}`);
+  logger.info(`API escuchando en puerto ${PORT}`);
 });
 
 // --- Graceful shutdown ---

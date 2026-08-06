@@ -1,5 +1,6 @@
 import { User } from '../models/models.js';
 import { guardarMensaje } from './historial.js';
+import { TicketContextSchema } from './schemas.js';
 
 const cache = new Map<string, { user: User | null; ts: number }>();
 const CACHE_TTL = 60_000;
@@ -72,6 +73,23 @@ export async function obtenerUsuario(telefono: string): Promise<SessionUser> {
 export async function guardarUsuario(telefono: string, data: Partial<SessionUser>) {
   if (data.context !== undefined) {
     data.context = { ...data.context, _lastActivity: Date.now() };
+    if (typeof (data.context as any).ticketPaso === 'number') {
+      const parsed = TicketContextSchema.safeParse(data.context);
+      if (!parsed.success && process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️ [Zod] Context inválido:', parsed.error.flatten());
+      }
+    }
+  }
+
+  if (data.email) {
+    const existente = await User.findOne({ where: { email: data.email, telefono } });
+    if (!existente) {
+      const otro = await User.findOne({ where: { email: data.email } });
+      if (otro) {
+        console.warn(`⚠️ Email duplicado: ${data.email} ya lo usa ${otro.telefono}, no se asignó a ${telefono}`);
+        delete data.email;
+      }
+    }
   }
 
   const [user] = await User.upsert({

@@ -1,20 +1,21 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
+import { Ticket, User, Base } from '../models/models.js';
 import { sequelize } from '../config/database.js';
+import { Op } from 'sequelize';
 
 export async function resumen(_req: AuthRequest, res: Response) {
   try {
-    const [data] = await sequelize.query(`
-      SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE estado = 'abierto')::int AS abiertos,
-        COUNT(*) FILTER (WHERE estado = 'en_proceso')::int AS en_proceso,
-        COUNT(*) FILTER (WHERE estado = 'cerrado')::int AS cerrados,
-        COUNT(*) FILTER (WHERE prioridad = 'alta')::int AS alta_prioridad,
-        (SELECT COUNT(*) FROM usuarios WHERE activo = true)::int AS usuarios_activos
-      FROM tickets
-    `);
-    res.json(data[0]);
+    const [total, abiertos, enProceso, cerrados, altaPrioridad, usuariosActivos] = await Promise.all([
+      Ticket.count(),
+      Ticket.count({ where: { estado: 'abierto' } }),
+      Ticket.count({ where: { estado: 'en_proceso' } }),
+      Ticket.count({ where: { estado: 'cerrado' } }),
+      Ticket.count({ where: { prioridad: 'alta' } }),
+      User.count({ where: { activo: true } }),
+    ]);
+
+    res.json({ total, abiertos, en_proceso: enProceso, cerrados, alta_prioridad: altaPrioridad, usuarios_activos: usuariosActivos });
   } catch (e) {
     console.error('Error en stats resumen:', e);
     res.status(500).json({ error: 'Error al obtener estadísticas' });
@@ -23,19 +24,21 @@ export async function resumen(_req: AuthRequest, res: Response) {
 
 export async function porBase(_req: AuthRequest, res: Response) {
   try {
-    const data = await sequelize.query(`
-      SELECT
-        b.id, b.nombre,
-        COUNT(t.id)::int AS total,
-        COUNT(*) FILTER (WHERE t.estado = 'abierto')::int AS abiertos,
-        COUNT(*) FILTER (WHERE t.estado = 'en_proceso')::int AS en_proceso,
-        COUNT(*) FILTER (WHERE t.estado = 'cerrado')::int AS cerrados
-      FROM bases b
-      LEFT JOIN tickets t ON t."baseId" = b.id
-      GROUP BY b.id, b.nombre
-      ORDER BY total DESC
-    `);
-    res.json(data[0]);
+    const bases = await Base.findAll({
+      attributes: ['id', 'nombre'],
+      order: [['nombre', 'ASC']],
+    });
+
+    const data = await Promise.all(bases.map(async (b) => {
+      const total = await Ticket.count({ where: { baseId: b.id } });
+      const abiertos = await Ticket.count({ where: { baseId: b.id, estado: 'abierto' } });
+      const enProceso = await Ticket.count({ where: { baseId: b.id, estado: 'en_proceso' } });
+      const cerrados = await Ticket.count({ where: { baseId: b.id, estado: 'cerrado' } });
+
+      return { id: b.id, nombre: b.nombre, total, abiertos, en_proceso: enProceso, cerrados };
+    }));
+
+    res.json(data.sort((a: any, b: any) => b.total - a.total));
   } catch (e) {
     console.error('Error en stats porBase:', e);
     res.status(500).json({ error: 'Error al obtener estadísticas' });
@@ -63,18 +66,30 @@ export async function porMes(_req: AuthRequest, res: Response) {
 
 export async function topUsuarios(_req: AuthRequest, res: Response) {
   try {
-    const data = await sequelize.query(`
-      SELECT
-        u.telefono, u."nombreCompleto",
-        COUNT(t.id)::int AS total_tickets,
-        COUNT(*) FILTER (WHERE t.estado = 'cerrado')::int AS resueltos
-      FROM usuarios u
-      LEFT JOIN tickets t ON t."userTelefono" = u.telefono
-      GROUP BY u.telefono, u."nombreCompleto"
-      ORDER BY total_tickets DESC
-      LIMIT 20
-    `);
-    res.json(data[0]);
+    const usuarios = await User.findAll({
+      attributes: ['telefono', 'nombreCompleto'],
+      include: [{
+        model: Ticket,
+        as: 'misTickets',
+        attributes: ['id', 'estado'],
+      }],
+      limit: 40,
+    });
+
+    const data = usuarios
+      .map(u => {
+        const tickets = (u as any).misTickets || [];
+        return {
+          telefono: u.telefono,
+          nombreCompleto: u.nombreCompleto,
+          total_tickets: tickets.length,
+          resueltos: tickets.filter((t: any) => t.estado === 'cerrado').length,
+        };
+      })
+      .sort((a, b) => b.total_tickets - a.total_tickets)
+      .slice(0, 20);
+
+    res.json(data);
   } catch (e) {
     console.error('Error en stats topUsuarios:', e);
     res.status(500).json({ error: 'Error al obtener estadísticas' });

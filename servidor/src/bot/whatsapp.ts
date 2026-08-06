@@ -4,6 +4,7 @@ import qrcode from 'qrcode-terminal';
 import { procesarMensaje } from './index.js';
 import { setClient } from './enviar.js';
 import { setBotConnected, setBotDisconnected, emitQR } from '../socket/server.js';
+import { logger } from '../config/logger.js';
 
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: 'dgcatra' }),
@@ -35,23 +36,23 @@ async function intentarReconectar() {
 
   while (reintentos < MAX_REINTENTOS) {
     reintentos++;
-    console.log(`🔄 [WhatsApp] Intento de reconexión ${reintentos}/${MAX_REINTENTOS}`);
+    logger.warn(`Intento de reconexión ${reintentos}/${MAX_REINTENTOS}`);
     await new Promise(r => setTimeout(r, ESPERA_REINTENTO));
 
     try {
       await client.initialize();
-      return; // ready event se encargará de resetear
+      return;
     } catch (e: any) {
-      console.warn(`⚠️ [WhatsApp] Reintento ${reintentos} falló:`, e?.message || e);
+      logger.warn({ err: e?.message }, `Reintento ${reintentos} falló`);
     }
   }
 
-  console.error('❌ [WhatsApp] Se agotaron los reintentos. Se necesita escanear QR manualmente.');
+  logger.error('Se agotaron los reintentos. Se necesita escanear QR manualmente.');
   reconectando = false;
 }
 
 client.on('qr', (qr) => {
-  console.log('📱 [WhatsApp] Nuevo QR generado');
+  logger.info('Nuevo QR generado');
   qrcode.generate(qr, { small: true });
   emitQR(qr);
   reconectando = false;
@@ -61,25 +62,24 @@ client.on('ready', () => {
   reintentos = 0;
   reconectando = false;
   const phone = client.info?.wid?._serialized?.split('@')[0] || 'Conectado';
-  console.log(`✅ [WhatsApp] Conectado y listo! (${phone})`);
+  logger.info(`WhatsApp conectado (${phone})`);
   setBotConnected(phone);
 });
 
 client.on('auth_failure', (msg) => {
-  console.error('❌ [WhatsApp] Error de autenticación:', msg);
+  logger.error({ err: msg }, 'Error de autenticación');
   setBotDisconnected();
-  reintentos = MAX_REINTENTOS; // no reintentar, sesión inválida
+  reintentos = MAX_REINTENTOS;
 });
 
 client.on('disconnected', (reason) => {
-  console.log(`⚠️ [WhatsApp] Desconectado: ${reason}`);
+  logger.warn(`WhatsApp desconectado: ${reason}`);
   setBotDisconnected();
   intentarReconectar();
 });
 
 client.on('message', async (msg) => {
   if (msg.from === 'status@broadcast') return;
-  console.log(`📩 De: ${msg.from} · ${msg.body || '(archivo/multimedia)'}`);
   await procesarMensaje(msg);
 });
 

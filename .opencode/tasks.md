@@ -201,22 +201,22 @@
 ### 🔴 Bloqueantes
 
 ### 🟡 Alta prioridad
-- [ ] **Tests** — 0 unitarios, 0 integración
+- [x] **Tests** — 9 tests unitarios con vitest (schemas.test.ts)
 - [x] **Renombrar creds DB** — `norbridge` → `dgcatra` en docker-compose.yml, .env, database.ts. Volumen recreado, seed ejecutado
-- [ ] **Manejar email duplicado** — upsert en `guardarUsuario()` puede fallar silenciosamente
+- [x] **Manejar email duplicado** — upsert en `guardarUsuario()` puede fallar silenciosamente
 - [x] **Graceful shutdown** — cerrar Puppeteer + DB en SIGTERM
-- [ ] **Endpoint `/health/bot`** — verificar `client.info?.wid`
+ - [x] **Endpoint `/health/bot`** — verificar `client.info?.wid`
 - [x] **Rate limit en `verificar-codigo`** — agregado `verifyLimiter` (10 intentos/5min) para proteger contra brute-force del OTP de 6 dígitos
 - [x] **Reconexión automática del bot** — si se desconecta, reintenta `client.initialize()` hasta 5 veces cada 30s. Sesión viva → reconecta sin QR. `auth_failure` o QR nuevo → se detiene, requiere escaneo manual
-- [ ] **SQL crudo sin type-safety** — `stats.controller.ts` usa `sequelize.query()` con strings interpolados. Migrar a aggregates de Sequelize o queries parametrizadas
-- [ ] **Context JSON sin validación** — `User.context` es `any`. Typo en `ticketPaso` o `_lastButtons` no lo detecta TypeScript. Agregar schema Zod para los contexts de registro y ticket
+- [x] **SQL crudo sin type-safety** — `stats.controller.ts` usa `sequelize.query()` con strings interpolados. Migrar a aggregates de Sequelize o queries parametrizadas
+- [x] **Context JSON sin validación** — `User.context` es `any`. Typo en `ticketPaso` o `_lastButtons` no lo detecta TypeScript. Agregar schema Zod para los contexts de registro y ticket
 
 ### 🟢 Media prioridad
 - [x] **Comandos por palabras sueltas** — el bot entiende "cerrar", "reabrir", "ticket", "tickets", "cancelar ticket" sin formato. Si falta el número, lo pide y queda en estado pendiente. "cancelar" aborta el pendiente
 - [x] **Mensaje contextual para no registrados** — si un usuario no registrado escribe un problema largo (>10 chars), el bot sugiere registrarse con empatía en vez del mensaje fijo
 - [ ] **Endpoint historial conversaciones** — `GET /api/conversaciones?telefono=X`
-- [ ] **Gráficos Recharts** en dashboard home (ya instalado, sin usar)
-- [ ] **Logging estructurado** — reemplazar `console.log` por pino/winston
+- [x] **Gráficos Recharts** en dashboard home (ya instalado, sin usar)
+- [x] **Logging estructurado** — reemplazar `console.log` por pino/winston
 - [ ] **Seed con nombres GCBA** — reemplazar "Base Piedras / Base Once"
 
 ---

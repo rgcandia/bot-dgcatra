@@ -4,6 +4,7 @@ import { manejarComandos } from './handlers/comandos.js';
 import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante, invalidarCache } from './session.js';
 import { registrarChatId } from './enviar.js';
 import { User } from '../models/models.js';
+import { logger } from '../config/logger.js';
 
 const colas = new Map<string, Promise<void>>();
 const mensajesProcesados = new Set<string>();
@@ -45,7 +46,7 @@ export async function procesarMensaje(msg: any) {
   const msgId = msg.id?.id || msg.id?._serialized;
   if (msgId) {
     if (mensajesProcesados.has(msgId)) {
-      console.log(`🛡️ [Dedup] Mensaje ${msgId} ignorado (duplicado).`);
+      logger.warn({ msgId }, 'Mensaje duplicado ignorado');
       return;
     }
     mensajesProcesados.add(msgId);
@@ -62,9 +63,7 @@ export async function procesarMensaje(msg: any) {
   const text = msg.body || '';
   const buttonId = extraerButtonId(msg);
 
-  console.log(`📩 De: ${rawFrom}`);
-  console.log(`💬 Mensaje: ${text || '(sin texto)'}`);
-  if (buttonId) console.log(`🔘 Botón: ${buttonId}`);
+  logger.info({ from: rawFrom, body: text || '(sin texto)', buttonId });
 
   registrarMensajeEntrante(from, text);
 
