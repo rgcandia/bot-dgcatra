@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
 import {
@@ -8,7 +9,7 @@ import {
   AlertCircle, Play, ArrowRightCircle, ArrowLeft, MessageCircle,
   Send, X,
 } from 'lucide-react';
-import { api, ApiError } from '../api/client';
+import { api } from '../api/client';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
@@ -98,8 +99,7 @@ export default function TicketDetail() {
   // Chat socket
   useEffect(() => {
     if (!user?.token || !id) return;
-    const socket = new (window as any).io ? (window as any).io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] }) : null;
-    if (!socket) return;
+    const socket: Socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('chat-mensaje-entrante', (data: any) => {

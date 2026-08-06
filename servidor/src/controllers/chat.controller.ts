@@ -26,12 +26,35 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
         adminId: req.user?.telefono || 'admin',
         adminNombre,
         startedAt: Date.now(),
+        lastActivity: Date.now(),
       },
     };
     user.changed('context', true);
     await user.save();
 
-    // Avisar al usuario por WhatsApp
+    // Timeout: si no hay actividad del admin en 5 min, devolver al bot
+    const CHAT_TIMEOUT = 5 * 60 * 1000;
+    setTimeout(async () => {
+      try {
+        const u = await User.findByPk(ticket.userTelefono);
+        if (!u) return;
+        const chat = (u.context as any)?.chatConAdmin;
+        if (chat && chat.adminId && Date.now() - chat.lastActivity > CHAT_TIMEOUT) {
+          u.context = { ...(u.context || {}), chatConAdmin: null };
+          u.changed('context', true);
+          await u.save();
+
+          const { enviarTexto } = await import('../bot/enviar.js');
+          await enviarTexto(ticket.userTelefono,
+            `🛡️ *Ticket #${ticket.id}*\n\nEl técnico finalizó la charla por inactividad. Si necesitás algo más, escribí *ayuda*.`,
+            ticket.id);
+
+          const io = getIO();
+          if (io) io.emit('chat-estado', { ticketId: ticket.id, estado: 'inactivo', admin: null });
+        }
+      } catch {}
+    }, CHAT_TIMEOUT + 5000);
+
     enviarPorWhatsApp(
       ticket.userTelefono,
       `🛡️ *Ticket #${ticket.id}*\n\nUn técnico se pondrá en contacto con vos a la brevedad.`,
@@ -59,6 +82,17 @@ export async function enviarMensaje(req: AuthRequest, res: Response) {
 
     const adminNombre = req.user?.nombre || 'Técnico';
     const texto = `🛡️ *Técnico ${adminNombre}:* ${mensaje}`;
+
+    const user = await User.findByPk(ticket.userTelefono);
+    if (user) {
+      const chat = (user.context as any)?.chatConAdmin;
+      if (chat) {
+        chat.lastActivity = Date.now();
+        user.context = { ...(user.context || {}), chatConAdmin: chat };
+        user.changed('context', true);
+        await user.save();
+      }
+    }
 
     await enviarPorWhatsApp(ticket.userTelefono, texto, ticket.id);
 
