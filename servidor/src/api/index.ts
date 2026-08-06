@@ -40,6 +40,8 @@ app.use('/api/sectores', sectoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/tickets', chatRoutes);
 app.use('/api/tickets', ticketsRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.get('/health/bot', (_req, res) => {
