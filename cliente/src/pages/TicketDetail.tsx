@@ -276,7 +276,7 @@ export default function TicketDetail() {
         <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem 2rem' }}>
           <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '1rem' }}>Acciones de administrador</div>
 
-          {ticketSinTecnico && (
+          {ticketSinTecnico && !puedeActuar && (
             <div style={{ marginBottom: '1rem' }}>
               <button className="btn btn-primary" onClick={adoptar}>
                 <ClipboardCheck size={18} /> Tomar caso
