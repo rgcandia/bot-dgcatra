@@ -3,6 +3,7 @@ import { enviarTexto, enviarBotones, enviarLista } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { config } from '../../config/index.js';
 import { getSetting } from '../../config/settings.js';
+import { getIO } from '../../socket/server.js';
 import type { BtnDef } from '../enviar.js';
 
 interface Ctx {
@@ -248,6 +249,9 @@ async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
     pasoRegistro: 0,
     context: null,
   });
+
+  const io = getIO();
+  if (io) io.emit('usuario-registrado');
 
   return await enviarTexto(ctx.telefono,
     '✅ *¡Registro completo!*\n\n' +

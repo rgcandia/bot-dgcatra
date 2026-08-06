@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { api } from '../../api/client';
+import { useSocket } from '../../context/useSocket';
 
 interface User {
   telefono: string; nombreCompleto: string | null; email: string | null;
@@ -20,8 +21,9 @@ export default function UsuariosPage() {
   const [edit, setEdit] = useState<User | null>(null);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const { tick } = useSocket();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [tick]);
 
   async function load() {
     try {

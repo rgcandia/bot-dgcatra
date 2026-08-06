@@ -53,6 +53,10 @@ export function useSocket() {
       setTicketActualizado(ticket);
     });
 
+    socket.on('usuario-registrado', () => {
+      setTick(t => t + 1);
+    });
+
     socketRef.current = socket;
     return () => { socket.disconnect(); };
   }, [user?.token]);
