@@ -145,7 +145,7 @@ export async function update(req: AuthRequest, res: Response) {
         msg = `📋 *Ticket #${ticket.id}*\n` +
           `✅ ${autor} lo marcó como *resuelto*.`;
         if (solucion) msg += `\n🔧 Solución: ${(solucion as string).substring(0, 200)}`;
-        msg += `\n\nSi necesitás reabrirlo, escribí *reabrir ticket ${ticket.id}*.\n\n${fecha}`;
+        msg += `\n\n${fecha}`;
       } else if (estado === 'abierto') {
         msg = `📋 *Ticket #${ticket.id}*\n` +
           `🔄 ${autor} reabrió el ticket.\n` +

@@ -150,7 +150,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       return await enviarTexto(ctx.telefono,
         `✅ *Ticket #${ticket.id} creado*\n\n` +
         `Un técnico lo va a revisar a la brevedad.\n` +
-        `Si querés cancelarlo, escribí *cancelar ticket ${ticket.id}*.\n\n` +
+        `Si querés cancelarlo, escribí *cerrar ticket ${ticket.id}*.\n\n` +
         'Escribí *ayuda* para ver el menú.',
         ticket.id);
     }

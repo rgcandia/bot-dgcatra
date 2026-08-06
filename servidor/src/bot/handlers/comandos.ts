@@ -9,7 +9,7 @@ interface Ctx {
   buttonId?: string;
 }
 
-type PendingCmd = 'cerrar' | 'reabrir' | 'cancelarTicket' | 'verTicket';
+type PendingCmd = 'cerrar' | 'verTicket';
 
 export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   const texto = ctx.texto.toLowerCase().trim();
@@ -64,40 +64,16 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
     return await mostrarTicket(ctx.telefono, parseInt(ticketConNum[1]));
   }
 
-  // cerrar #N o cerrar ticket #N (con número)
+  // cerrar N o cerrar ticket N
   const cerrarConNum = texto.match(/^(?:\/cerrar|cerrar(?:\s+ticket)?)\s+#?(\d+)$/i);
   if (cerrarConNum) {
     return await cambiarEstado(ctx.telefono, parseInt(cerrarConNum[1]), 'cerrado');
-  }
-
-  // cancelar ticket #N (con número)
-  const cancelarConNum = texto.match(/^cancelar\s+ticket\s+#?(\d+)$/i);
-  if (cancelarConNum) {
-    return await cambiarEstado(ctx.telefono, parseInt(cancelarConNum[1]), 'cerrado');
-  }
-
-  // reabrir #N o reabrir ticket #N (con número)
-  const reabrirConNum = texto.match(/^(?:\/reabrir|reabrir(?:\s+ticket)?)\s+#?(\d+)$/i);
-  if (reabrirConNum) {
-    return await cambiarEstado(ctx.telefono, parseInt(reabrirConNum[1]), 'abierto');
   }
 
   // ── Comandos sin número → pedir número ──
   if (texto === 'cerrar') {
     await guardarUsuario(ctx.telefono, { context: { pendingCommand: 'cerrar' } });
     await enviarTexto(ctx.telefono, '🔒 ¿Qué ticket querés *cerrar*?\nEscribí el número. Para cancelar, escribí *cancelar*.');
-    return true;
-  }
-
-  if (texto === 'reabrir') {
-    await guardarUsuario(ctx.telefono, { context: { pendingCommand: 'reabrir' } });
-    await enviarTexto(ctx.telefono, '🔄 ¿Qué ticket querés *reabrir*?\nEscribí el número. Para cancelar, escribí *cancelar*.');
-    return true;
-  }
-
-  if (texto === 'cancelar ticket') {
-    await guardarUsuario(ctx.telefono, { context: { pendingCommand: 'cancelarTicket' } });
-    await enviarTexto(ctx.telefono, '❌ ¿Qué ticket querés *cancelar*?\nEscribí el número. Para cancelar, escribí *cancelar*.');
     return true;
   }
 
@@ -113,10 +89,7 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
 async function ejecutarPendiente(telefono: string, cmd: PendingCmd, id: number): Promise<boolean> {
   switch (cmd) {
     case 'cerrar':
-    case 'cancelarTicket':
       return await cambiarEstado(telefono, id, 'cerrado');
-    case 'reabrir':
-      return await cambiarEstado(telefono, id, 'abierto');
     case 'verTicket':
       return await mostrarTicket(telefono, id);
   }
@@ -140,11 +113,9 @@ async function mostrarAyuda(telefono: string): Promise<boolean> {
     'ℹ️ *Comandos disponibles*\n\n' +
     '🎫 *Nuevo ticket* — crea un ticket\n' +
     '📋 *tickets* — ve tus últimos tickets\n' +
-    '🔍 *ticket #N* — consulta un ticket\n' +
-    '✅ *cerrar #N* — cerrar un ticket resuelto\n' +
-    '❌ *cancelar ticket #N* — cancelar un ticket\n' +
-    '🔄 *reabrir #N* — reabrir un ticket cerrado\n\n' +
-    'También podés escribir solo *cerrar*, *reabrir* o *ticket*\n' +
+    '🔍 *ticket N* — consulta un ticket\n' +
+    '✅ *cerrar N* — cerrar un ticket resuelto\n\n' +
+    'También podés escribir solo *cerrar* o *ticket*\n' +
     'y te pido el número.\n\n' +
     'Escribí *ayuda* para ver esto de nuevo.');
 }
@@ -192,8 +163,6 @@ async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
   let acciones = '';
   if (ticket.estado === 'en_proceso') {
     acciones = `\n\nSi ya se solucionó, escribí *cerrar ${ticket.id}*`;
-  } else if (ticket.estado === 'cerrado') {
-    acciones = `\n\nSi necesitás reabrirlo, escribí *reabrir ${ticket.id}*`;
   }
 
   const msg = `${estadoIcon} *Ticket #${ticket.id}*\n\n` +
@@ -209,25 +178,19 @@ async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
   return true;
 }
 
-async function cambiarEstado(telefono: string, ticketId: number, estado: 'abierto' | 'cerrado'): Promise<boolean> {
+async function cambiarEstado(telefono: string, ticketId: number, _estado: string): Promise<boolean> {
   const ticket = await Ticket.findOne({ where: { id: ticketId, userTelefono: telefono } });
   if (!ticket) {
     await enviarTexto(telefono, `❌ No encontré el ticket #${ticketId} o no es tuyo.`);
     return true;
   }
 
-  if (ticket.estado === estado) {
-    const labels: Record<string, string> = { abierto: 'abierto', cerrado: 'cerrado' };
-    await enviarTexto(telefono, `⚠️ El ticket #${ticketId} ya está ${labels[estado]}.`);
+  if (ticket.estado === 'cerrado') {
+    await enviarTexto(telefono, `⚠️ El ticket #${ticketId} ya está cerrado.`);
     return true;
   }
 
-  if (estado === 'abierto' && ticket.estado !== 'cerrado') {
-    await enviarTexto(telefono, `⚠️ Solo podés reabrir tickets que están cerrados.\nEl ticket #${ticketId} está *${ticket.estado.replace('_', ' ')}*.`);
-    return true;
-  }
-
-  if (estado === 'cerrado' && ticket.estado === 'abierto') {
+  if (ticket.estado === 'abierto') {
     await enviarTexto(telefono, `⚠️ El ticket #${ticketId} todavía no fue tomado por un técnico.\nEsperá a que esté *en proceso* para cerrarlo.`);
     return true;
   }
@@ -235,13 +198,8 @@ async function cambiarEstado(telefono: string, ticketId: number, estado: 'abiert
   const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
   const user = await User.findByPk(telefono);
   const autor = user?.nombreCompleto || telefono;
-  if (estado === 'cerrado') {
-    historial.push({ accion: `${autor} cerró el ticket`, autor, timestamp: new Date().toISOString() });
-    ticket.estado = 'cerrado';
-  } else {
-    historial.push({ accion: `${autor} reabrió el ticket`, autor, timestamp: new Date().toISOString() });
-    ticket.estado = 'abierto';
-  }
+  historial.push({ accion: `${autor} cerró el ticket`, autor, timestamp: new Date().toISOString() });
+  ticket.estado = 'cerrado';
 
   ticket.historial = historial;
   ticket.changed('historial', true);
@@ -250,13 +208,9 @@ async function cambiarEstado(telefono: string, ticketId: number, estado: 'abiert
   const io = getIO();
   if (io) io.emit('ticket-actualizado', ticket);
 
-  const label = estado === 'cerrado' ? 'cerrado' : 'reabierto';
-  const emoji = estado === 'cerrado' ? '✅' : '🔴';
   await enviarTexto(telefono,
-    `${emoji} *Ticket #${ticketId} ${label}*\n\n` +
-    (estado === 'cerrado'
-      ? `Si necesitás reabrirlo, escribí *reabrir ${ticketId}*.`
-      : `Un técnico va a revisarlo nuevamente.\nEscribí *ayuda* para ver el menú.`),
+    `✅ *Ticket #${ticketId} cerrado*\n\n` +
+    `Escribí *ayuda* para ver el menú.`,
     ticketId);
   return true;
 }
