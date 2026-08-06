@@ -318,6 +318,7 @@ export default function TicketDetail() {
           {puedeActuar && (
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={adoptar}><ClipboardCheck size={18} /> Adoptar caso</button>
+              {user?.superAdmin && (
                 <>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>o</span>
                   <select value={techSel} onChange={e => setTechSel(e.target.value)} style={{ width: 160 }}>
