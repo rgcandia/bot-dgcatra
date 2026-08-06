@@ -246,6 +246,24 @@ Reglas ingress actuales:
 
 ---
 
+## Deploy Frontend (Vercel)
+
+El frontend se deploya desde el directorio `cliente/`. El `vercel.json` ya está incluido en el repo.
+
+**Variables de entorno en Vercel:**
+
+| Variable | Valor |
+|---|---|
+| `VITE_API_URL` | `https://dgcatra.alejndrogcandia.online` |
+
+**En el servidor**, agregar el dominio de Vercel a la variable `FRONTEND_URL` (CORS):
+
+```env
+FRONTEND_URL=https://tu-proyecto.vercel.app
+```
+
+---
+
 ## Inicio rápido (desarrollo local)
 
 ```bash
