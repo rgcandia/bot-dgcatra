@@ -6,14 +6,14 @@
 
 > **Diagnóstico:** Al migrar de Meta API a whatsapp-web.js, el bot quedó con código legacy que simula botones mandando múltiples mensajes con `👉`, no usa la clase `Buttons` nativa de la librería, la simulación de typing está en código muerto (nunca se ejecuta), y el modelo `Conversacion` nunca persiste historial. Además hay 3-5 queries SQL redundantes por cada mensaje recibido.
 
-#### Problemas detectados
-- [ ] **3-5 queries User.findByPk por mensaje** — se busca el mismo usuario repetidas veces en `procesarMensaje`, `manejarUsuarioRegistrado`, `manejarRegistro`, y cada paso del registro
-- [ ] **Button detection rota** — `msg._data?.interactiveAnnouncement?.nativeFlow...` es formato Meta API; los `Buttons` nativos responden en `msg.selectedButtonId`
-- [ ] **enviarBotones spam** — manda 1 texto + N mensajes `👉` separados. Detectable por anti-bot de WhatsApp
-- [ ] **Typing simulado muerto** — `msg.reply` override en `whatsapp.ts:47-54` nunca se invoca; todas las respuestas van por `client.sendMessage`
-- [ ] **Historial de conversación no se persiste** — tabla `conversaciones` y modelo `Conversacion` existen pero nunca se escribe ningún registro
-- [ ] **User.upsert + race condition** — en `procesarMensaje` se hace upsert y luego se lee inmediatamente, posible estado inconsistente
-- [ ] **Sin timeout de sesión** — si el usuario abandona el flujo de registro/ticket, el context queda sucio indefinidamente
+#### Problemas detectados (todos resueltos)
+- [x] **3-5 queries User.findByPk por mensaje** — se busca el mismo usuario repetidas veces en `procesarMensaje`, `manejarUsuarioRegistrado`, `manejarRegistro`, y cada paso del registro
+- [x] **Button detection rota** — `msg._data?.interactiveAnnouncement?.nativeFlow...` es formato Meta API; los `Buttons` nativos responden en `msg.selectedButtonId`
+- [x] **enviarBotones spam** — manda 1 texto + N mensajes `👉` separados. Detectable por anti-bot de WhatsApp
+- [x] **Typing simulado muerto** — `msg.reply` override en `whatsapp.ts:47-54` nunca se invoca; todas las respuestas van por `client.sendMessage`
+- [x] **Historial de conversación no se persiste** — tabla `conversaciones` y modelo `Conversacion` existen pero nunca se escribe ningún registro
+- [x] **User.upsert + race condition** — en `procesarMensaje` se hace upsert y luego se lee inmediatamente, posible estado inconsistente
+- [x] **Sin timeout de sesión** — si el usuario abandona el flujo de registro/ticket, el context queda sucio indefinidamente
 
 #### Plan de restructura
 
@@ -212,6 +212,8 @@
 - [ ] **Context JSON sin validación** — `User.context` es `any`. Typo en `ticketPaso` o `_lastButtons` no lo detecta TypeScript. Agregar schema Zod para los contexts de registro y ticket
 
 ### 🟢 Media prioridad
+- [ ] **Comandos por palabras sueltas** — que el bot entienda "tickets", "cerrar", "ayuda", "hola" sin formato `/comando`. Analizar juntos antes de implementar
+- [ ] **Mensaje contextual para no registrados** — si un usuario no registrado escribe un problema largo, sugerir registro en vez del mensaje fijo "escribí hola"
 - [ ] **Endpoint historial conversaciones** — `GET /api/conversaciones?telefono=X`
 - [ ] **Gráficos Recharts** en dashboard home (ya instalado, sin usar)
 - [ ] **Logging estructurado** — reemplazar `console.log` por pino/winston
