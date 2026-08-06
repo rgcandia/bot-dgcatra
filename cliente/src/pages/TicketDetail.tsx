@@ -307,7 +307,7 @@ export default function TicketDetail() {
           {puedeActuar && (
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={adoptar}><ClipboardCheck size={18} /> Adoptar caso</button>
-          {ticketSinTecnico && !puedeActuar && (
+          {ticketSinTecnico && (
             <div style={{ marginBottom: '1rem' }}>
               <button className="btn btn-primary" onClick={adoptar}>
                 <ClipboardCheck size={18} /> Tomar caso
