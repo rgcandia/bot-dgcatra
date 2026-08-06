@@ -275,7 +275,18 @@ export default function TicketDetail() {
       {user?.esAdmin && (
         <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem 2rem' }}>
           <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '1rem' }}>Acciones de administrador</div>
+
+          {ticketSinTecnico && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button className="btn btn-primary" onClick={adoptar}>
+                <ClipboardCheck size={18} /> Tomar caso
+              </button>
+            </div>
+          )}
+
           {user?.superAdmin && (
+
+(Showing lines 275-290)...
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '1.2rem' }}>
               <div>
                 <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Estado</label>
@@ -307,15 +318,6 @@ export default function TicketDetail() {
           {puedeActuar && (
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={adoptar}><ClipboardCheck size={18} /> Adoptar caso</button>
-          {ticketSinTecnico && (
-            <div style={{ marginBottom: '1rem' }}>
-              <button className="btn btn-primary" onClick={adoptar}>
-                <ClipboardCheck size={18} /> Tomar caso
-              </button>
-            </div>
-          )}
-
-          {user?.superAdmin && (
                 <>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>o</span>
                   <select value={techSel} onChange={e => setTechSel(e.target.value)} style={{ width: 160 }}>
