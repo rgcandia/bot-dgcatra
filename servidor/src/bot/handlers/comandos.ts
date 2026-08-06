@@ -34,10 +34,13 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   }
 
   // Menú
-  if (texto === 'hola' || texto === 'menu' || texto === 'buenas' || texto === 'buenos dias' || texto === 'buenas tardes' ||
-      ctx.buttonId === 'cmd_ticket' || ctx.buttonId === 'cmd_mis_tickets') {
+  if (texto === 'hola' || texto === 'menu' || texto === 'buenas' || texto === 'buenos dias' || texto === 'buenas tardes') {
     return await mostrarMenu(ctx.telefono);
   }
+
+  // Botones numéricos del menú
+  if (ctx.buttonId === 'cmd_ticket') return false; // → inicia creación de ticket
+  if (ctx.buttonId === 'cmd_mis_tickets') return await mostrarTickets(ctx.telefono);
 
   // Ayuda
   if (texto === 'ayuda' || texto === 'help' || texto === 'comandos' || ctx.buttonId === 'cmd_ayuda') {
