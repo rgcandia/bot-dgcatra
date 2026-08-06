@@ -170,9 +170,10 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [oculto, setOculto] = useState(false);
 
   useEffect(() => {
-    const handler = (e: CustomEvent) => { if (e.detail !== id) setStep(0); };
+    const handler = (e: CustomEvent) => setOculto(e.detail !== id);
     window.addEventListener('mass-delete-active', handler as any);
     return () => window.removeEventListener('mass-delete-active', handler as any);
   }, [id]);
@@ -194,7 +195,7 @@ function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: st
   function cancelar() { setStep(0); }
 
   return (
-    <div>
+    <div style={{ display: oculto ? 'none' : 'block' }}>
       {step === 0 && (
         <button className="btn btn-danger btn-sm" onClick={iniciar}>{label}</button>
       )}
