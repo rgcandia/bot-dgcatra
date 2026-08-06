@@ -204,22 +204,20 @@ export default function TicketDetail() {
           </div>
         </div>
 
-        {/* Descripción — solo si difiere del asunto */}
-        {ticket.descripcion !== ticket.asunto && (
-          <div style={{
-            background: 'var(--bg)',
-            borderRadius: 8,
-            padding: '1rem',
-            marginBottom: '1rem',
-          }}>
-            <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.4rem' }}>
-              Descripción del problema
-            </div>
-            <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0, fontSize: '.95rem' }}>
-              {ticket.descripcion}
-            </p>
+        {/* Descripción */}
+        <div style={{
+          background: 'var(--bg)',
+          borderRadius: 8,
+          padding: '1rem',
+          marginBottom: '1rem',
+        }}>
+          <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.4rem' }}>
+            Descripción del problema
           </div>
-        )}
+          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0, fontSize: '.95rem' }}>
+            {ticket.descripcion}
+          </p>
+        </div>
 
         {/* Footer: reportó + técnico */}
         <div style={{ display: 'flex', gap: '2rem', fontSize: '.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
