@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Ticket, AlertTriangle, CheckCircle, Clock, Users, FileText } from 'lucide-react';
 import { api } from '../api/client';
 import StatCard from '../components/StatCard';
 import { useSocket } from '../context/useSocket';
@@ -15,7 +16,6 @@ interface StatsBase {
 }
 
 const PIE_COLORS = ['#dc2626', '#d97706', '#16a34a'];
-const BAR_COLOR = '#1A2C3F';
 
 export default function DashboardHome() {
   const [stats, setStats] = useState<StatsResumen | null>(null);
@@ -47,30 +47,31 @@ export default function DashboardHome() {
 
   return (
     <div>
-      <h2>Panel principal</h2>
-      {updatedAt && <p style={{ color: 'var(--text-secondary)', fontSize: '.8rem' }}>
-        Actualizado {updatedAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-      </p>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2 style={{ margin: 0 }}>Panel principal</h2>
+        {updatedAt && <span style={{ color: 'var(--text-secondary)', fontSize: '.75rem' }}>
+          Actualizado {updatedAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+        </span>}
+      </div>
 
       {stats && (
-        <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-          <StatCard value={stats.total} label="Total tickets" />
-          <StatCard value={stats.abiertos} label="Abiertos" color="var(--danger)" />
-          <StatCard value={stats.en_proceso} label="En proceso" color="var(--warning)" />
-          <StatCard value={stats.cerrados} label="Cerrados" color="var(--success)" />
-          <StatCard value={stats.alta_prioridad} label="Alta prioridad" color="var(--danger)" />
-          <StatCard value={stats.usuarios_activos} label="Usuarios activos" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '.6rem', marginBottom: '1.5rem' }}>
+          <StatCard value={stats.total} label="Total tickets" icon={<FileText size={18} />} />
+          <StatCard value={stats.abiertos} label="Abiertos" color="var(--danger)" icon={<AlertTriangle size={18} />} />
+          <StatCard value={stats.en_proceso} label="En proceso" color="var(--warning)" icon={<Clock size={18} />} />
+          <StatCard value={stats.cerrados} label="Cerrados" color="var(--success)" icon={<CheckCircle size={18} />} />
+          <StatCard value={stats.alta_prioridad} label="Alta prioridad" color="var(--danger)" icon={<Ticket size={18} />} />
+          <StatCard value={stats.usuarios_activos} label="Usuarios activos" icon={<Users size={18} />} />
         </div>
       )}
 
-      {/* Charts */}
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+      {stats && pieData.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div className="card" style={{ padding: '1rem' }}>
-            <h3 style={{ marginBottom: '.8rem', fontSize: '.95rem' }}>Distribución</h3>
-            <ResponsiveContainer width="100%" height={200}>
+            <h3 style={{ margin: '0 0 .5rem', fontSize: '.9rem', fontWeight: 600 }}>Distribución por estado</h3>
+            <ResponsiveContainer width="100%" height={180}>
               <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={({ name, value }) => `${name}: ${value}`}>
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={({ name, value }) => `${name}: ${value}`}>
                   {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                 </Pie>
                 <Tooltip />
@@ -80,14 +81,14 @@ export default function DashboardHome() {
 
           {barData.length > 0 && (
             <div className="card" style={{ padding: '1rem' }}>
-              <h3 style={{ marginBottom: '.8rem', fontSize: '.95rem' }}>Tickets por base</h3>
-              <ResponsiveContainer width="100%" height={200}>
+              <h3 style={{ margin: '0 0 .5rem', fontSize: '.9rem', fontWeight: 600 }}>Tickets por base</h3>
+              <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={barData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" />
-                  <YAxis type="category" dataKey="nombre" width={80} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="nombre" width={80} tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="total" fill={BAR_COLOR} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="total" fill="#1A2C3F" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -96,9 +97,9 @@ export default function DashboardHome() {
       )}
 
       {porBase.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>Por base</h3>
-          <table style={{ marginTop: '.5rem' }}>
+        <div className="card" style={{ padding: '1rem' }}>
+          <h3 style={{ margin: '0 0 .5rem', fontSize: '.9rem', fontWeight: 600 }}>Detalle por base</h3>
+          <table>
             <thead>
               <tr>
                 <th>Base</th>
@@ -111,7 +112,7 @@ export default function DashboardHome() {
             <tbody>
               {porBase.map(b => (
                 <tr key={b.id}>
-                  <td>{b.nombre}</td>
+                  <td style={{ fontWeight: 600 }}>{b.nombre}</td>
                   <td>{b.total}</td>
                   <td><span className="badge badge-abierto">{b.abiertos}</span></td>
                   <td><span className="badge badge-en_proceso">{b.en_proceso}</span></td>

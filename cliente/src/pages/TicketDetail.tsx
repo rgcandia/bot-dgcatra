@@ -122,9 +122,9 @@ export default function TicketDetail() {
   const historial: any[] = Array.isArray(ticket.historial) ? [...ticket.historial].reverse() : [];
 
   return (
-    <div style={{ maxWidth: 780 }}>
+    <div style={{ maxWidth: 780, margin: '0 auto' }}>
       {/* ── Back button ── */}
-      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tickets')} style={{ marginBottom: '1.2rem' }}>
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tickets')} style={{ marginBottom: '1.5rem' }}>
         <ArrowLeft size={16} /> Volver a tickets
       </button>
 
@@ -134,7 +134,7 @@ export default function TicketDetail() {
       )}
 
       {/* ═══════════════════════════ Card: Info ═══════════════════════════ */}
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', padding: '2rem' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '1.2rem' }}>
@@ -168,34 +168,34 @@ export default function TicketDetail() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: '.8rem',
-          padding: '.8rem',
+          gap: '1rem',
+          padding: '1rem',
           background: 'var(--bg)',
           borderRadius: 8,
-          marginBottom: '1rem',
+          marginBottom: '1.5rem',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <Building2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Base</div>
               <div style={{ fontWeight: 600 }}>{ticket.base?.nombre || '—'}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <Settings2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Sector</div>
               <div style={{ fontWeight: 600 }}>{ticket.sector?.nombre || '—'}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <MapPin size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Ubicación</div>
               <div style={{ fontWeight: 600 }}>{ticket.ubicacion}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fecha</div>
@@ -240,8 +240,8 @@ export default function TicketDetail() {
 
       {/* ═══════════════════════════ Card: Acciones ═══════════════════════════ */}
       {user?.esAdmin && (
-        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.2rem 1.5rem' }}>
-          <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '.8rem' }}>
+        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem 2rem' }}>
+          <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '1rem' }}>
             Acciones de administrador
           </div>
 
