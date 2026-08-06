@@ -17,7 +17,6 @@ export default function SettingsPage() {
   const [askingUnlink, setAskingUnlink] = useState(false);
   const [unlinkError, setUnlinkError] = useState('');
   const [waitingQR, setWaitingQR] = useState(false);
-  const [confirming, setConfirming] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
@@ -157,8 +156,8 @@ export default function SettingsPage() {
             Estas acciones son irreversibles. Eliminan datos masivamente.
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" otherActive={confirming === 'usuarios'} onActivate={() => setConfirming('tickets')} />
-            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" otherActive={confirming === 'tickets'} onActivate={() => setConfirming('usuarios')} />
+            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" id="del-tickets" />
+            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" id="del-usuarios" />
           </div>
         </div>
 
@@ -167,10 +166,16 @@ export default function SettingsPage() {
   );
 }
 
-function MassDeleteButton({ label, endpoint, otherActive, onActivate }: { label: string; endpoint: string; otherActive: boolean; onActivate: () => void }) {
+function MassDeleteButton({ label, endpoint, id }: { label: string; endpoint: string; id: string }) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    const handler = (e: CustomEvent) => { if (e.detail !== id) setStep(0); };
+    window.addEventListener('mass-delete-active', handler as any);
+    return () => window.removeEventListener('mass-delete-active', handler as any);
+  }, [id]);
 
   async function ejecutar() {
     setLoading(true);
@@ -181,12 +186,11 @@ function MassDeleteButton({ label, endpoint, otherActive, onActivate }: { label:
       });
       const data = await res.json();
       setMsg(data.ok ? data.mensaje : data.error);
-      setStep(0);
     } catch { setMsg('Error de conexión'); }
-    finally { setLoading(false); }
+    finally { setLoading(false); setStep(0); }
   }
 
-  function iniciar() { setStep(1); onActivate(); }
+  function iniciar() { setStep(1); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: id })); }
   function cancelar() { setStep(0); }
 
   return (
