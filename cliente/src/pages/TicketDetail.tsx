@@ -455,11 +455,11 @@ export default function TicketDetail() {
                     maxWidth: '75%', padding: '.5rem .8rem', borderRadius: 12,
                     borderBottomRightRadius: m.direccion !== 'inbound' ? 4 : undefined,
                     borderBottomLeftRadius: m.direccion === 'inbound' ? 4 : undefined,
-                    background: m.direccion === 'inbound' ? '#e5e7eb' : m.direccion === 'admin' ? '#dbeafe' : '#dcfce7',
+                    background: m.direccion === 'inbound' ? '#e5e7eb' : m.direccion === 'admin' ? '#dcfce7' : '#dcfce7',
                     color: 'var(--text)', fontSize: '.88rem', lineHeight: 1.5,
                   }}>
                     {m.direccion === 'admin' && m.autor && (
-                      <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#1d4ed8', marginBottom: '.2rem' }}>
+                      <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#166534', marginBottom: '.2rem' }}>
                         Técnico {m.autor}
                       </div>
                     )}
