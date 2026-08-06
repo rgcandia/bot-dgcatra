@@ -285,8 +285,6 @@ export default function TicketDetail() {
           )}
 
           {user?.superAdmin && (
-
-(Showing lines 275-290)...
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '1.2rem' }}>
               <div>
                 <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Estado</label>
