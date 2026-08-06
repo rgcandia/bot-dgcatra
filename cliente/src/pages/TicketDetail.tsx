@@ -198,7 +198,7 @@ export default function TicketDetail() {
   if (loading) return <div className="empty"><span className="spinner" /><br />Cargando ticket...</div>;
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
-  const puedeActuar = user?.esAdmin && ticket.estado === 'abierto';
+  const puedeActuar = user?.esAdmin && (ticket.estado === 'abierto' || (!ticket.tecnicoAsignado && ticket.estado !== 'cerrado'));
   const ticketSinTecnico = user?.esAdmin && !ticket.tecnicoAsignado && ticket.estado !== 'cerrado';
   const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso' && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
   const puedeReabrir = user?.superAdmin && ticket.estado === 'cerrado';
@@ -276,14 +276,6 @@ export default function TicketDetail() {
         <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem 2rem' }}>
           <div style={{ fontSize: '.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '1rem' }}>Acciones de administrador</div>
 
-          {ticketSinTecnico && (
-            <div style={{ marginBottom: '1rem' }}>
-              <button className="btn btn-primary" onClick={adoptar}>
-                <ClipboardCheck size={18} /> Adoptar caso
-              </button>
-            </div>
-          )}
-
           {user?.superAdmin && (
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '1.2rem' }}>
               <div>
@@ -313,7 +305,7 @@ export default function TicketDetail() {
               )}
             </div>
           )}
-          {puedeActuar && !ticketSinTecnico && (
+          {puedeActuar && (
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="btn btn-primary" onClick={adoptar}><ClipboardCheck size={18} /> Adoptar caso</button>
               {user?.superAdmin && (
