@@ -1,4 +1,5 @@
 import { Ticket } from '../../models/models.js';
+import { getIO } from '../../socket/server.js';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 
 interface Ctx {
@@ -10,25 +11,41 @@ interface Ctx {
 export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   const texto = ctx.texto.toLowerCase().trim();
 
-  if (texto === 'hola' || texto === 'menu' || texto === 'ayuda' || ctx.buttonId === 'cmd_ayuda') {
+  if (texto === 'hola' || texto === 'menu' || ctx.buttonId === 'cmd_ticket' || ctx.buttonId === 'cmd_mis_tickets') {
     return await mostrarMenu(ctx.telefono);
   }
 
+  if (ctx.buttonId === 'cmd_ayuda') {
+    return await mostrarAyuda(ctx.telefono);
+  }
+
   if (texto === 'cancelar') {
-    await enviarTexto(ctx.telefono, 'Ok. Escribí *ayuda* para ver el menú.');
+    await enviarTexto(ctx.telefono, 'Ok. Escribí *ayuda* para ver los comandos.');
     return true;
   }
 
-  if (texto.startsWith('/ticket') || ctx.buttonId === 'cmd_ticket') {
-    const ticketMatch = texto.match(/^\/ticket\s+#?(\d+)$/i);
-    if (ticketMatch) {
-      return await mostrarTicket(ctx.telefono, parseInt(ticketMatch[1]));
-    }
-    return false;
+  const ticketMatch = texto.match(/^\/ticket\s+#?(\d+)$/i);
+  if (ticketMatch) {
+    return await mostrarTicket(ctx.telefono, parseInt(ticketMatch[1]));
   }
 
-  if (texto === '/mis-tickets' || ctx.buttonId === 'cmd_mis_tickets') {
+  if (texto === '/mis-tickets' || texto === '/tickets') {
     return await mostrarTickets(ctx.telefono);
+  }
+
+  const cerrarMatch = texto.match(/^(?:\/cerrar|cerrar\s+ticket)\s+#?(\d+)$/i);
+  if (cerrarMatch) {
+    return await cambiarEstado(ctx.telefono, parseInt(cerrarMatch[1]), 'cerrado');
+  }
+
+  const cancelarTicketMatch = texto.match(/^cancelar\s+ticket\s+#?(\d+)$/i);
+  if (cancelarTicketMatch) {
+    return await cambiarEstado(ctx.telefono, parseInt(cancelarTicketMatch[1]), 'cerrado');
+  }
+
+  const reabrirMatch = texto.match(/^(?:\/reabrir|reabrir\s+ticket)\s+#?(\d+)$/i);
+  if (reabrirMatch) {
+    return await cambiarEstado(ctx.telefono, parseInt(reabrirMatch[1]), 'abierto');
   }
 
   return false;
@@ -40,11 +57,23 @@ async function mostrarMenu(telefono: string): Promise<boolean> {
     'Escribí el número de la opción:',
     [
       { id: 'cmd_ticket', title: 'Nuevo ticket' },
-      { id: 'cmd_mis_tickets', title: 'Mis tickets' },
+      { id: 'cmd_mis_tickets', title: 'Ver mis tickets' },
       { id: 'cmd_ayuda', title: 'Ayuda' },
       { id: 'cancelar', title: 'Cancelar' },
     ],
   );
+}
+
+async function mostrarAyuda(telefono: string): Promise<boolean> {
+  return await enviarTexto(telefono,
+    'ℹ️ *Comandos disponibles*\n\n' +
+    '🎫 *Nuevo ticket* — crea un ticket\n' +
+    '📋 *Mis tickets* — ve tus últimos tickets\n' +
+    '🔍 */ticket #N* — consulta un ticket\n' +
+    '✅ */cerrar #N* — cerrar un ticket resuelto\n' +
+    '❌ *cancelar ticket #N* — cancelar un ticket\n' +
+    '🔄 */reabrir #N* — reabrir un ticket cerrado\n\n' +
+    'Escribí *ayuda* para ver esto de nuevo.');
 }
 
 async function mostrarTickets(telefono: string): Promise<boolean> {
@@ -65,6 +94,8 @@ async function mostrarTickets(telefono: string): Promise<boolean> {
     msg += `${estado} *Ticket #${t.id}* — ${(t.asunto || '').substring(0, 50)}\n`;
     msg += `   Estado: ${t.estado.replace('_', ' ')} · ${new Date(t.createdAt).toLocaleDateString('es-AR')}\n\n`;
   });
+  msg += 'Para ver el detalle de uno, escribí */ticket #N*\n';
+  msg += 'Para cerrar uno resuelto, escribí */cerrar #N*';
 
   await enviarTexto(telefono, msg);
   return true;
@@ -85,14 +116,72 @@ async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
       ).join('\n')
     : '';
 
+  let acciones = '';
+  if (ticket.estado === 'en_proceso') {
+    acciones = `\n\nSi ya se solucionó, escribí *cerrar ticket #${ticket.id}*`;
+  } else if (ticket.estado === 'cerrado') {
+    acciones = `\n\nSi necesitás reabrirlo, escribí *reabrir ticket #${ticket.id}*`;
+  }
+
   const msg = `${estadoIcon} *Ticket #${ticket.id}*\n\n` +
     `📝 ${ticket.asunto}\n` +
     `📍 ${ticket.ubicacion || 'No especificada'}\n` +
     `⚡ Prioridad: ${ticket.prioridad}\n` +
     `📅 ${new Date(ticket.createdAt).toLocaleDateString('es-AR')}\n` +
     `${ticket.solucion ? `\n🔧 Solución: ${(ticket.solucion as string).substring(0, 200)}` : ''}` +
-    histStr;
+    histStr +
+    acciones;
 
   await enviarTexto(telefono, msg);
+  return true;
+}
+
+async function cambiarEstado(telefono: string, ticketId: number, estado: 'abierto' | 'cerrado'): Promise<boolean> {
+  const ticket = await Ticket.findOne({ where: { id: ticketId, userTelefono: telefono } });
+  if (!ticket) {
+    await enviarTexto(telefono, `❌ No encontré el ticket #${ticketId} o no es tuyo.`);
+    return true;
+  }
+
+  if (ticket.estado === estado) {
+    const labels: Record<string, string> = { abierto: 'abierto', cerrado: 'cerrado' };
+    await enviarTexto(telefono, `⚠️ El ticket #${ticketId} ya está ${labels[estado]}.`);
+    return true;
+  }
+
+  if (estado === 'abierto' && ticket.estado !== 'cerrado') {
+    await enviarTexto(telefono, `⚠️ Solo podés reabrir tickets que están cerrados.\nEl ticket #${ticketId} está *${ticket.estado.replace('_', ' ')}*.`);
+    return true;
+  }
+
+  if (estado === 'cerrado' && ticket.estado === 'abierto') {
+    await enviarTexto(telefono, `⚠️ El ticket #${ticketId} todavía no fue tomado por un técnico.\nEsperá a que esté *en proceso* para cerrarlo.`);
+    return true;
+  }
+
+  const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
+  const autor = 'Agente';
+  if (estado === 'cerrado') {
+    historial.push({ accion: 'El agente cerró el ticket', autor, timestamp: new Date().toISOString() });
+    ticket.estado = 'cerrado';
+  } else {
+    historial.push({ accion: 'El agente reabrió el ticket', autor, timestamp: new Date().toISOString() });
+    ticket.estado = 'abierto';
+  }
+
+  ticket.historial = historial;
+  ticket.changed('historial', true);
+  await ticket.save();
+
+  const io = getIO();
+  if (io) io.emit('ticket-actualizado', ticket);
+
+  const label = estado === 'cerrado' ? '*cerrado* ✅' : '*reabierto* 🔴';
+  await enviarTexto(telefono,
+    `✅ *Ticket #${ticketId} ${label}*\n\n` +
+    (estado === 'cerrado'
+      ? `Si necesitás reabrirlo, escribí *reabrir ticket #${ticketId}*.`
+      : `Un técnico va a revisarlo nuevamente.\nEscribí *ayuda* para ver el menú.`),
+    ticketId);
   return true;
 }

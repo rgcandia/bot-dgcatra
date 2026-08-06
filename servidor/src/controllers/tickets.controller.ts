@@ -100,7 +100,7 @@ export async function update(req: AuthRequest, res: Response) {
     // Solo superAdmin puede cambiar prioridad y reasignar
     if (prioridad && prioridad !== ticket.prioridad) {
       if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede cambiar la prioridad' });
-      historial.push({ accion: `Prioridad: "${ticket.prioridad}" → "${prioridad}"`, autor, timestamp: new Date().toISOString() });
+      historial.push({ accion: `${autor} cambió la prioridad a ${prioridad}`, autor, timestamp: new Date().toISOString() });
       ticket.prioridad = prioridad;
     }
     if (tecnicoAsignado !== undefined && tecnicoAsignado !== ticket.tecnicoAsignado) {
@@ -109,7 +109,7 @@ export async function update(req: AuthRequest, res: Response) {
       if (!isSuperAdmin && !esAutoAsignacion && !esDesasignarse) {
         return res.status(403).json({ error: 'Solo el administrador puede reasignar el técnico' });
       }
-      historial.push({ accion: tecnicoAsignado ? `Técnico asignado: ${tecnicoAsignado}` : 'Técnico desvinculado', autor, timestamp: new Date().toISOString() });
+      historial.push({ accion: tecnicoAsignado ? `${autor} se asignó como técnico` : `${autor} se desvinculó del ticket`, autor, timestamp: new Date().toISOString() });
       ticket.tecnicoAsignado = tecnicoAsignado || null;
     }
 
@@ -119,12 +119,13 @@ export async function update(req: AuthRequest, res: Response) {
       if (estado === 'abierto' && ticket.estado !== 'abierto' && !esDesasignarYReabrir) {
         if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reabrir un ticket' });
       }
-      historial.push({ accion: `Estado: "${ticket.estado}" → "${estado}"`, autor, timestamp: new Date().toISOString() });
+      const estadoLabel = estado === 'cerrado' ? 'cerró' : estado === 'en_proceso' ? 'puso en proceso' : 'reabrió';
+      historial.push({ accion: `${autor} ${estadoLabel} el ticket`, autor, timestamp: new Date().toISOString() });
       ticket.estado = estado;
     }
 
     if (solucion !== undefined && solucion !== ticket.solucion) {
-      historial.push({ accion: `Solución registrada`, autor, timestamp: new Date().toISOString() });
+      historial.push({ accion: `${autor} registró la solución`, autor, timestamp: new Date().toISOString() });
       ticket.solucion = solucion || null;
     }
 
@@ -133,12 +134,24 @@ export async function update(req: AuthRequest, res: Response) {
     await ticket.save();
 
     if (estado && estado !== oldEstado && ticket.userTelefono) {
-      const labels: Record<string, string> = { en_proceso: 'en proceso ⚙️', cerrado: 'cerrado ✅', abierto: 'reabierto 🔴' };
-      const label = labels[estado] || estado;
-      let msg = `📋 *Ticket #${ticket.id}*\nTu ticket fue: *${label}*`;
-      if (estado === 'cerrado' && solucion) msg += `\n\n🔧 Solución: ${(solucion as string).substring(0, 200)}`;
-      if (estado === 'en_proceso') msg += '\n\nUn técnico ya está trabajando en tu caso.';
-      notificarAgente(ticket.userTelefono, msg);
+      const fecha = new Date().toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      let msg = '';
+      if (estado === 'en_proceso') {
+        msg = `📋 *Ticket #${ticket.id}*\n` +
+          `🔧 ${autor} ya está trabajando en tu caso.\n` +
+          `Si ya se solucionó, escribí *cerrar ticket #${ticket.id}*.\n\n` +
+          `${fecha}`;
+      } else if (estado === 'cerrado') {
+        msg = `📋 *Ticket #${ticket.id}*\n` +
+          `✅ ${autor} lo marcó como *resuelto*.`;
+        if (solucion) msg += `\n🔧 Solución: ${(solucion as string).substring(0, 200)}`;
+        msg += `\n\nSi necesitás reabrirlo, escribí *reabrir ticket #${ticket.id}*.\n\n${fecha}`;
+      } else if (estado === 'abierto') {
+        msg = `📋 *Ticket #${ticket.id}*\n` +
+          `🔄 ${autor} reabrió el ticket.\n` +
+          `Un técnico va a revisarlo nuevamente.\n\n${fecha}`;
+      }
+      if (msg) notificarAgente(ticket.userTelefono, msg);
     }
 
     const updated = await Ticket.findByPk(ticket.id, {

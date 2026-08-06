@@ -221,6 +221,17 @@
 
 ## Historial (completado)
 
+### 2026-08-06 — Mejoras en mensajes del bot y comandos
+- [x] **Ticket creado**: mensaje simplificado (sin repetir descripción/ID/ubicación), CTA de cancelar
+- [x] **Multimedia**: si el usuario envía foto/audio/video, responde que no puede procesarlo y pide texto
+- [x] **Cancelar registro contextual**: mensaje distinto según paso (código base vs nombre)
+- [x] **Comandos nuevos**: `/cerrar #N`, `cancelar ticket #N`, `/reabrir #N` desde WhatsApp por el agente
+- [x] **Ayuda**: ahora muestra lista de comandos en vez de loop al menú
+- [x] **`/mis-tickets`**: instrucción al final para ver detalle (`/ticket #N`) y para cerrar (`/cerrar #N`)
+- [x] **`/ticket #N`**: muestra CTA contextual (cerrar si está en proceso, reabrir si está cerrado)
+- [x] **Notificaciones humanizadas**: incluyen nombre del técnico, fecha, y CTA contextual (cerrar/reabrir)
+- [x] **Historial humanizado**: `Ale Candia cerró el ticket` en vez de `Estado: "en_proceso" → "cerrado"`
+
 ### 2026-08-06 — UX refinements + conversación WhatsApp
 - [x] **Descripción oculta si `asunto === descripcion`**: evita duplicar info cuando el usuario escribe poco
 - [x] **Labels**: `Reportado por: Ale Candia` / `Técnico asignado: Ale Candia` (verbos antes del nombre)

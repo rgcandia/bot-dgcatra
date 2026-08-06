@@ -81,6 +81,15 @@ async function marcarComoLeido(msg: any, chatId: string) {
 async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom: string, buttonId?: string) {
   await marcarComoLeido(msg, rawFrom);
 
+  if (msg.hasMedia) {
+    const { enviarTexto } = await import('./enviar.js');
+    await enviarTexto(from,
+      '📎 Recibí tu archivo, pero todavía no puedo procesar imágenes ni audios.\n\n' +
+      'Describí el problema por texto así puedo crear el ticket.\n\n' +
+      'Escribí *cancelar* para salir.');
+    return;
+  }
+
   const user = await obtenerUsuario(from);
 
   const numericoId = parsearBotonNumerico(text, (user.context || {})?._lastButtons);

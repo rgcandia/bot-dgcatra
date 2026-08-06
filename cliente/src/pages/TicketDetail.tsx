@@ -40,17 +40,17 @@ function formatFecha(iso: string) {
 }
 
 function iconoHistorial(accion: string) {
-  if (accion.startsWith('Ticket creado')) return <Play size={12} />;
-  if (accion.startsWith('Estado:')) return <ArrowRightCircle size={12} />;
-  if (accion.startsWith('Técnico')) return <UserCheck size={12} />;
-  if (accion.startsWith('Prioridad')) return <AlertCircle size={12} />;
-  if (accion.startsWith('Solución')) return <CircleCheckBig size={12} />;
+  if (accion.includes('creó el ticket')) return <Play size={12} />;
+  if (accion.includes('puso en proceso') || accion.includes('cerró') || accion.includes('reabrió')) return <ArrowRightCircle size={12} />;
+  if (accion.includes('asignó') || accion.includes('desvinculó')) return <UserCheck size={12} />;
+  if (accion.includes('prioridad')) return <AlertCircle size={12} />;
+  if (accion.includes('solución')) return <CircleCheckBig size={12} />;
   return <Clock size={12} />;
 }
 
 function colorHistorial(accion: string) {
-  if (accion.includes('→ "cerrado"') || accion.startsWith('Solución')) return 'var(--success)';
-  if (accion.includes('→ "en_proceso"') || accion.includes('→ "abierto"')) return '#6366f1';
+  if (accion.includes('cerró') || accion.includes('solución')) return 'var(--success)';
+  if (accion.includes('reabrió') || accion.includes('puso en proceso') || accion.includes('asignó') || accion.includes('desvinculó')) return '#6366f1';
   return 'var(--text-secondary)';
 }
 

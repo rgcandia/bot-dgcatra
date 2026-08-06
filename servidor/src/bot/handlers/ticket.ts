@@ -116,7 +116,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         estado: 'abierto',
         prioridad: 'media',
         historial: [{
-          accion: `Ticket creado por: ${user.nombreCompleto || ctx.telefono}`,
+          accion: `${user.nombreCompleto || ctx.telefono} creó el ticket`,
           autor: user.nombreCompleto || ctx.telefono,
           timestamp: new Date().toISOString(),
         }],
@@ -148,11 +148,9 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       }
 
       return await enviarTexto(ctx.telefono,
-        `✅ *Ticket #${ticket.id} creado con éxito*\n\n` +
-        `Tu ticket fue registrado y un técnico lo va a tomar a la brevedad.\n\n` +
-        `📝 ${asunto}\n` +
-        `📍 ${ctxData.ubicacion}\n` +
-        `🆔 #${ticket.id}\n\n` +
+        `✅ *Ticket #${ticket.id} creado*\n\n` +
+        `Un técnico lo va a revisar a la brevedad.\n` +
+        `Si querés cancelarlo, escribí *cancelar ticket #${ticket.id}*.\n\n` +
         'Escribí *ayuda* para ver el menú.',
         ticket.id);
     }

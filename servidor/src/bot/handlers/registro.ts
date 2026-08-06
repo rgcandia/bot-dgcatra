@@ -26,13 +26,19 @@ export async function manejarRegistro(ctx: Ctx): Promise<boolean> {
   }
 }
 
-async function cancelarRegistro(telefono: string) {
+async function cancelarRegistro(telefono: string, paso: number) {
   await guardarUsuario(telefono, {
     pasoRegistro: 0,
     context: null,
     registroCompleto: false,
   });
-  return await enviarTexto(telefono, 'Registro cancelado. Cuando quieras intentarlo, escribí *hola*.');
+
+  const mensajes: Record<number, string> = {
+    1: 'Registro cancelado. Si conseguís el código de tu base, escribí *hola*.',
+    4: 'Registro cancelado. Ya casi estabas! Escribí *hola* para retomar.',
+  };
+  const msg = mensajes[paso] || 'Registro cancelado. Cuando quieras intentarlo, escribí *hola*.';
+  return await enviarTexto(telefono, msg);
 }
 
 async function paso0(ctx: Ctx): Promise<boolean> {
@@ -53,7 +59,7 @@ async function paso0(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
-  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono);
+  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono, 1);
 
   if (!ctx.texto || ctx.texto.length < 3) {
     await enviarTexto(ctx.telefono, '❌ El código debe tener al menos 3 caracteres. Intentá de nuevo:');
@@ -101,7 +107,7 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso2Sector(ctx: Ctx): Promise<boolean> {
-  if (ctx.buttonId === 'cancelar') return await cancelarRegistro(ctx.telefono);
+  if (ctx.buttonId === 'cancelar') return await cancelarRegistro(ctx.telefono, 2);
 
   const match = ctx.buttonId?.match(/^sector_(\d+)$/);
   if (!match) {
@@ -188,7 +194,7 @@ async function paso3CodigoAdmin(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso4Nombre(ctx: Ctx): Promise<boolean> {
-  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono);
+  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono, 4);
 
   if (!ctx.texto || ctx.texto.length < 3) {
     await enviarTexto(ctx.telefono, '❌ El nombre debe tener al menos 3 caracteres. Escribilo de nuevo:');
@@ -223,7 +229,7 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
 
 async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
   if (ctx.buttonId === 'conf_no' || ctx.buttonId === 'cancelar') {
-    return await cancelarRegistro(ctx.telefono);
+    return await cancelarRegistro(ctx.telefono, 6);
   }
   if (ctx.buttonId !== 'conf_si') return false;
 
