@@ -6,6 +6,7 @@ import { registrarChatId } from './enviar.js';
 import { User } from '../models/models.js';
 import { logger } from '../config/logger.js';
 import { getIO } from '../socket/server.js';
+import { Ticket } from '../models/models.js';
 
 const colas = new Map<string, Promise<void>>();
 const mensajesProcesados = new Set<string>();
@@ -95,6 +96,13 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
   // Chat con admin activo → forward mensajes al dashboard
   const chatAdmin = (user.context as any)?.chatConAdmin;
   if (chatAdmin?.adminId) {
+    // Guardar en DB
+    const ticketReciente = await Ticket.findOne({
+      where: { userTelefono: from },
+      order: [['createdAt', 'DESC']],
+    }).catch(() => null);
+    registrarMensajeEntrante(from, text || '', ticketReciente?.id);
+
     const io = getIO();
     if (io) {
       io.emit('chat-mensaje-entrante', {
