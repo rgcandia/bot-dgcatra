@@ -256,6 +256,20 @@
 - [x] **Historial timeline**: línea vertical, dots con color por tipo de acción, íconos semánticos
 - [x] **Solución**: layout consistente con el resto de cards
 
+### 2026-08-06 — Login redesign, comandos simplificados, blacklist, fixes
+- [x] **Login OTP 6 inputs**: inputs individuales con auto-avance, pegado automático, timer visual "Expira en 4:32"
+- [x] **Login UX**: botón "Enviar código" en vez de auto-enviar, "Reenviar" si expira, transiciones animadas entre pasos
+- [x] **Login con socket**: lista de admins se actualiza en vivo al registrarse un usuario
+- [x] **Botón código maestro**: unificado (mismo estilo con/sin admins), centrado, tamaño proporcionado
+- [x] **Confirmación registro**: acepta SI/NO como texto además de botones numéricos
+- [x] **Comandos simplificados**: eliminado `reabrir`, unificado `cancelar ticket` → `cerrar`. Solo 4 comandos
+- [x] **Blacklist usuarios**: al eliminar un usuario del panel, se agrega a blacklist en memoria. Próximo request → 401 → deslogueo automático → debe registrarse de nuevo
+- [x] **Eliminar usuarios**: botón 🗑️ visible para todos los usuarios (incluyendo admins), backend sin restricción
+- [x] **Adoptar caso**: visible cuando ticket no tiene técnico (abierto o en_proceso), sin duplicar botones
+- [x] **Timezone**: Docker configurado a `America/Argentina/Buenos_Aires`
+- [x] **Menú fix**: `cmd_ticket` inicia creación en vez de mostrar el menú de nuevo (loop infinito arreglado)
+- [x] **Zona de peligro**: eliminar tickets/usuarios masivamente con doble confirmación, botones se ocultan entre sí
+
 ### 2026-08-06 — Chat takeover, UX fixes, socket global, DB seed fresco
 - [x] **Chat takeover**: tabs Historial/Conversación, admin toma control, pausa bot, envía mensajes por WhatsApp con prefijo `💬 Técnico Nombre:`, usuario responde y aparece en dashboard en tiempo real vía socket
 - [x] **Timeout chat**: 5 min sin actividad del admin → devuelve al bot automáticamente, notifica al usuario
