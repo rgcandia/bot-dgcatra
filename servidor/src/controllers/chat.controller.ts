@@ -46,7 +46,7 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
 
           const { enviarTexto } = await import('../bot/enviar.js');
           await enviarTexto(ticket.userTelefono,
-            `🛡️ *Ticket #${ticket.id}*\n\nEl técnico finalizó la charla por inactividad. Si necesitás algo más, escribí *ayuda*.`,
+            `📢 *Ticket #${ticket.id}*\n\nEl técnico finalizó la charla por inactividad. Si necesitás algo más, escribí *ayuda*.`,
             ticket.id);
 
           const io = getIO();
@@ -57,7 +57,7 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
 
     enviarPorWhatsApp(
       ticket.userTelefono,
-      `🛡️ *Ticket #${ticket.id}*\n\nUn técnico se pondrá en contacto con vos a la brevedad.`,
+      `📢 *Ticket #${ticket.id}*\n\nUn técnico se pondrá en contacto con vos a la brevedad.`,
       ticket.id,
     );
 
@@ -81,7 +81,7 @@ export async function enviarMensaje(req: AuthRequest, res: Response) {
     if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
 
     const adminNombre = req.user?.nombre || 'Técnico';
-    const texto = `🛡️ *Técnico ${adminNombre}:* ${mensaje}`;
+    const texto = `💬 *Técnico ${adminNombre}:* ${mensaje}`;
 
     const user = await User.findByPk(ticket.userTelefono);
     if (user) {
@@ -122,7 +122,7 @@ export async function finalizarChat(req: AuthRequest, res: Response) {
     // Avisar al usuario
     enviarPorWhatsApp(
       ticket.userTelefono,
-      `🛡️ *Ticket #${ticket.id}*\n\nEl técnico finalizó la charla. Si necesitás algo más, escribí *ayuda*.`,
+      `📢 *Ticket #${ticket.id}*\n\nEl técnico finalizó la charla. Si necesitás algo más, escribí *ayuda*.`,
       ticket.id,
     );
 

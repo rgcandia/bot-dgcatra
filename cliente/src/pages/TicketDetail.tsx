@@ -74,8 +74,9 @@ export default function TicketDetail() {
   const [chatInput, setChatInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<any>(null);
+  const [chatEnviando, setChatEnviando] = useState(false);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs, tab]);
 
   useEffect(() => {
     Promise.all([
@@ -174,13 +175,15 @@ export default function TicketDetail() {
   }
 
   async function enviarChatMsg() {
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || chatEnviando) return;
     const txt = chatInput.trim();
     setChatInput('');
+    setChatEnviando(true);
     try {
       const res = await api.post<{ ok: boolean; mensaje: string; autor: string; timestamp: string }>(`/api/tickets/${id}/chat/enviar`, { mensaje: txt });
       setChatMsgs(prev => [...prev, { direccion: 'admin', mensaje: txt, createdAt: res.timestamp, autor: res.autor }]);
     } catch (e: any) { setError(e.message); }
+    finally { setChatEnviando(false); }
   }
 
   async function devolverControl() {
@@ -478,8 +481,8 @@ export default function TicketDetail() {
                   placeholder="Escribí un mensaje..."
                   style={{ flex: 1, padding: '.5rem .7rem', borderRadius: 8, border: '1px solid var(--border)', fontSize: '.9rem' }}
                 />
-                <button className="btn btn-primary btn-sm" onClick={enviarChatMsg} disabled={!chatInput.trim()}>
-                  <Send size={16} />
+                <button className="btn btn-primary btn-sm" onClick={enviarChatMsg} disabled={!chatInput.trim() || chatEnviando}>
+                  {chatEnviando ? <span className="spinner spinner-sm" /> : <Send size={16} />}
                 </button>
               </div>
             )}
