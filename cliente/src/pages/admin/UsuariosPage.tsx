@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Trash2 } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
 
@@ -36,7 +36,12 @@ export default function UsuariosPage() {
     } finally { setLoading(false); }
   }
 
-  async function handleSave() {
+  async function handleDelete(telefono: string) {
+    try { await api.delete(`/api/usuarios/${telefono}`); await load(); }
+    catch (e: any) { alert(e.message); }
+  }
+
+  async function handleSave() { {
     if (!edit) return;
     setError('');
     try {
@@ -76,7 +81,7 @@ export default function UsuariosPage() {
       </div>
 
       <table>
-        <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th></tr></thead>
+        <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th><th></th></tr></thead>
         <tbody>
           {filtrados.map(u => (
             <tr key={u.telefono}>
@@ -90,9 +95,17 @@ export default function UsuariosPage() {
                 </span>
               </td>
               <td>{u.esAdmin ? 'true' : 'false'}</td>
-              <td>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
-              </td>
+                <td>
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
+                </td>
+                <td>
+                  {!u.esAdmin && (
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
+                      onClick={() => { if (confirm(`¿Eliminar a ${u.nombreCompleto || u.telefono}?`)) handleDelete(u.telefono); }}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </td>
             </tr>
           ))}
         </tbody>

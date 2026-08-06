@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [askingUnlink, setAskingUnlink] = useState(false);
   const [unlinkError, setUnlinkError] = useState('');
   const [waitingQR, setWaitingQR] = useState(false);
+  const [confirming, setConfirming] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
@@ -156,8 +157,8 @@ export default function SettingsPage() {
             Estas acciones son irreversibles. Eliminan datos masivamente.
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" />
-            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" />
+            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" otherActive={confirming === 'usuarios'} onActivate={() => setConfirming('tickets')} />
+            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" otherActive={confirming === 'tickets'} onActivate={() => setConfirming('usuarios')} />
           </div>
         </div>
 
@@ -166,7 +167,7 @@ export default function SettingsPage() {
   );
 }
 
-function MassDeleteButton({ label, endpoint }: { label: string; endpoint: string }) {
+function MassDeleteButton({ label, endpoint, otherActive, onActivate }: { label: string; endpoint: string; otherActive: boolean; onActivate: () => void }) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
@@ -185,10 +186,13 @@ function MassDeleteButton({ label, endpoint }: { label: string; endpoint: string
     finally { setLoading(false); }
   }
 
+  function iniciar() { setStep(1); onActivate(); }
+  function cancelar() { setStep(0); }
+
   return (
-    <div>
+    <div style={{ display: otherActive ? 'none' : 'block' }}>
       {step === 0 && (
-        <button className="btn btn-danger btn-sm" onClick={() => setStep(1)}>{label}</button>
+        <button className="btn btn-danger btn-sm" onClick={iniciar}>{label}</button>
       )}
       {step === 1 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
@@ -196,7 +200,7 @@ function MassDeleteButton({ label, endpoint }: { label: string; endpoint: string
           <button className="btn btn-danger btn-sm" onClick={ejecutar} disabled={loading}>
             {loading ? <span className="spinner spinner-sm" /> : 'Sí, eliminar'}
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setStep(0)}>No</button>
+          <button className="btn btn-ghost btn-sm" onClick={cancelar}>No</button>
         </div>
       )}
       {msg && <p style={{ fontSize: '.85rem', marginTop: '.4rem', color: 'var(--success)' }}>{msg}</p>}
