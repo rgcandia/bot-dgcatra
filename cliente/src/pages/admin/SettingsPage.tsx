@@ -150,7 +150,56 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--danger)' }}>
+          <h3 style={{ margin: '0 0 .5rem', color: 'var(--danger)' }}>⚠️ Zona de peligro</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', marginBottom: '1rem' }}>
+            Estas acciones son irreversibles. Eliminan datos masivamente.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" />
+            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" />
+          </div>
+        </div>
+
       </div>
+    </div>
+  );
+}
+
+function MassDeleteButton({ label, endpoint }: { label: string; endpoint: string }) {
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function ejecutar() {
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}${endpoint}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('dgcatra_auth') || '{}').token}` },
+      });
+      const data = await res.json();
+      setMsg(data.ok ? data.mensaje : data.error);
+      setStep(0);
+    } catch { setMsg('Error de conexión'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div>
+      {step === 0 && (
+        <button className="btn btn-danger btn-sm" onClick={() => setStep(1)}>{label}</button>
+      )}
+      {step === 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+          <span style={{ fontSize: '.85rem', color: 'var(--danger)' }}>¿Confirmás?</span>
+          <button className="btn btn-danger btn-sm" onClick={ejecutar} disabled={loading}>
+            {loading ? <span className="spinner spinner-sm" /> : 'Sí, eliminar'}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setStep(0)}>No</button>
+        </div>
+      )}
+      {msg && <p style={{ fontSize: '.85rem', marginTop: '.4rem', color: 'var(--success)' }}>{msg}</p>}
     </div>
   );
 }
