@@ -98,8 +98,8 @@ export async function topUsuarios(_req: AuthRequest, res: Response) {
 
 export async function eliminarTickets(_req: AuthRequest, res: Response) {
   try {
-    await Conversacion.destroy({ where: {}, truncate: true });
-    await Ticket.destroy({ where: {}, truncate: true });
+    await Conversacion.destroy({ where: {} });
+    await Ticket.destroy({ where: {} });
     res.json({ ok: true, mensaje: 'Todos los tickets eliminados' });
   } catch (e) {
     console.error('Error en eliminarTickets:', e);
