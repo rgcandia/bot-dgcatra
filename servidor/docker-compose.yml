@@ -31,13 +31,13 @@ services:
     container_name: dgcatra-db
     restart: always
     environment:
-      POSTGRES_USER: norbridge
-      POSTGRES_PASSWORD: norbridge
-      POSTGRES_DB: norbridge
+      POSTGRES_USER: dgcatra
+      POSTGRES_PASSWORD: dgcatra
+      POSTGRES_DB: dgcatra
     volumes:
       - dgcatra-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U norbridge -d norbridge"]
+      test: ["CMD-SHELL", "pg_isready -U dgcatra -d dgcatra"]
       interval: 5s
       timeout: 5s
       retries: 5

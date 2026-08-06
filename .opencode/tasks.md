@@ -202,12 +202,12 @@
 
 ### 🟡 Alta prioridad
 - [ ] **Tests** — 0 unitarios, 0 integración
-- [ ] **Renombrar creds DB** — `norbridge` → `dgcatra` en docker-compose.yml y seed.ts
+- [x] **Renombrar creds DB** — `norbridge` → `dgcatra` en docker-compose.yml, .env, database.ts. Volumen recreado, seed ejecutado
 - [ ] **Manejar email duplicado** — upsert en `guardarUsuario()` puede fallar silenciosamente
 - [x] **Graceful shutdown** — cerrar Puppeteer + DB en SIGTERM
 - [ ] **Endpoint `/health/bot`** — verificar `client.info?.wid`
-- [ ] **Rate limit en `verificar-codigo`** — solo `solicitar-codigo` tiene rate limit (5/5min), pero `verificar-codigo` no tiene protección contra brute-force del OTP de 6 dígitos
-- [ ] **Reconexión automática del bot** — si WhatsApp se desconecta (`disconnected` event), no hay reintento automático ni notificación al dashboard. Depende de escanear QR manualmente desde Configuración
+- [x] **Rate limit en `verificar-codigo`** — agregado `verifyLimiter` (10 intentos/5min) para proteger contra brute-force del OTP de 6 dígitos
+- [x] **Reconexión automática del bot** — si se desconecta, reintenta `client.initialize()` hasta 5 veces cada 30s. Sesión viva → reconecta sin QR. `auth_failure` o QR nuevo → se detiene, requiere escaneo manual
 - [ ] **SQL crudo sin type-safety** — `stats.controller.ts` usa `sequelize.query()` con strings interpolados. Migrar a aggregates de Sequelize o queries parametrizadas
 - [ ] **Context JSON sin validación** — `User.context` es `any`. Typo en `ticketPaso` o `_lastButtons` no lo detecta TypeScript. Agregar schema Zod para los contexts de registro y ticket
 
