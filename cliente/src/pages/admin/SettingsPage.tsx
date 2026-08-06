@@ -196,7 +196,7 @@ export default function SettingsPage() {
                   />
                 ))}
               </div>
-              <button className="btn btn-primary" onClick={saveMaster}>{savedMaster ? 'Guardado' : 'Guardar'}</button>
+              <button className="btn btn-primary btn-sm" onClick={saveMaster}>{savedMaster ? 'Guardado' : 'Guardar'}</button>
             </div>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
             </p>
             <div style={{ display: 'flex', gap: '.5rem' }}>
               <input value={adminCode} onChange={e => setAdminCode(e.target.value)} placeholder="admin2024" style={{ flex: 1 }} />
-              <button className="btn btn-primary" onClick={saveAdmin}>{savedAdmin ? 'Guardado' : 'Guardar'}</button>
+              <button className="btn btn-primary btn-sm" onClick={saveAdmin}>{savedAdmin ? 'Guardado' : 'Guardar'}</button>
             </div>
           </div>
         </div>
