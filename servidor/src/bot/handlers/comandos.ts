@@ -1,4 +1,4 @@
-import { Ticket } from '../../models/models.js';
+import { Ticket, User } from '../../models/models.js';
 import { getIO } from '../../socket/server.js';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
@@ -164,8 +164,8 @@ async function mostrarTickets(telefono: string): Promise<boolean> {
     msg += `${estado} *Ticket #${t.id}* — ${(t.asunto || '').substring(0, 50)}\n`;
     msg += `   Estado: ${t.estado.replace('_', ' ')} · ${new Date(t.createdAt).toLocaleDateString('es-AR')}\n\n`;
   });
-  msg += 'Para ver uno, escribí *ticket #N*\n';
-  msg += 'Para cerrar uno, escribí *cerrar #N*';
+  msg += 'Para ver uno, escribí *ticket N*\n';
+  msg += 'Para cerrar uno, escribí *cerrar N*';
 
   await enviarTexto(telefono, msg);
   return true;
@@ -188,9 +188,9 @@ async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
 
   let acciones = '';
   if (ticket.estado === 'en_proceso') {
-    acciones = `\n\nSi ya se solucionó, escribí *cerrar #${ticket.id}*`;
+    acciones = `\n\nSi ya se solucionó, escribí *cerrar ${ticket.id}*`;
   } else if (ticket.estado === 'cerrado') {
-    acciones = `\n\nSi necesitás reabrirlo, escribí *reabrir #${ticket.id}*`;
+    acciones = `\n\nSi necesitás reabrirlo, escribí *reabrir ${ticket.id}*`;
   }
 
   const msg = `${estadoIcon} *Ticket #${ticket.id}*\n\n` +
@@ -230,12 +230,13 @@ async function cambiarEstado(telefono: string, ticketId: number, estado: 'abiert
   }
 
   const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
-  const autor = 'Agente';
+  const user = await User.findByPk(telefono);
+  const autor = user?.nombreCompleto || telefono;
   if (estado === 'cerrado') {
-    historial.push({ accion: 'El agente cerró el ticket', autor, timestamp: new Date().toISOString() });
+    historial.push({ accion: `${autor} cerró el ticket`, autor, timestamp: new Date().toISOString() });
     ticket.estado = 'cerrado';
   } else {
-    historial.push({ accion: 'El agente reabrió el ticket', autor, timestamp: new Date().toISOString() });
+    historial.push({ accion: `${autor} reabrió el ticket`, autor, timestamp: new Date().toISOString() });
     ticket.estado = 'abierto';
   }
 
@@ -246,11 +247,12 @@ async function cambiarEstado(telefono: string, ticketId: number, estado: 'abiert
   const io = getIO();
   if (io) io.emit('ticket-actualizado', ticket);
 
-  const label = estado === 'cerrado' ? '*cerrado* ✅' : '*reabierto* 🔴';
+  const label = estado === 'cerrado' ? 'cerrado' : 'reabierto';
+  const emoji = estado === 'cerrado' ? '✅' : '🔴';
   await enviarTexto(telefono,
-    `✅ *Ticket #${ticketId} ${label}*\n\n` +
+    `${emoji} *Ticket #${ticketId} ${label}*\n\n` +
     (estado === 'cerrado'
-      ? `Si necesitás reabrirlo, escribí *reabrir #${ticketId}*.`
+      ? `Si necesitás reabrirlo, escribí *reabrir ${ticketId}*.`
       : `Un técnico va a revisarlo nuevamente.\nEscribí *ayuda* para ver el menú.`),
     ticketId);
   return true;
