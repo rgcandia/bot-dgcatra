@@ -18,6 +18,10 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { ...opts, headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    if (res.status === 401 && body.error?.includes('eliminado')) {
+      localStorage.removeItem('dgcatra_auth');
+      window.location.href = '/login';
+    }
     throw new ApiError(res.status, body.error || `Error ${res.status}`);
   }
   return res.json();

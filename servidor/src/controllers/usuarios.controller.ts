@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth.js';
+import { AuthRequest, banearUsuario } from '../middleware/auth.js';
 import { User, Base, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 
@@ -71,7 +71,9 @@ export async function remove(req: AuthRequest, res: Response) {
   try {
     const user = await User.findByPk(req.params.telefono);
     if (!user) return res.status(404).json({ error: 'No encontrado' });
+    const telefono = user.telefono;
     await user.destroy();
+    banearUsuario(telefono);
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.json({ message: 'Usuario eliminado' });
   } catch (e) {

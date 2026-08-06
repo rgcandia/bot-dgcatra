@@ -1,6 +1,7 @@
 import { Server as SocketServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
+import { usuariosBaneados } from '../middleware/auth.js';
 
 let io: SocketServer | null = null;
 let botStatus: { connected: boolean; phone?: string } = { connected: false };
@@ -36,6 +37,7 @@ export function initSocket(httpServer: any) {
     if (!token) return next(new Error('Token requerido'));
     try {
       const decoded = jwt.verify(token as string, config.jwt.secret) as { telefono: string; esAdmin: boolean };
+      if (usuariosBaneados.has(decoded.telefono)) return next(new Error('Usuario eliminado'));
       (socket as any).user = decoded;
       next();
     } catch {
