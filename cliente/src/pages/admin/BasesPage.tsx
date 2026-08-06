@@ -3,7 +3,7 @@ import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
 import ConfirmButton from '../../components/ConfirmButton';
 
-interface Base { id: number; nombre: string; codigoAcceso: string; }
+interface Base { id: number; nombre: string; direccion: string; codigoAcceso: string; }
 
 export default function BasesPage() {
   const [bases, setBases] = useState<Base[]>([]);
@@ -24,8 +24,8 @@ export default function BasesPage() {
     if (!edit) return;
     setError('');
     try {
-      if (edit.id) await api.patch(`/api/bases/${edit.id}`, { nombre: edit.nombre, codigoAcceso: edit.codigoAcceso });
-      else await api.post('/api/bases', { nombre: edit.nombre, codigoAcceso: edit.codigoAcceso });
+      if (edit.id) await api.patch(`/api/bases/${edit.id}`, { nombre: edit.nombre, direccion: edit.direccion, codigoAcceso: edit.codigoAcceso });
+      else await api.post('/api/bases', { nombre: edit.nombre, direccion: edit.direccion, codigoAcceso: edit.codigoAcceso });
       setEdit(null); setShowNew(false);
       await load();
     } catch (e: any) { setError(e.message); }
@@ -42,17 +42,18 @@ export default function BasesPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Bases</h2>
-        <button className="btn btn-primary" onClick={() => { setEdit({ nombre: '', codigoAcceso: '' }); setShowNew(true); setError(''); }}>
+          <button className="btn btn-primary" onClick={() => { setEdit({ nombre: '', direccion: '', codigoAcceso: '' }); setShowNew(true); setError(''); }}>
           Nueva base
         </button>
       </div>
 
       <table>
-        <thead><tr><th>Nombre</th><th>Código</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Dirección</th><th>Código</th><th></th></tr></thead>
         <tbody>
           {bases.map(b => (
             <tr key={b.id}>
               <td>{b.nombre}</td>
+              <td>{b.direccion}</td>
               <td><code>{b.codigoAcceso}</code></td>
               <td>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(b); setError(''); }}>Editar</button>
@@ -71,6 +72,10 @@ export default function BasesPage() {
             <div className="form-group">
               <label>Nombre</label>
               <input className="input" value={edit?.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Dirección</label>
+              <input className="input" value={edit?.direccion || ''} onChange={e => setEdit({ ...edit, direccion: e.target.value })} />
             </div>
             <div className="form-group">
               <label>Código de acceso</label>

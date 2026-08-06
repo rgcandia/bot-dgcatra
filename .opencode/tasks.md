@@ -2,6 +2,12 @@
 
 ## En progreso
 
+### 2026-08-06 — Reset DB + fix crear base + master code 6 dígitos
+
+- [x] **Limpieza total de BD**: script `reset-db.ts` (`sync({ force: true })` sin seed). Dropea y recrea todas las tablas vacías con IDs desde 1. Volumen PostgreSQL borrado y recreado.
+- [x] **Fix crear base**: faltaba campo `direccion` en el formulario del frontend (`BasesPage.tsx`). Backend exigía `nombre`, `direccion`, `codigoAcceso` pero el front solo mandaba `nombre` y `codigoAcceso` → error 400 "Faltan campos requeridos". Agregado input Dirección, columna en tabla, y en POST/PATCH.
+- [x] **Master code 6 dígitos**: input de código maestro en SettingsPage reemplazado por 6 cajitas numéricas individuales (mismo diseño que login). Solo dígitos, autofocus, soporte pegado.
+
 ### 2026-07-31 — Restructuración del bot: botones nativos, typing humano, historial
 
 > **Diagnóstico:** Al migrar de Meta API a whatsapp-web.js, el bot quedó con código legacy que simula botones mandando múltiples mensajes con `👉`, no usa la clase `Buttons` nativa de la librería, la simulación de typing está en código muerto (nunca se ejecuta), y el modelo `Conversacion` nunca persiste historial. Además hay 3-5 queries SQL redundantes por cada mensaje recibido.
