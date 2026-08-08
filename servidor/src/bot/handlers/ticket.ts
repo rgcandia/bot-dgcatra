@@ -5,6 +5,7 @@ import { getIO } from '../../socket/server.js';
 import { Op } from 'sequelize';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
+import { generarTituloTicket } from '../groq.js';
 
 interface Ctx {
   telefono: string;
@@ -99,7 +100,14 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       }
 
       const ctxData = (user.context || {}) as any;
-      const asunto = (ctxData.descripcion || '').substring(0, 100);
+      const descripcion = ctxData.descripcion || '';
+      const ubicacion = ctxData.ubicacion || '';
+
+      let asunto = descripcion.substring(0, 60);
+      try {
+        const t = await generarTituloTicket(descripcion, ubicacion);
+        if (t) asunto = t;
+      } catch {}
 
       if (!user.baseId) {
         await enviarTexto(ctx.telefono, '❌ Error: no tenés una base asignada. Contactá a sistemas.');

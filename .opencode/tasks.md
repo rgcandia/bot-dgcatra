@@ -18,6 +18,14 @@
 - [x] **Frontend `UsuariosPage.tsx`**: ídem.
 - [x] **Rebuild cliente**: `npm run build` en `cliente/` para deploy Vercel.
 
+### 2026-08-08 — IA: títulos de tickets con Groq (llama-3.1-8b-instant)
+
+- [x] **`servidor/src/bot/groq.ts`**: función `generarTituloTicket(descripcion, ubicacion)`. Llama a la API de Groq con `llama-3.1-8b-instant` (modelo más rápido/barato). System prompt pide título de máx 60 chars, sustantivos concretos. Timeout de 4s con `AbortController`. Si no hay `GROQ_API_KEY` configurada, lanza error → fallback.
+- [x] **`ticket.ts` CONFIRMAR**: reemplazado `asunto = descripcion.substring(0, 60)` por try/catch que llama a `generarTituloTicket()`. Si la IA falla (timeout, error, token inválido), se usa el fallback de 60 chars. El ticket se crea siempre.
+- [x] **`.env.example`**: agregada variable `GROQ_API_KEY` (opcional).
+- [x] **`.env`**: configurada key de Groq para producción.
+- [x] **Build + deploy**: compilado y redeployado en Docker. Test manual: "No me anda el mouse" → IA genera "Mouse no responde" (56 tokens).
+
 ### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
 
 - [x] **Endpoint `POST /api/settings/limpiar-db`**: `TRUNCATE RESTART IDENTITY CASCADE` en conversaciones, tickets, usuarios, bases, sectores. IDs reinician desde 1. Código maestro sobrevive (en memoria).
