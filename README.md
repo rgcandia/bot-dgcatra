@@ -94,6 +94,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
 | **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes recientes con `ticketId`. |
 | **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
+| **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos automáticamente al crear tickets. Si la IA falla, usa las primeras 60 letras de la descripción. |
 
 ---
 
@@ -117,6 +118,8 @@ bot-dgcatra/
 │   ├── src/
 │   │   ├── api/index.ts       # Express entry point + Socket.IO
 │   │   ├── bot/               # Lógica del bot WhatsApp (whatsapp-web.js)
+│   │   │   ├── groq.ts         # IA: genera títulos de tickets (Groq API)
+│   │   │   ├── handlers/       # Flujos: registro, ticket, comandos
 │   │   ├── config/            # Config centralizado + DB connection
 │   │   ├── controllers/       # CRUD auth, bases, sectores, usuarios, tickets, stats
 │   │   ├── middleware/         # JWT + admin middleware
@@ -151,7 +154,7 @@ bot-dgcatra/
 2. Bot pide **descripción del problema**
 3. Bot pide **ubicación** (dónde ocurre)
 4. Bot muestra resumen y pide confirmación
-5. Confirmado → se crea el ticket con estado `abierto` y el usuario recibe el número de ticket
+5. Confirmado → la IA (Groq) genera un título corto y se crea el ticket con estado `abierto`. Si la IA falla, usa las primeras 60 letras de la descripción como título.
 6. El ticket aparece en el dashboard para que un admin lo adopte
 
 ## Tipos de usuarios
@@ -184,6 +187,7 @@ Dashboard React con autenticación JWT.
 | `JWT_SECRET` | Secreto para firmar JWT (24h expiración) |
 | `SUPER_ADMIN_PHONE` | Teléfono del super admin (se registra automáticamente como admin) |
 | `MASTER_CODE` | Código maestro de acceso al dashboard (backup si no llega el OTP) |
+| `GROQ_API_KEY` | API key de Groq para generar títulos de tickets con IA (opcional, sin ella usa fallback) |
 
 ---
 
