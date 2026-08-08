@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth.js';
-import { Sector } from '../models/models.js';
+import { sequelize, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 
 export async function getAll(_req: AuthRequest, res: Response) {
@@ -26,39 +26,41 @@ export async function getById(req: AuthRequest, res: Response) {
 }
 
 export async function create(req: AuthRequest, res: Response) {
+  const t = await sequelize.transaction();
   try {
     const { nombre, isAdmin, codigoAdmin } = req.body;
-    if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
-    if (isAdmin && !codigoAdmin) return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' });
-    if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true } });
-    const sector = await Sector.create({ nombre, isAdmin: !!isAdmin, codigoAdmin: codigoAdmin || null });
+    if (!nombre) { await t.rollback(); return res.status(400).json({ error: 'Nombre requerido' }); }
+    if (isAdmin && !codigoAdmin) { await t.rollback(); return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' }); }
+    if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true }, transaction: t });
+    const sector = await Sector.create({ nombre, isAdmin: !!isAdmin, codigoAdmin: codigoAdmin || null }, { transaction: t });
+    await t.commit();
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.status(201).json(sector);
   } catch (e) {
+    await t.rollback();
     console.error('Error en create sector:', e);
     res.status(500).json({ error: 'Error al crear sector' });
   }
 }
 
 export async function update(req: AuthRequest, res: Response) {
+  const t = await sequelize.transaction();
   try {
-    const sector = await Sector.findByPk(req.params.id);
-    if (!sector) return res.status(404).json({ error: 'No encontrado' });
+    const sector = await Sector.findByPk(req.params.id, { transaction: t });
+    if (!sector) { await t.rollback(); return res.status(404).json({ error: 'No encontrado' }); }
     const { nombre, isAdmin, codigoAdmin } = req.body;
-    const updates: Record<string, unknown> = {};
-    if (nombre !== undefined) updates.nombre = nombre;
-    if (isAdmin !== undefined) {
-      updates.isAdmin = isAdmin;
-      if (isAdmin && !codigoAdmin && !sector.codigoAdmin) {
-        return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' });
-      }
-      if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true, id: { [Op.ne]: sector.id } } });
+    if (isAdmin && !codigoAdmin && !sector.codigoAdmin) {
+      await t.rollback();
+      return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' });
     }
-    if (codigoAdmin !== undefined) updates.codigoAdmin = codigoAdmin || null;
-    await sector.update(updates);
+    if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true, id: { [Op.ne]: sector.id } }, transaction: t });
+    await sector.update({ nombre, isAdmin, codigoAdmin: codigoAdmin ?? null }, { transaction: t });
+    await t.commit();
+    const reloaded = await Sector.findByPk(sector.id);
     const io = getIO(); if (io) io.emit('datos-actualizados');
-    res.json(sector);
+    res.json(reloaded);
   } catch (e) {
+    await t.rollback();
     console.error('Error en update sector:', e);
     res.status(500).json({ error: 'Error al actualizar sector' });
   }
