@@ -198,12 +198,9 @@ export default function SettingsPage() {
             Zona de peligro
           </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', marginBottom: '1rem' }}>
-            Estas acciones son irreversibles. Eliminan datos masivamente.
+            Esta acción es irreversible. Elimina todos los tickets, conversaciones, usuarios, bases y sectores. Reinicia los IDs. El código maestro se conserva.
           </p>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <MassDeleteButton label="Eliminar todos los tickets" endpoint="/api/stats/tickets" id="del-tickets" onDone={showToast} />
-            <MassDeleteButton label="Eliminar usuarios no-admin" endpoint="/api/stats/usuarios" id="del-usuarios" onDone={showToast} />
-          </div>
+          <DangerButton label="Limpiar base de datos" endpoint="/api/settings/limpiar-db" id="limpiar-db" onDone={showToast} />
         </div>
 
       </div>
@@ -223,45 +220,31 @@ export default function SettingsPage() {
   );
 }
 
-function MassDeleteButton({ label, endpoint, id, onDone }: { label: string; endpoint: string; id: string; onDone: (msg: string) => void }) {
+function DangerButton({ label, endpoint, id, onDone }: { label: string; endpoint: string; id: string; onDone: (msg: string) => void }) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [oculto, setOculto] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: CustomEvent) => setOculto(!!e.detail && e.detail !== id);
-    window.addEventListener('mass-delete-active', handler as any);
-    return () => window.removeEventListener('mass-delete-active', handler as any);
-  }, [id]);
 
   async function ejecutar() {
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}${endpoint}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('dgcatra_auth') || '{}').token}` },
-      });
-      const data = await res.json();
-      if (data.ok) onDone(data.mensaje);
-    } catch { onDone('Error de conexión'); }
-    finally { setLoading(false); setStep(0); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: null })); }
+      const res = await api.post<{ ok: boolean; mensaje: string }>(endpoint);
+      if (res.ok) onDone(res.mensaje);
+    } catch (e: any) { onDone(e.message || 'Error de conexión'); }
+    finally { setLoading(false); setStep(0); }
   }
 
-  function iniciar() { setStep(1); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: id })); }
-  function cancelar() { setStep(0); window.dispatchEvent(new CustomEvent('mass-delete-active', { detail: null })); }
-
   return (
-    <div style={{ display: oculto ? 'none' : 'block' }}>
+    <div>
       {step === 0 && (
-        <button className="btn btn-danger btn-sm" onClick={iniciar}>{label}</button>
+        <button className="btn btn-danger btn-sm" onClick={() => setStep(1)}>{label}</button>
       )}
       {step === 1 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-          <span style={{ fontSize: '.85rem', color: 'var(--danger)' }}>¿Confirmás?</span>
+          <span style={{ fontSize: '.85rem', color: 'var(--danger)' }}>¿Confirmás? Se perderán todos los datos.</span>
           <button className="btn btn-danger btn-sm" onClick={ejecutar} disabled={loading}>
-            {loading ? <span className="spinner spinner-sm" /> : 'Sí, eliminar'}
+            {loading ? <span className="spinner spinner-sm" /> : 'Sí, limpiar todo'}
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={cancelar}>No</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setStep(0)}>No</button>
         </div>
       )}
     </div>

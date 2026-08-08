@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { getSetting, setSetting } from '../config/settings.js';
+import { sequelize } from '../config/database.js';
+import { logger } from '../config/logger.js';
 
 export function getMasterCode(_req: Request, res: Response) {
   res.json({ masterCode: getSetting('masterCode'), adminCode: getSetting('adminCode') });
@@ -11,7 +13,7 @@ export function setMasterCode(req: Request, res: Response) {
     return res.status(400).json({ error: 'masterCode requerido' });
   }
   setSetting('masterCode', masterCode);
-  console.log('🔐 Código maestro actualizado');
+  logger.info('Código maestro actualizado');
   res.json({ ok: true });
 }
 
@@ -21,6 +23,19 @@ export function setAdminCode(req: Request, res: Response) {
     return res.status(400).json({ error: 'adminCode requerido' });
   }
   setSetting('adminCode', adminCode);
-  console.log('🛡️ Código de admin actualizado');
+  logger.info('Código de admin actualizado');
   res.json({ ok: true });
+}
+
+export async function limpiarDB(_req: Request, res: Response) {
+  try {
+    await sequelize.query(
+      'TRUNCATE TABLE conversaciones, tickets, usuarios, bases, sectores RESTART IDENTITY CASCADE',
+    );
+    logger.warn('Base de datos limpiada completamente');
+    res.json({ ok: true, mensaje: 'Base de datos limpiada. IDs reiniciados. Código maestro conservado.' });
+  } catch (e: any) {
+    logger.error({ err: e.message }, 'Error al limpiar DB');
+    res.status(500).json({ error: 'Error al limpiar la base de datos' });
+  }
 }
