@@ -36,7 +36,7 @@ export async function getAll(req: AuthRequest, res: Response) {
     const sortBy = (req.query.sortBy as string) || 'createdAt';
     const sortDir = (req.query.sortDir as string)?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    const SORT_MAP: Record<string, any> = {
+    const SORT_MAP: Record<string, any[]> = {
       id: ['id'],
       asunto: ['asunto'],
       base: [{ model: Base, as: 'base' }, 'nombre'],
@@ -44,7 +44,8 @@ export async function getAll(req: AuthRequest, res: Response) {
       tecnicoAsignado: ['tecnicoAsignado'],
       createdAt: ['createdAt'],
     };
-    const order = SORT_MAP[sortBy] ? [[...SORT_MAP[sortBy], sortDir]] : [['createdAt', 'DESC']];
+    const orderCol = SORT_MAP[sortBy] || SORT_MAP.createdAt;
+    const order = [[...orderCol, sortDir]] as any;
 
     const { count: total, rows: tickets } = await Ticket.findAndCountAll({
       where,
