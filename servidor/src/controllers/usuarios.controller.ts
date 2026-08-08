@@ -33,7 +33,7 @@ export async function getAll(req: AuthRequest, res: Response) {
       registroCompleto: ['registroCompleto'],
       esAdmin: ['esAdmin'],
     };
-    const order = SORT_MAP[sortBy] ? [...SORT_MAP[sortBy], sortDir] : [['nombreCompleto', 'ASC']];
+    const order = SORT_MAP[sortBy] ? [[...SORT_MAP[sortBy], sortDir]] : [['nombreCompleto', 'ASC']];
 
     const { count: total, rows: usuarios } = await User.findAndCountAll({
       where,

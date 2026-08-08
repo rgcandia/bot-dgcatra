@@ -44,7 +44,7 @@ export async function getAll(req: AuthRequest, res: Response) {
       tecnicoAsignado: ['tecnicoAsignado'],
       createdAt: ['createdAt'],
     };
-    const order = SORT_MAP[sortBy] ? [...SORT_MAP[sortBy], sortDir] : [['createdAt', 'DESC']];
+    const order = SORT_MAP[sortBy] ? [[...SORT_MAP[sortBy], sortDir]] : [['createdAt', 'DESC']];
 
     const { count: total, rows: tickets } = await Ticket.findAndCountAll({
       where,
