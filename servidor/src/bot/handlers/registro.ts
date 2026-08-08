@@ -224,7 +224,7 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
     `🏢 *Base:* ${ctx.baseNombre}\n` +
     `⚙️ *Sector:* ${ctx.sectorNombre}\n` +
     `${rolLine}` +
-    '¿Está todo correcto?\nRespondé *SI* o *NO*.',
+    '¿Está todo correcto?',
     [
       { id: 'conf_si', title: 'Confirmar' },
       { id: 'conf_no', title: 'Cancelar' },
