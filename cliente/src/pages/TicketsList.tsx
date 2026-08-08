@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { useSocket } from '../context/useSocket';
@@ -39,6 +39,14 @@ export default function TicketsList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('DESC');
+
+  function toggleSort(col: string) {
+    if (sortBy === col) setSortDir(d => d === 'ASC' ? 'DESC' : 'ASC');
+    else { setSortBy(col); setSortDir(col === 'base' ? 'ASC' : 'DESC'); }
+    setPage(1);
+  }
 
   const fetchTickets = useCallback(() => {
     setLoading(true);
@@ -50,6 +58,8 @@ export default function TicketsList() {
     if (soloMios && user?.nombre) params.set('tecnicoAsignado', user.nombre);
     if (sinAsignar) params.set('sinAsignar', 'true');
     if (search.trim()) params.set('search', search.trim());
+    params.set('sortBy', sortBy);
+    params.set('sortDir', sortDir);
     api.get<PaginatedResponse>(`/api/tickets?${params}`)
       .then(res => {
         setTickets(res.data);
@@ -59,9 +69,21 @@ export default function TicketsList() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filtroEstado, filtroPrioridad, soloMios, sinAsignar, search, page, user?.nombre]);
+  }, [filtroEstado, filtroPrioridad, soloMios, sinAsignar, search, page, user?.nombre, sortBy, sortDir]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets, tick]);
+
+  function SortHeader({ col, label }: { col: string; label: string }) {
+    const active = sortBy === col;
+    return (
+      <th onClick={() => toggleSort(col)} style={{ cursor: 'pointer', userSelect: 'none' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.2rem' }}>
+          {label}
+          {active && (sortDir === 'ASC' ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
+        </span>
+      </th>
+    );
+  }
 
   return (
     <div>
@@ -112,12 +134,12 @@ export default function TicketsList() {
           <div className="table-wrap"><table>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Asunto</th>
-                <th>Base</th>
-                <th>Estado</th>
-                <th>Técnico</th>
-                <th>Fecha</th>
+                <SortHeader col="id" label="#" />
+                <SortHeader col="asunto" label="Asunto" />
+                <SortHeader col="base" label="Base" />
+                <SortHeader col="estado" label="Estado" />
+                <SortHeader col="tecnicoAsignado" label="Técnico" />
+                <SortHeader col="createdAt" label="Fecha" />
               </tr>
             </thead>
             <tbody>

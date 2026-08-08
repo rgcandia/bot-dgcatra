@@ -22,13 +22,26 @@ export async function getAll(req: AuthRequest, res: Response) {
       ];
     }
 
+    const sortBy = (req.query.sortBy as string) || 'nombreCompleto';
+    const sortDir = (req.query.sortDir as string)?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const SORT_MAP: Record<string, any> = {
+      telefono: ['telefono'],
+      nombreCompleto: ['nombreCompleto'],
+      base: [{ model: Base, as: 'base' }, 'nombre'],
+      sector: [{ model: Sector, as: 'sector' }, 'nombre'],
+      registroCompleto: ['registroCompleto'],
+      esAdmin: ['esAdmin'],
+    };
+    const order = SORT_MAP[sortBy] ? [...SORT_MAP[sortBy], sortDir] : [['nombreCompleto', 'ASC']];
+
     const { count: total, rows: usuarios } = await User.findAndCountAll({
       where,
       include: [
         { model: Base, as: 'base' },
         { model: Sector, as: 'sector' },
       ],
-      order: [['nombreCompleto', 'ASC']],
+      order,
       limit,
       offset: (page - 1) * limit,
     });

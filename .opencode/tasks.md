@@ -8,7 +8,15 @@
 - [x] **`ticket-creado.mp3`**: archivo descargado de Pixabay (sonido de notificación nueva). Se reproduce al recibir evento `ticket-creado` vía Socket.IO.
 - [x] **`ticket-asignado.mp3`**: archivo descargado de Pixabay (sonido de notificación de asignación). Se reproduce al recibir evento `ticket-asignado` solo si el técnico asignado coincide con el usuario actual.
 - [x] **`download-sounds2.mjs`**: script auxiliar para descargar MP3s desde Pixabay API. Búsqueda por query, seguimiento de redirects, guardado en `cliente/public/sounds/`.
-- [ ] **Commitear**: los 3 archivos están en working tree sin commitear.
+- [x] **Commitear**: los 3 archivos están en working tree sin commitear. ✅ Commiteado `6938662`.
+
+### 2026-08-08 — Ordenamiento clickeable en columnas de Tickets y Usuarios
+
+- [x] **Backend `tickets.controller.ts`**: aceptar `sortBy`/`sortDir` query params. Mapping: `id` (#), `asunto` (Asunto), `base.nombre` (Base — join), `estado` (Estado), `tecnicoAsignado` (Técnico), `createdAt` (Fecha, default DESC).
+- [x] **Backend `usuarios.controller.ts`**: aceptar `sortBy`/`sortDir` query params. Mapping: `telefono` (ID WhatsApp), `nombreCompleto` (Nombre, default ASC), `base.nombre` (Base), `sector.nombre` (Sector), `registroCompleto` (Registro), `esAdmin` (Admin).
+- [x] **Frontend `TicketsList.tsx`**: headers clickeables con flecha ↑↓ de dirección. Estado `sortBy`/`sortDir` se pasa como query params al API. Vuelve a página 1 al cambiar orden.
+- [x] **Frontend `UsuariosPage.tsx`**: ídem.
+- [x] **Rebuild cliente**: `npm run build` en `cliente/` para deploy Vercel.
 
 ### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
 

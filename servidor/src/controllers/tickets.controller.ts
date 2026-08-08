@@ -33,6 +33,19 @@ export async function getAll(req: AuthRequest, res: Response) {
       ];
     }
 
+    const sortBy = (req.query.sortBy as string) || 'createdAt';
+    const sortDir = (req.query.sortDir as string)?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const SORT_MAP: Record<string, any> = {
+      id: ['id'],
+      asunto: ['asunto'],
+      base: [{ model: Base, as: 'base' }, 'nombre'],
+      estado: ['estado'],
+      tecnicoAsignado: ['tecnicoAsignado'],
+      createdAt: ['createdAt'],
+    };
+    const order = SORT_MAP[sortBy] ? [...SORT_MAP[sortBy], sortDir] : [['createdAt', 'DESC']];
+
     const { count: total, rows: tickets } = await Ticket.findAndCountAll({
       where,
       include: [
@@ -40,7 +53,7 @@ export async function getAll(req: AuthRequest, res: Response) {
         { model: Base, as: 'base', attributes: ['nombre'] },
         { model: Sector, as: 'sector', attributes: ['nombre'] },
       ],
-      order: [['createdAt', 'DESC']],
+      order,
       limit,
       offset: (page - 1) * limit,
     });

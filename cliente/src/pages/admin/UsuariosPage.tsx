@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
 import ConfirmButton from '../../components/ConfirmButton';
@@ -38,7 +38,15 @@ export default function UsuariosPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState('');
+  const [sortBy, setSortBy] = useState('nombreCompleto');
+  const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('ASC');
   const { tick } = useSocket();
+
+  function toggleSort(col: string) {
+    if (sortBy === col) setSortDir(d => d === 'ASC' ? 'DESC' : 'ASC');
+    else { setSortBy(col); setSortDir('ASC'); }
+    setPage(1);
+  }
 
   const load = useCallback(() => {
     setLoading(true);
@@ -49,6 +57,8 @@ export default function UsuariosPage() {
     if (soloAdmin) params.set('esAdmin', 'true');
     if (soloIncompleto) params.set('registroIncompleto', 'true');
     if (soloInactivo) params.set('inactivo', 'true');
+    params.set('sortBy', sortBy);
+    params.set('sortDir', sortDir);
 
     Promise.all([
       api.get<PaginatedResponse>(`/api/usuarios?${params}`),
@@ -65,9 +75,21 @@ export default function UsuariosPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [search, soloAdmin, soloIncompleto, soloInactivo, page]);
+  }, [search, soloAdmin, soloIncompleto, soloInactivo, page, sortBy, sortDir]);
 
   useEffect(() => { load(); }, [load, tick]);
+
+  function SortHeader({ col, label }: { col: string; label: string }) {
+    const active = sortBy === col;
+    return (
+      <th onClick={() => toggleSort(col)} style={{ cursor: 'pointer', userSelect: 'none' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.2rem' }}>
+          {label}
+          {active && (sortDir === 'ASC' ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
+        </span>
+      </th>
+    );
+  }
 
   async function handleDelete(telefono: string) {
     setError('');
@@ -126,7 +148,15 @@ export default function UsuariosPage() {
       ) : (
         <>
           <table>
-            <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th><th></th></tr></thead>
+            <thead><tr>
+              <SortHeader col="telefono" label="ID WhatsApp" />
+              <SortHeader col="nombreCompleto" label="Nombre" />
+              <SortHeader col="base" label="Base" />
+              <SortHeader col="sector" label="Sector" />
+              <SortHeader col="registroCompleto" label="Registro" />
+              <SortHeader col="esAdmin" label="Admin" />
+              <th></th><th></th>
+            </tr></thead>
             <tbody>
               {usuarios.map(u => (
                 <tr key={u.telefono}>
