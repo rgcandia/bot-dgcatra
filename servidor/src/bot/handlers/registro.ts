@@ -51,10 +51,10 @@ async function paso0(ctx: Ctx): Promise<boolean> {
     return await enviarTexto(ctx.telefono, 'Ok. Cuando quieras registrarte, escribí *hola*.');
   }
   return await enviarBotones(ctx.telefono,
-    '👮 *Bienvenido al sistema DGCatra*\n\nPara acceder necesitás registrarte.\n¿Querés comenzar?',
+    '🤖 *Bienvenido al sistema de gestión de tickets DGCATRA*\n\nPara acceder necesitás registrarte.\n¿Comenzamos?',
     [
-      { id: 'reg_iniciar', title: 'Registrarme' },
-      { id: 'reg_salir', title: 'Salir' },
+      { id: 'reg_iniciar', title: 'SI' },
+      { id: 'reg_salir', title: 'NO' },
     ]);
 }
 
@@ -89,12 +89,12 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
       ...sectores.map(s => ({ id: `sector_${s.id}`, title: s.nombre })),
       { id: 'cancelar', title: 'Cancelar' },
     ];
-    return await enviarBotones(ctx.telefono, '👤 Seleccioná tu *sector*:', btns);
+    return await enviarBotones(ctx.telefono, '👤 Seleccioná tu *sector*:\n\nEscribí el número de la opción.', btns);
   }
 
   return await enviarLista(
     ctx.telefono,
-    '👤 Seleccioná tu *sector*:',
+    '👤 Seleccioná tu *sector*:\n\nEscribí el número de la opción.',
     'Ver sectores',
     [{
       title: 'Sectores',
@@ -107,7 +107,8 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso2Sector(ctx: Ctx): Promise<boolean> {
-  if (ctx.buttonId === 'cancelar') return await cancelarRegistro(ctx.telefono, 2);
+  const textoLower = ctx.texto?.toLowerCase() || '';
+  if (ctx.buttonId === 'cancelar' || textoLower === 'cancelar' || textoLower === 'salir') return await cancelarRegistro(ctx.telefono, 2);
 
   const match = ctx.buttonId?.match(/^sector_(\d+)$/);
   if (!match) {
@@ -224,7 +225,7 @@ async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean>
     `🏢 *Base:* ${ctx.baseNombre}\n` +
     `⚙️ *Sector:* ${ctx.sectorNombre}\n` +
     `${rolLine}` +
-    '¿Está todo correcto?',
+    '¿Querés confirmar el registro?\nEscribí *SI* o *NO*.',
     [
       { id: 'conf_si', title: 'Confirmar' },
       { id: 'conf_no', title: 'Cancelar' },

@@ -28,6 +28,13 @@
 - [x] **Typing mientras IA procesa**: `iniciarTyping(telefono)` fire-and-forget en `enviar.ts`. Se dispara antes de llamar a Groq, el usuario ve "escribiendo..." mientras se genera el título.
 - [x] **Log de fallos**: `catch (e) { console.log('🤖 IA título falló...') }` para monitorear caídas de Groq sin revisar cada ticket.
 
+### 2026-08-08 — UX Registro: bienvenida, sectores, confirmación, fechas
+
+- [x] **Bienvenida**: emoji cambiado de 👮 a 🤖. Texto: "Bienvenido al sistema de gestión de tickets DGCATRA". Botones: SI/NO en vez de Registrarme/Salir.
+- [x] **Selección de sector**: agregado "Escribí el número de la opción" al mensaje. Ahora también acepta texto "cancelar" y "salir" además del botón.
+- [x] **Confirmación de registro**: texto cambiado a "¿Querés confirmar el registro? Escribí SI o NO". Ya acepta texto "cancelar"/"salir" + botones Confirmar/Cancelar.
+- [x] **Fechas en notificaciones WhatsApp**: eliminadas de mensajes de estado de ticket (cierre, reapertura, en proceso). WhatsApp ya muestra el timestamp.
+
 ### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
 
 - [x] **Endpoint `POST /api/settings/limpiar-db`**: `TRUNCATE RESTART IDENTITY CASCADE` en conversaciones, tickets, usuarios, bases, sectores. IDs reinician desde 1. Código maestro sobrevive (en memoria).
