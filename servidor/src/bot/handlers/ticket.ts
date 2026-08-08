@@ -16,8 +16,7 @@ const ESTADOS_TICKET = {
   INICIAR: 0,
   PEDIR_DESCRIPCION: 1,
   PEDIR_UBICACION: 2,
-  PEDIR_PRIORIDAD: 3,
-  CONFIRMAR: 4,
+  CONFIRMAR: 3,
 } as const;
 
 export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
@@ -74,45 +73,17 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       }
 
       const ctxData = (user.context || {}) as any;
-      ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_PRIORIDAD;
+      ctxData.ticketPaso = ESTADOS_TICKET.CONFIRMAR;
       ctxData.ubicacion = ctx.texto;
 
       await guardarUsuario(ctx.telefono, { context: ctxData });
 
-      return await enviarTexto(ctx.telefono,
-        '⚡ *¿Qué tan urgente es?*\n\n' +
-        '1️⃣ *Alta* — impide trabajar, necesita solución inmediata\n' +
-        '2️⃣ *Media* — molesta pero hay forma de trabajar igual\n' +
-        '3️⃣ *Baja* — puede esperar, no es urgente\n\n' +
-        'Escribí *1, 2 o 3* (o *alta, media, baja*).');
-    }
-
-    case ESTADOS_TICKET.PEDIR_PRIORIDAD: {
-      const prioridadMap: Record<string, string> = {
-        '1': 'alta', 'alta': 'alta',
-        '2': 'media', 'media': 'media',
-        '3': 'baja', 'baja': 'baja',
-      };
-      const prioridad = prioridadMap[ctx.texto.toLowerCase().trim()];
-      if (!prioridad) {
-        await enviarTexto(ctx.telefono, '❌ Respondé con *1, 2 o 3* (o *alta, media, baja*):');
-        return false;
-      }
-
-      const ctxData = (user.context || {}) as any;
-      ctxData.ticketPaso = ESTADOS_TICKET.CONFIRMAR;
-      ctxData.prioridad = prioridad;
-
-      await guardarUsuario(ctx.telefono, { context: ctxData });
-
       const descripcion = ctxData.descripcion?.substring(0, 80);
-      const prioridadLabel = prioridad === 'alta' ? '🔴 Alta' : prioridad === 'media' ? '🟡 Media' : '🟢 Baja';
 
       return await enviarTexto(ctx.telefono,
         '📋 *Confirmá el ticket:*\n\n' +
         `📝 *Problema:* ${descripcion}${(ctxData.descripcion?.length || 0) > 80 ? '...' : ''}\n` +
-        `📍 *Ubicación:* ${ctxData.ubicacion}\n` +
-        `⚡ *Prioridad:* ${prioridadLabel}\n\n` +
+        `📍 *Ubicación:* ${ctxData.ubicacion}\n\n` +
         'Respondé *SI* para enviarlo o *NO* para cancelar.');
     }
 
@@ -139,11 +110,11 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         asunto,
         descripcion: ctxData.descripcion || '',
         ubicacion: ctxData.ubicacion || '',
-        prioridad: ctxData.prioridad || 'media',
         baseId: user.baseId,
         sectorId: user.sectorId,
         userTelefono: ctx.telefono,
         estado: 'abierto',
+        prioridad: 'media',
         historial: [{
           accion: `${user.nombreCompleto || ctx.telefono} creó el ticket`,
           autor: user.nombreCompleto || ctx.telefono,
