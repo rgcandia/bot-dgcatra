@@ -76,7 +76,7 @@ export default function SectoresPage() {
             </div>
 
             <div className="form-group">
-              <label>Código de acceso <span className="optional">(opcional)</span></label>
+              <label>Código de acceso {edit?.isAdmin ? <span className="required">(requerido)</span> : <span className="optional">(opcional)</span>}</label>
               <input
                 className="input"
                 value={edit?.codigoAdmin || ''}
@@ -85,10 +85,14 @@ export default function SectoresPage() {
               />
             </div>
 
-            <div className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`} onClick={() => setEdit({ ...edit, isAdmin: !edit?.isAdmin })}>
+            <button
+              type="button"
+              className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`}
+              onClick={() => setEdit({ ...edit, isAdmin: !edit?.isAdmin })}
+            >
               <span className="sectores-admin-indicator" />
               <span className="sectores-admin-text">Privilegios de administrador</span>
-            </div>
+            </button>
 
             <div className="modal-actions">
               <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>

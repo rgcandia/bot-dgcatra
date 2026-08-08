@@ -157,6 +157,7 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   padding: .4rem .6rem; border: 1px solid var(--border);
   border-radius: var(--radius); margin-bottom: 1rem;
   transition: border-color .2s, background .2s;
+  background: var(--surface); width: 100%; font: inherit;
 }
 .sectores-admin-toggle.is-active {
   border-color: var(--primary); background: #f0f4ff;
@@ -188,4 +189,5 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   padding-top: .5rem; border-top: 1px solid var(--border);
 }
 
+.required { color: var(--danger); font-weight: 500; font-size: .8rem; }
 .optional { color: var(--text-secondary); font-weight: 400; font-size: .8rem; }
