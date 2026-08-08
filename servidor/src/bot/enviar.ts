@@ -56,6 +56,18 @@ async function simularEscritura(chatId: string, texto: string): Promise<void> {
   }
 }
 
+export async function iniciarTyping(telefono: string): Promise<void> {
+  try {
+    const chatId = await resolverChatId(telefono);
+    const client = await esperarCliente();
+    await client.pupPage!.evaluate(async (id: string) => {
+      const WidFactory = window.require('WAWebWidFactory');
+      const ChatState = window.require('WAWebChatStateBridge');
+      await ChatState.sendChatStateComposing(WidFactory.createWid(id));
+    }, chatId);
+  } catch {}
+}
+
 async function rateLimitar(telefono: string): Promise<void> {
   const now = Date.now();
   const ultimo = lastSend.get(telefono) || 0;

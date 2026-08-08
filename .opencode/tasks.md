@@ -25,6 +25,8 @@
 - [x] **`.env.example`**: agregada variable `GROQ_API_KEY` (opcional).
 - [x] **`.env`**: configurada key de Groq para producción.
 - [x] **Build + deploy**: compilado y redeployado en Docker. Test manual: "No me anda el mouse" → IA genera "Mouse no responde" (56 tokens).
+- [x] **Typing mientras IA procesa**: `iniciarTyping(telefono)` fire-and-forget en `enviar.ts`. Se dispara antes de llamar a Groq, el usuario ve "escribiendo..." mientras se genera el título.
+- [x] **Log de fallos**: `catch (e) { console.log('🤖 IA título falló...') }` para monitorear caídas de Groq sin revisar cada ticket.
 
 ### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
 

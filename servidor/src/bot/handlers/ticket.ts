@@ -3,7 +3,7 @@ import { Conversacion } from '../../models/models.js';
 import { Base } from '../../models/models.js';
 import { getIO } from '../../socket/server.js';
 import { Op } from 'sequelize';
-import { enviarTexto, enviarBotones } from '../enviar.js';
+import { enviarTexto, enviarBotones, iniciarTyping } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { generarTituloTicket } from '../groq.js';
 
@@ -104,10 +104,13 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       const ubicacion = ctxData.ubicacion || '';
 
       let asunto = descripcion.substring(0, 60);
+      iniciarTyping(ctx.telefono); // fire-and-forget: typing mientras la IA procesa
       try {
         const t = await generarTituloTicket(descripcion, ubicacion);
         if (t) asunto = t;
-      } catch {}
+      } catch (e: any) {
+        console.log('🤖 IA título falló, usando fallback:', e?.message || e);
+      }
 
       if (!user.baseId) {
         await enviarTexto(ctx.telefono, '❌ Error: no tenés una base asignada. Contactá a sistemas.');
