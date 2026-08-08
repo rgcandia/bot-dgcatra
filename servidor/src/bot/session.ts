@@ -32,13 +32,14 @@ function necesitaLimpieza(user: SessionUser, now: number): boolean {
 }
 
 async function limpiarSesionVencida(telefono: string, user: User) {
-  user.set('pasoRegistro', 0);
-  user.set('context', null);
-  if (!user.get('registroCompleto')) {
+  const yaRegistrado = user.get('registroCompleto') === true;
+  if (!yaRegistrado) {
     user.set('nombreCompleto', null);
     user.set('email', null);
+    user.set('registroCompleto', false);
   }
-  user.set('registroCompleto', false);
+  user.set('pasoRegistro', 0);
+  user.set('context', null);
   await user.save();
 }
 
@@ -107,7 +108,7 @@ export async function guardarUltimosBotones(telefono: string, buttons: { id: str
     const currentCtx = (entry.user as any).context || {};
     currentCtx._lastButtons = buttons;
     currentCtx._lastActivity = Date.now();
-    User.update({ context: currentCtx }, { where: { telefono } }).catch(() => {});
+    User.update({ context: currentCtx }, { where: { telefono } }).catch(e => console.error('❌ guardarUltimosBotones:', e?.message || e));
     return;
   }
 

@@ -16,5 +16,5 @@ export function guardarMensaje(
     mensaje: truncated,
     direccion,
     metadata: metadata ?? null,
-  }).catch(() => {});
+  }).catch(e => console.error('❌ historial:', e?.message || e));
 }

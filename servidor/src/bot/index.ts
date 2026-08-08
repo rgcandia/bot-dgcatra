@@ -14,7 +14,9 @@ const TTL_MENSAJE = 15_000; // 15 segundos
 
 function encolar(telefono: string, fn: () => Promise<void>): Promise<void> {
   const anterior = colas.get(telefono) || Promise.resolve();
-  const tarea = anterior.then(fn).finally(() => {
+  const tarea = anterior.then(() => fn()).catch(e => {
+    console.error(`❌ Error en cola de ${telefono}:`, e?.message || e);
+  }).finally(() => {
     if (colas.get(telefono) === tarea) colas.delete(telefono);
   });
   colas.set(telefono, tarea);
@@ -60,7 +62,7 @@ export async function procesarMensaje(msg: any) {
   registrarChatId(from, rawFrom);
 
   // Guardar formato real de WhatsApp (@c.us o @lid) en la DB
-  User.update({ chatId: rawFrom }, { where: { telefono: from } }).catch(() => {});
+  User.update({ chatId: rawFrom }, { where: { telefono: from } }).catch(e => console.error('❌ update chatId:', e?.message || e));
 
   const text = msg.body || '';
   const buttonId = extraerButtonId(msg);

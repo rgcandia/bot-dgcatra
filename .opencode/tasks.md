@@ -35,6 +35,13 @@
 - [x] **Confirmación de registro**: texto cambiado a "¿Querés confirmar el registro? Escribí SI o NO". Ya acepta texto "cancelar"/"salir" + botones Confirmar/Cancelar.
 - [x] **Fechas en notificaciones WhatsApp**: eliminadas de mensajes de estado de ticket (cierre, reapertura, en proceso). WhatsApp ya muestra el timestamp.
 
+### 2026-08-08 — Bugs: limpieza de sesión, cola envenenada, timeout cliente, logs
+
+- [x] **`limpiarSesionVencida` corrompía `registroCompleto`** (session.ts:41): si un usuario registrado tenía `ticketPaso` expirado, la limpieza lo marcaba como no registrado. Fix: solo tocar `registroCompleto` y datos de registro si no estaba registrado.
+- [x] **Cola de mensajes envenenable** (index.ts:17): si un handler lanzaba excepción, la promesa se rechazaba y los mensajes siguientes del mismo usuario se perdían. Fix: `.then(() => fn()).catch(e => console.error(...))` en `encolar`.
+- [x] **`esperarCliente` sin timeout** (enviar.ts:33): si Puppeteer moría, el poll de 500ms corría para siempre. Fix: rechazar después de 15 segundos.
+- [x] **`.catch(()=>{})` silencioso**: 5 fire-and-forget tragaban errores de DB y Socket.IO sin loggear. Fix: `console.error` en todos.
+
 ### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
 
 - [x] **Endpoint `POST /api/settings/limpiar-db`**: `TRUNCATE RESTART IDENTITY CASCADE` en conversaciones, tickets, usuarios, bases, sectores. IDs reinician desde 1. Código maestro sobrevive (en memoria).

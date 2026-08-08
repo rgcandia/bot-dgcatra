@@ -32,9 +32,11 @@ async function resolverChatId(telefono: string): Promise<string> {
 
 async function esperarCliente(): Promise<Client> {
   if (_ready && _client) return _client;
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
     const check = setInterval(() => {
       if (_ready && _client) { clearInterval(check); resolve(_client); }
+      else if (Date.now() - start > 15000) { clearInterval(check); reject(new Error('Timeout esperando cliente WhatsApp')); }
     }, 500);
   });
 }

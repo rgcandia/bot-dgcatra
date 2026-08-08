@@ -142,7 +142,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
             createdAt: { [Op.gte]: new Date(Date.now() - 10 * 60 * 1000) },
           },
         },
-      ).catch(() => {});
+      ).catch(e => console.error('❌ backfill Conversacion:', e?.message || e));
 
       await guardarUsuario(ctx.telefono, { context: null });
 
@@ -155,7 +155,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
           ],
         }).then(fullTicket => {
           if (fullTicket) io.emit('ticket-creado', fullTicket);
-        }).catch(() => {});
+        }).catch(e => console.error('❌ socket ticket-creado:', e?.message || e));
       }
 
       return await enviarTexto(ctx.telefono,
