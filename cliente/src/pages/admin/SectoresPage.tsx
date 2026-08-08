@@ -69,38 +69,40 @@ export default function SectoresPage() {
         <div className="modal-overlay" onClick={() => { setEdit(null); setShowNew(false); }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3>{edit?.id ? 'Editar sector' : 'Nuevo sector'}</h3>
-            {error && <p style={{ color: 'var(--danger)', marginBottom: '.5rem' }}>{error}</p>}
+            {error && <p className="sectores-error">{error}</p>}
             <div className="form-group">
-              <label>Nombre</label>
-              <input className="input" value={edit?.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} />
+              <label>Nombre del sector</label>
+              <input className="input" value={edit?.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} placeholder="Ej: Operativo" />
             </div>
-            <div className="form-group">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+
+            <div className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`}>
+              <label className="sectores-admin-label">
                 <input
                   type="checkbox"
                   checked={!!edit?.isAdmin}
-                  onChange={e => setEdit({ ...edit, isAdmin: e.target.checked, codigoAdmin: e.target.checked ? (edit?.codigoAdmin || '') : '' })}
+                  onChange={e => setEdit({ ...edit, isAdmin: e.target.checked })}
                 />
-                Sector administrador
+                <span className="sectores-admin-indicator" />
+                <span className="sectores-admin-text">
+                  Sector administrador
+                  <small>Requiere código de acceso durante el registro</small>
+                </span>
               </label>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '.8rem', margin: '.2rem 0 0 1.7rem' }}>
-                Los usuarios que elijan este sector deberán ingresar un código durante el registro.
-              </p>
             </div>
-            {edit?.isAdmin && (
-              <div className="form-group">
-                <label>Código de acceso</label>
-                <input
-                  className="input"
-                  value={edit?.codigoAdmin || ''}
-                  onChange={e => setEdit({ ...edit, codigoAdmin: e.target.value })}
-                  placeholder="admin2024"
-                />
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: '.5rem' }}>
-              <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
+
+            <div className="form-group">
+              <label>Código de acceso {edit?.isAdmin ? <span className="required">*</span> : <span className="optional">(opcional)</span>}</label>
+              <input
+                className="input"
+                value={edit?.codigoAdmin || ''}
+                onChange={e => setEdit({ ...edit, codigoAdmin: e.target.value })}
+                placeholder="admin2024"
+              />
+            </div>
+
+            <div className="modal-actions">
               <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
             </div>
           </div>
         </div>

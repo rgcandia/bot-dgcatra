@@ -123,8 +123,9 @@ async function paso2Sector(ctx: Ctx): Promise<boolean> {
   ctxData.sectorId = sectorId;
   ctxData.sectorNombre = sector.nombre;
   ctxData.codigoAdmin = sector.codigoAdmin;
+  ctxData.sectorIsAdmin = sector.isAdmin;
 
-  if (sector.isAdmin) {
+  if (sector.codigoAdmin) {
     await guardarUsuario(ctx.telefono, { pasoRegistro: 3, context: ctxData });
     return await enviarTexto(ctx.telefono,
       '🔐 *Autorización de administrador*\n\nIngresá el *código de acceso*:\n\nEscribí *cancelar* para volver atrás.');
@@ -159,8 +160,9 @@ async function paso2SectorNumerico(ctx: Ctx): Promise<boolean> {
   ctxData.sectorId = sectorId;
   ctxData.sectorNombre = sector.nombre;
   ctxData.codigoAdmin = sector.codigoAdmin;
+  ctxData.sectorIsAdmin = sector.isAdmin;
 
-  if (sector.isAdmin) {
+  if (sector.codigoAdmin) {
     await guardarUsuario(ctx.telefono, { pasoRegistro: 3, context: ctxData });
     return await enviarTexto(ctx.telefono,
       '🔐 *Autorización de administrador*\n\nIngresá el *código de acceso*:\n\nEscribí *cancelar* para volver atrás.');
@@ -191,7 +193,6 @@ async function paso3CodigoAdmin(ctx: Ctx): Promise<boolean> {
     return false;
   }
 
-  ctxData.esAdmin = true;
   await guardarUsuario(ctx.telefono, { pasoRegistro: 4, context: ctxData });
   return await enviarTexto(ctx.telefono,
     '👤 Escribí tu *nombre completo*:\n\nEj: `Juan Pérez`\n\nEscribí *cancelar* para salir.');
@@ -215,7 +216,7 @@ async function paso4Nombre(ctx: Ctx): Promise<boolean> {
 }
 
 async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean> {
-  const rol = ctx.esAdmin ? '🛡️ Admin' : '';
+  const rol = ctx.sectorIsAdmin ? '🛡️ Admin' : '';
   const rolLine = rol ? `${rol}\n` : '';
   return await enviarBotones(telefono,
     '✅ *Confirmá tus datos:*\n\n' +
@@ -242,7 +243,7 @@ async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;
 
-  const esAdmin = ctxData.esAdmin || (config.superAdminPhone && ctx.telefono === config.superAdminPhone);
+  const esAdmin = ctxData.sectorIsAdmin || (config.superAdminPhone && ctx.telefono === config.superAdminPhone);
 
   await guardarUsuario(ctx.telefono, {
     nombreCompleto: ctxData.nombre,

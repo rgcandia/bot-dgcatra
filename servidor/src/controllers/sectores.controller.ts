@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth.js';
 import { Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
@@ -29,6 +30,7 @@ export async function create(req: AuthRequest, res: Response) {
     const { nombre, isAdmin, codigoAdmin } = req.body;
     if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
     if (isAdmin && !codigoAdmin) return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' });
+    if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true } });
     const sector = await Sector.create({ nombre, isAdmin: !!isAdmin, codigoAdmin: codigoAdmin || null });
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.status(201).json(sector);
@@ -50,6 +52,7 @@ export async function update(req: AuthRequest, res: Response) {
       if (isAdmin && !codigoAdmin && !sector.codigoAdmin) {
         return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' });
       }
+      if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true, id: { [Op.ne]: sector.id } } });
     }
     if (codigoAdmin !== undefined) updates.codigoAdmin = codigoAdmin || null;
     await sector.update(updates);
