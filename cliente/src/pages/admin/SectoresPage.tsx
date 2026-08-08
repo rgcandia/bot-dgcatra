@@ -23,8 +23,12 @@ export default function SectoresPage() {
   async function handleSave() {
     if (!edit) return;
     setError('');
+    const body = { nombre: edit.nombre, isAdmin: edit.isAdmin, codigoAdmin: edit.codigoAdmin };
+    if (body.isAdmin && !body.codigoAdmin) {
+      setError('El código de acceso es requerido para sectores con privilegios de administrador');
+      return;
+    }
     try {
-      const body: Record<string, unknown> = { nombre: edit.nombre, isAdmin: edit.isAdmin, codigoAdmin: edit.codigoAdmin };
       if (edit.id) await api.patch(`/api/sectores/${edit.id}`, body);
       else await api.post('/api/sectores', body);
       setEdit(null); setShowNew(false);
@@ -85,14 +89,15 @@ export default function SectoresPage() {
               />
             </div>
 
-            <button
-              type="button"
-              className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`}
-              onClick={() => setEdit({ ...edit, isAdmin: !edit?.isAdmin })}
-            >
+            <label className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`}>
+              <input
+                type="checkbox"
+                checked={!!edit?.isAdmin}
+                onChange={e => setEdit({ ...edit, isAdmin: e.target.checked })}
+              />
               <span className="sectores-admin-indicator" />
               <span className="sectores-admin-text">Privilegios de administrador</span>
-            </button>
+            </label>
 
             <div className="modal-actions">
               <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>

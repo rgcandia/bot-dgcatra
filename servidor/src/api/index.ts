@@ -23,6 +23,11 @@ const app = express();
 const server = http.createServer(app);
 initSocket(server);
 
+// --- Sync DB schema (agrega columnas nuevas sin borrar datos) ---
+sequelize.sync({ alter: true }).catch((e) => {
+  logger.error({ err: e.message }, 'Error sincronizando DB');
+});
+
 const allowedOrigins = [
   'https://dgcatra.alejndrogcandia.online',
   'http://localhost:5173',

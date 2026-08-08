@@ -157,7 +157,10 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   padding: .4rem .6rem; border: 1px solid var(--border);
   border-radius: var(--radius); margin-bottom: 1rem;
   transition: border-color .2s, background .2s;
-  background: var(--surface); width: 100%; font: inherit;
+  background: var(--surface);
+}
+.sectores-admin-toggle input[type="checkbox"] {
+  display: none;
 }
 .sectores-admin-toggle.is-active {
   border-color: var(--primary); background: #f0f4ff;
