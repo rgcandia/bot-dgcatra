@@ -118,10 +118,10 @@ async function seed() {
   ];
 
   const tecnicos = ['Ale Candia', 'María López', 'Carlos Ruiz', 'Laura Díaz'];
-  const estados = ['abierto', 'en_proceso', 'cerrado'] as const;
-  const prioridades = ['baja', 'media', 'alta'] as const;
+  const estados: Array<'abierto' | 'en_proceso' | 'cerrado'> = ['abierto', 'en_proceso', 'cerrado'];
+  const prioridades: Array<'baja' | 'media' | 'alta'> = ['baja', 'media', 'alta'];
 
-  const tickets = [];
+  const tickets: any[] = [];
   for (let i = 0; i < 200; i++) {
     const createdAt = daysAgo(rand(1, 180)); // 6 meses atrás
     const estado = pick(estados);
