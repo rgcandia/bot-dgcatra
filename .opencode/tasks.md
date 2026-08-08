@@ -4,7 +4,7 @@
 
 ### 2026-08-08 — UX Tickets: prioridad, paginación, búsqueda, badge, quick replies
 
-- [x] **Paso prioridad en creación de ticket WhatsApp**: nuevo paso `PEDIR_PRIORIDAD` (entre ubicación y confirmación). Agente elige *alta / media / baja* por número o texto. Se muestra en la confirmación con emoji de color (🔴🟡🟢) y se persiste en el ticket.
+- [~] **Paso prioridad en creación de ticket WhatsApp**: revertido — la prioridad la maneja el admin desde el dashboard, no el agente al crear el ticket.
 - [x] **Paginación + búsqueda en TicketsList**: `findAndCountAll` con `limit`/`offset` en backend (20 por página). Barra de búsqueda con `Op.iLike` en asunto/descripción/técnico. Filtro "Sin técnico" (`sinAsignar=true`). Paginación con controles `< >` y contador.
 - [x] **Badge contador de tickets abiertos**: `NavItem` acepta `badge?: number` (círculo verde lima con número). `useSocket` expone `ticketsAbiertos` (fetch a `/stats/resumen`). DashboardLayout muestra el badge en el NavItem de Tickets.
 - [x] **TicketDetail — socket compartido**: en vez de crear un 2do Socket.IO, usa `socketRef` expuesto por `useSocket`. Listeners con `socket.off()` en cleanup (no `disconnect()`).
