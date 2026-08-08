@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 interface Props {
   onConfirm: () => void;
   message: string;
   label: string;
   danger?: boolean;
+  children?: ReactNode;
 }
 
-export default function ConfirmButton({ onConfirm, message, label, danger }: Props) {
+export default function ConfirmButton({ onConfirm, message, label, danger, children }: Props) {
   const [asking, setAsking] = useState(false);
 
   if (!asking) {
+    if (children) {
+      return <span onClick={() => setAsking(true)} style={{ cursor: 'pointer' }}>{children}</span>;
+    }
     return <button className="btn btn-ghost btn-sm" style={danger ? { color: 'var(--danger)' } : {}}
       onClick={() => setAsking(true)}>{label}</button>;
   }

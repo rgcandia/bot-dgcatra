@@ -2,6 +2,14 @@
 
 ## En progreso
 
+### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
+
+- [x] **Endpoint `POST /api/settings/limpiar-db`**: `TRUNCATE RESTART IDENTITY CASCADE` en conversaciones, tickets, usuarios, bases, sectores. IDs reinician desde 1. Código maestro sobrevive (en memoria).
+- [x] **SettingsPage "Zona de peligro"**: reemplazados 2 botones de eliminación masiva por un solo botón "Limpiar base de datos" con confirmación en 2 pasos.
+- [x] **Seed demo** (`seed-demo.ts`): 4 bases, 3 sectores, 20 usuarios (4 admins + 16 agentes), 200 tickets random en 6 meses, 60 conversaciones. Script: `npm run seed-demo`.
+- [x] **UsuariosPage — ConfirmButton**: reemplazado `confirm()` del navegador por `<ConfirmButton>` inline para eliminar usuarios. `ConfirmButton` ahora acepta `children` como trigger personalizado.
+- [x] **UsuariosPage — error handling**: eliminado `alert()`, ahora usa estado `error` visible arriba de la tabla.
+
 ### 2026-08-08 — UX Tickets: prioridad, paginación, búsqueda, badge, quick replies
 
 - [~] **Paso prioridad en creación de ticket WhatsApp**: revertido — la prioridad la maneja el admin desde el dashboard, no el agente al crear el ticket.

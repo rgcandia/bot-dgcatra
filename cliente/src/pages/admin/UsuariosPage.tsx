@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Trash2 } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
+import ConfirmButton from '../../components/ConfirmButton';
 
 interface User {
   telefono: string; nombreCompleto: string | null; email: string | null;
@@ -37,8 +38,9 @@ export default function UsuariosPage() {
   }
 
   async function handleDelete(telefono: string) {
+    setError('');
     try { await api.delete(`/api/usuarios/${telefono}`); await load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { setError(e.message); }
   }
 
   async function handleSave() {
@@ -80,6 +82,8 @@ export default function UsuariosPage() {
         </div>
       </div>
 
+      {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem', fontSize: '.9rem' }}>{error}</p>}
+
       <table>
         <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th><th></th></tr></thead>
         <tbody>
@@ -99,10 +103,16 @@ export default function UsuariosPage() {
                   <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
                 </td>
                 <td>
-                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
-                    onClick={() => { if (confirm(`¿Eliminar a ${u.nombreCompleto || u.telefono}?`)) handleDelete(u.telefono); }}>
-                    <Trash2 size={14} />
-                  </button>
+                  <ConfirmButton
+                    label=""
+                    message={`¿Eliminar a ${u.nombreCompleto || u.telefono}?`}
+                    danger
+                    onConfirm={() => handleDelete(u.telefono)}
+                  >
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </ConfirmButton>
                 </td>
             </tr>
           ))}
