@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/api/index.js",
     "seed": "node dist/seed.js",
+    "seed-demo": "node dist/seed-demo.js",
     "test": "vitest run"
   },
   "dependencies": {
