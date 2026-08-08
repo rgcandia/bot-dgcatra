@@ -75,29 +75,19 @@ export default function SectoresPage() {
               <input className="input" value={edit?.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} placeholder="Ej: Operativo" />
             </div>
 
-            <div className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`}>
-              <label className="sectores-admin-label">
-                <input
-                  type="checkbox"
-                  checked={!!edit?.isAdmin}
-                  onChange={e => setEdit({ ...edit, isAdmin: e.target.checked })}
-                />
-                <span className="sectores-admin-indicator" />
-                <span className="sectores-admin-text">
-                  Sector administrador
-                  <small>Requiere código de acceso durante el registro</small>
-                </span>
-              </label>
-            </div>
-
             <div className="form-group">
-              <label>Código de acceso {edit?.isAdmin ? <span className="required">*</span> : <span className="optional">(opcional)</span>}</label>
+              <label>Código de acceso <span className="optional">(opcional)</span></label>
               <input
                 className="input"
                 value={edit?.codigoAdmin || ''}
                 onChange={e => setEdit({ ...edit, codigoAdmin: e.target.value })}
                 placeholder="admin2024"
               />
+            </div>
+
+            <div className={`sectores-admin-toggle ${edit?.isAdmin ? 'is-active' : ''}`} onClick={() => setEdit({ ...edit, isAdmin: !edit?.isAdmin })}>
+              <span className="sectores-admin-indicator" />
+              <span className="sectores-admin-text">Privilegios de administrador</span>
             </div>
 
             <div className="modal-actions">
