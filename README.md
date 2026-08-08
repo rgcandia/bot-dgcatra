@@ -220,17 +220,27 @@ Dashboard React con autenticación JWT.
 | DELETE | /api/sectores/:id | Eliminar sector | ✅ Admin |
 | POST | /api/sectores/asignar | Asignar sector a base | ✅ Admin |
 | DELETE | /api/sectores/base/:baseId/sector/:sectorId | Remover sector de base | ✅ Admin |
-| GET | /api/usuarios | Listar usuarios |
+| GET | /api/usuarios | Listar usuarios (query: `search`, `page`, `limit`, `esAdmin`, `registroIncompleto`, `inactivo`) |
 | GET | /api/usuarios/:telefono | Obtener usuario por teléfono |
 | PATCH | /api/usuarios/:telefono | Actualizar usuario (solo admin puede cambiar `esAdmin`) |
-| GET | /api/tickets | Listar tickets (filtros: estado, prioridad, baseId, sectorId) |
+| DELETE | /api/usuarios/:telefono | Eliminar usuario | ✅ Admin |
+| GET | /api/tickets | Listar tickets (query: `search`, `page`, `limit`, `estado`, `prioridad`, `baseId`, `sectorId`, `tecnicoAsignado`, `sinAsignar`) |
 | GET | /api/tickets/:id | Detalle del ticket (incluye historial) |
+| GET | /api/tickets/:id/conversacion | Conversación WhatsApp del ticket |
 | POST | /api/tickets | Crear ticket (asunto, descripcion, ubicacion, baseId) |
 | PATCH | /api/tickets/:id | Actualizar ticket (estado, prioridad, técnico, solución) | ✅ Admin |
+| GET | /api/tickets/:id/chat | Estado del chat takeover |
+| POST | /api/tickets/:id/chat/iniciar | Iniciar chat takeover | ✅ Admin |
+| POST | /api/tickets/:id/chat/enviar | Enviar mensaje al agente | ✅ Admin |
+| POST | /api/tickets/:id/chat/finalizar | Finalizar chat takeover | ✅ Admin |
 | GET | /api/stats/resumen | Totales (abiertos, cerrados, en_proceso, alta prioridad, usuarios) |
 | GET | /api/stats/por-base | Tickets agrupados por base |
 | GET | /api/stats/por-mes | Tickets agrupados por mes |
 | GET | /api/stats/top-usuarios | Usuarios con más tickets |
+| GET | /api/settings/master-code | Obtener código maestro | ✅ Admin |
+| PATCH | /api/settings/master-code | Actualizar código maestro | ✅ Admin |
+| POST | /api/settings/logout-whatsapp | Desvincular WhatsApp | ✅ Admin |
+| POST | /api/settings/limpiar-db | Limpiar toda la DB (TRUNCATE, IDs reiniciados) | ✅ Admin |
 
 ---
 
