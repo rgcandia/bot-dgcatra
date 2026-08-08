@@ -1,18 +1,45 @@
 import { Response } from 'express';
+import { Op } from 'sequelize';
 import { AuthRequest, banearUsuario } from '../middleware/auth.js';
 import { User, Base, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 
-export async function getAll(_req: AuthRequest, res: Response) {
+export async function getAll(req: AuthRequest, res: Response) {
   try {
-    const usuarios = await User.findAll({
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+    const search = (req.query.search as string || '').trim();
+
+    const where: any = {};
+    if (req.query.esAdmin === 'true') where.esAdmin = true;
+    if (req.query.registroIncompleto === 'true') where.registroCompleto = false;
+    if (req.query.inactivo === 'true') where.activo = false;
+
+    if (search) {
+      where[Op.or] = [
+        { nombreCompleto: { [Op.iLike]: `%${search}%` } },
+        { telefono: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const { count: total, rows: usuarios } = await User.findAndCountAll({
+      where,
       include: [
         { model: Base, as: 'base' },
         { model: Sector, as: 'sector' },
       ],
       order: [['nombreCompleto', 'ASC']],
+      limit,
+      offset: (page - 1) * limit,
     });
-    res.json(usuarios);
+
+    res.json({
+      data: usuarios,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (e) {
     console.error('Error en getAll usuarios:', e);
     res.status(500).json({ error: 'Error al obtener usuarios' });

@@ -9,6 +9,7 @@
 - [x] **Seed demo** (`seed-demo.ts`): 4 bases, 3 sectores, 20 usuarios (4 admins + 16 agentes), 200 tickets random en 6 meses, 60 conversaciones. Script: `npm run seed-demo`.
 - [x] **UsuariosPage — ConfirmButton**: reemplazado `confirm()` del navegador por `<ConfirmButton>` inline para eliminar usuarios. `ConfirmButton` ahora acepta `children` como trigger personalizado.
 - [x] **UsuariosPage — error handling**: eliminado `alert()`, ahora usa estado `error` visible arriba de la tabla.
+- [x] **UsuariosPage — paginación + búsqueda server-side**: `findAndCountAll` con `limit`/`offset` (20 por página). Búsqueda `Op.iLike` en `nombreCompleto` y `telefono`. Filtros: Admin, Registro pendiente, Inactivos. Paginación con controles `< >` y contador.
 
 ### 2026-08-08 — UX Tickets: prioridad, paginación, búsqueda, badge, quick replies
 

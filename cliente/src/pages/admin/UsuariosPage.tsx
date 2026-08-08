@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, Trash2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
 import ConfirmButton from '../../components/ConfirmButton';
@@ -11,8 +11,18 @@ interface User {
   registroCompleto: boolean; esAdmin: boolean; activo: boolean;
 }
 
+interface PaginatedResponse {
+  data: User[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 interface Base { id: number; nombre: string; }
 interface Sector { id: number; nombre: string; }
+
+const PAGE_SIZE = 20;
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<User[]>([]);
@@ -21,21 +31,43 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<User | null>(null);
   const [search, setSearch] = useState('');
+  const [soloAdmin, setSoloAdmin] = useState(false);
+  const [soloIncompleto, setSoloIncompleto] = useState(false);
+  const [soloInactivo, setSoloInactivo] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState('');
   const { tick } = useSocket();
 
-  useEffect(() => { load(); }, [tick]);
+  const load = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(PAGE_SIZE));
+    if (search.trim()) params.set('search', search.trim());
+    if (soloAdmin) params.set('esAdmin', 'true');
+    if (soloIncompleto) params.set('registroIncompleto', 'true');
+    if (soloInactivo) params.set('inactivo', 'true');
 
-  async function load() {
-    try {
-      const [users, bs, secs] = await Promise.all([
-        api.get<User[]>('/api/usuarios'),
-        api.get<Base[]>('/api/bases'),
-        api.get<Sector[]>('/api/sectores'),
-      ]);
-      setUsuarios(users); setBases(bs); setSectores(secs);
-    } finally { setLoading(false); }
-  }
+    Promise.all([
+      api.get<PaginatedResponse>(`/api/usuarios?${params}`),
+      api.get<Base[]>('/api/bases'),
+      api.get<Sector[]>('/api/sectores'),
+    ])
+      .then(([users, bs, secs]) => {
+        setUsuarios(users.data);
+        setTotal(users.total);
+        setTotalPages(users.totalPages);
+        if (users.totalPages > 0 && page > users.totalPages) setPage(users.totalPages);
+        setBases(bs);
+        setSectores(secs);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [search, soloAdmin, soloIncompleto, soloInactivo, page]);
+
+  useEffect(() => { load(); }, [load, tick]);
 
   async function handleDelete(telefono: string) {
     setError('');
@@ -56,68 +88,93 @@ export default function UsuariosPage() {
     } catch (e: any) { setError(e.message); }
   }
 
-  const filtrados = usuarios.filter(u => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (u.nombreCompleto || '').toLowerCase().includes(q)
-      || u.telefono.includes(q)
-      || (u.base?.nombre || '').toLowerCase().includes(q)
-      || (u.sector?.nombre || '').toLowerCase().includes(q);
-  });
-
   if (loading) return <p className="empty">Cargando...</p>;
 
   return (
     <div>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>Usuarios ({usuarios.length})</h2>
-        <div style={{ position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input
-            placeholder="Buscar..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ padding: '.5rem .5rem .5rem 2rem', borderRadius: 6, border: '1px solid var(--border)', width: 220, fontSize: '.9rem' }}
-          />
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '.5rem' }}>
+        <h2>Usuarios</h2>
+        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <input
+              placeholder="Buscar..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+              style={{ padding: '.4rem .6rem .4rem 1.7rem', borderRadius: 6, border: '1px solid var(--border)', fontSize: '.85rem', width: 200 }}
+            />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.85rem', cursor: 'pointer', padding: '.4rem .6rem', border: '1px solid var(--border)', borderRadius: 6, background: soloAdmin ? 'var(--bg)' : 'transparent' }}>
+            <input type="checkbox" checked={soloAdmin} onChange={e => { setSoloAdmin(e.target.checked); setPage(1); }} />
+            Admin
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.85rem', cursor: 'pointer', padding: '.4rem .6rem', border: '1px solid var(--border)', borderRadius: 6, background: soloIncompleto ? 'var(--bg)' : 'transparent' }}>
+            <input type="checkbox" checked={soloIncompleto} onChange={e => { setSoloIncompleto(e.target.checked); setPage(1); }} />
+            Registro pendiente
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.85rem', cursor: 'pointer', padding: '.4rem .6rem', border: '1px solid var(--border)', borderRadius: 6, background: soloInactivo ? 'var(--bg)' : 'transparent' }}>
+            <input type="checkbox" checked={soloInactivo} onChange={e => { setSoloInactivo(e.target.checked); setPage(1); }} />
+            Inactivos
+          </label>
         </div>
       </div>
 
       {error && <p style={{ color: 'var(--danger)', marginBottom: '1rem', fontSize: '.9rem' }}>{error}</p>}
 
-      <table>
-        <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th><th></th></tr></thead>
-        <tbody>
-          {filtrados.map(u => (
-            <tr key={u.telefono}>
-              <td style={{ fontFamily: 'monospace', fontSize: '.85rem' }}>{u.telefono}</td>
-              <td>{u.nombreCompleto || '-'}</td>
-              <td>{u.base?.nombre || '-'}</td>
-              <td>{u.sector?.nombre || '-'}</td>
-              <td>
-                <span className={`badge ${u.registroCompleto ? 'badge-cerrado' : 'badge-en_proceso'}`}>
-                  {u.registroCompleto ? 'Completo' : 'Pendiente'}
-                </span>
-              </td>
-              <td>{u.esAdmin ? 'true' : 'false'}</td>
-                <td>
-                  <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
-                </td>
-                <td>
-                  <ConfirmButton
-                    label=""
-                    message={`¿Eliminar a ${u.nombreCompleto || u.telefono}?`}
-                    danger
-                    onConfirm={() => handleDelete(u.telefono)}
-                  >
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}>
-                      <Trash2 size={14} />
-                    </button>
-                  </ConfirmButton>
-                </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {usuarios.length === 0 ? (
+        <p className="empty">{search || soloAdmin || soloIncompleto || soloInactivo ? 'No se encontraron usuarios con esos filtros.' : 'No hay usuarios'}</p>
+      ) : (
+        <>
+          <table>
+            <thead><tr><th>ID WhatsApp</th><th>Nombre</th><th>Base</th><th>Sector</th><th>Registro</th><th>Admin</th><th></th><th></th></tr></thead>
+            <tbody>
+              {usuarios.map(u => (
+                <tr key={u.telefono}>
+                  <td style={{ fontFamily: 'monospace', fontSize: '.85rem' }}>{u.telefono}</td>
+                  <td>{u.nombreCompleto || '-'}</td>
+                  <td>{u.base?.nombre || '-'}</td>
+                  <td>{u.sector?.nombre || '-'}</td>
+                  <td>
+                    <span className={`badge ${u.registroCompleto ? 'badge-cerrado' : 'badge-en_proceso'}`}>
+                      {u.registroCompleto ? 'Completo' : 'Pendiente'}
+                    </span>
+                  </td>
+                  <td>{u.esAdmin ? 'true' : 'false'}</td>
+                    <td>
+                      <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
+                    </td>
+                    <td>
+                      <ConfirmButton
+                        label=""
+                        message={`¿Eliminar a ${u.nombreCompleto || u.telefono}?`}
+                        danger
+                        onConfirm={() => handleDelete(u.telefono)}
+                      >
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </ConfirmButton>
+                    </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', padding: '1rem 0' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
+                <ChevronLeft size={16} />
+              </button>
+              <span style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>
+                {page} de {totalPages} ({total} usuarios)
+              </span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {edit && (
         <div className="modal-overlay" onClick={() => setEdit(null)}>
