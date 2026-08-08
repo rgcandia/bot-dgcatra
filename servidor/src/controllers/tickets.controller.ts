@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth.js';
 import { Ticket, User, Base, Sector, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
@@ -12,14 +13,27 @@ async function notificarAgente(telefono: string, mensaje: string) {
 
 export async function getAll(req: AuthRequest, res: Response) {
   try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+    const search = (req.query.search as string || '').trim();
+
     const where: any = {};
     if (req.query.estado) where.estado = req.query.estado;
     if (req.query.prioridad) where.prioridad = req.query.prioridad;
     if (req.query.baseId) where.baseId = req.query.baseId;
     if (req.query.sectorId) where.sectorId = req.query.sectorId;
     if (req.query.tecnicoAsignado) where.tecnicoAsignado = req.query.tecnicoAsignado;
+    if (req.query.sinAsignar === 'true') where.tecnicoAsignado = null;
 
-    const tickets = await Ticket.findAll({
+    if (search) {
+      where[Op.or] = [
+        { asunto: { [Op.iLike]: `%${search}%` } },
+        { descripcion: { [Op.iLike]: `%${search}%` } },
+        { tecnicoAsignado: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const { count: total, rows: tickets } = await Ticket.findAndCountAll({
       where,
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
@@ -27,8 +41,17 @@ export async function getAll(req: AuthRequest, res: Response) {
         { model: Sector, as: 'sector', attributes: ['nombre'] },
       ],
       order: [['createdAt', 'DESC']],
+      limit,
+      offset: (page - 1) * limit,
     });
-    res.json(tickets);
+
+    res.json({
+      data: tickets,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (e) {
     console.error('Error en getAll tickets:', e);
     res.status(500).json({ error: 'Error al obtener tickets' });

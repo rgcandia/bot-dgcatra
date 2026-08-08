@@ -1,17 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
 import {
-  ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User, UserX,
+  ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User,
   Building2, Settings2, MapPin, Calendar, Clock, UserCheck,
   AlertCircle, Play, ArrowRightCircle, ArrowLeft, MessageCircle,
-  Send, X,
+  Send,
 } from 'lucide-react';
 import { api } from '../api/client';
-
-const SOCKET_URL = import.meta.env.VITE_API_URL || '';
+import ConfirmButton from '../components/ConfirmButton';
 
 interface Ticket {
   id: number; asunto: string; descripcion: string; ubicacion: string;
@@ -56,7 +54,7 @@ interface ChatMsg { direccion: 'inbound' | 'outbound' | 'admin'; mensaje: string
 export default function TicketDetail() {
   const { id } = useParams();
   const { user } = useAuth();
-  const { ticketActualizado } = useSocket();
+  const { ticketActualizado, socketRef } = useSocket();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
@@ -64,6 +62,9 @@ export default function TicketDetail() {
   const [solucion, setSolucion] = useState('');
   const [error, setError] = useState('');
   const [techSel, setTechSel] = useState('');
+  const [saving, setSaving] = useState(false);
+  const ticketRef = useRef(ticket);
+  useEffect(() => { ticketRef.current = ticket; }, [ticket]);
   const [conversacion, setConversacion] = useState<Msg[]>([]);
   const [tab, setTab] = useState<'historial' | 'chat'>('historial');
 
@@ -73,7 +74,6 @@ export default function TicketDetail() {
   const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<any>(null);
   const [chatEnviando, setChatEnviando] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs, tab]);
@@ -97,13 +97,12 @@ export default function TicketDetail() {
     }
   }, [ticketActualizado, id]);
 
-  // Chat socket
+  // Chat socket — usa el socket compartido de useSocket
   useEffect(() => {
-    if (!user?.token || !id) return;
-    const socket: Socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
-    socketRef.current = socket;
+    const socket = socketRef.current;
+    if (!socket || !id) return;
 
-    socket.on('chat-mensaje-entrante', (data: any) => {
+    function onMensaje(data: any) {
       if (data.userTelefono === ticket?.usuario?.telefono) {
         setChatMsgs(prev => [...prev, {
           direccion: 'inbound',
@@ -111,17 +110,23 @@ export default function TicketDetail() {
           createdAt: data.timestamp,
         }]);
       }
-    });
+    }
 
-    socket.on('chat-estado', (data: any) => {
+    function onEstado(data: any) {
       if (data.ticketId === Number(id)) {
         setChatActivo(data.estado === 'activo');
         setChatAdminNombre(data.admin || '');
       }
-    });
+    }
 
-    return () => { socket.disconnect(); };
-  }, [user?.token, id, ticket?.usuario?.telefono]);
+    socket.on('chat-mensaje-entrante', onMensaje);
+    socket.on('chat-estado', onEstado);
+
+    return () => {
+      socket.off('chat-mensaje-entrante', onMensaje);
+      socket.off('chat-estado', onEstado);
+    };
+  }, [socketRef, id, ticket?.usuario?.telefono]);
 
   // Cargar estado inicial del chat
   useEffect(() => {
@@ -143,8 +148,16 @@ export default function TicketDetail() {
 
   async function patch(payload: Record<string, any>) {
     setError('');
+    setSaving(true);
+    const prev = ticketRef.current;
     try { setTicket(await api.patch<Ticket>(`/api/tickets/${id}`, payload)); }
-    catch (e: any) { setError(e.message); }
+    catch (e: any) {
+      setError(e.message);
+      if (prev && payload.estado && payload.estado !== prev.estado) {
+        setTicket(prev);
+      }
+    }
+    finally { setSaving(false); }
   }
 
   async function adoptar() {
@@ -174,14 +187,14 @@ export default function TicketDetail() {
     } catch (e: any) { setError(e.message); }
   }
 
-  async function enviarChatMsg() {
-    if (!chatInput.trim() || chatEnviando) return;
-    const txt = chatInput.trim();
-    setChatInput('');
+  async function enviarChatMsg(txt?: string) {
+    const mensaje = (txt || chatInput).trim();
+    if (!mensaje || chatEnviando) return;
+    if (!txt) setChatInput('');
     setChatEnviando(true);
     try {
-      const res = await api.post<{ ok: boolean; mensaje: string; autor: string; timestamp: string }>(`/api/tickets/${id}/chat/enviar`, { mensaje: txt });
-      const displayText = `💬 *Técnico ${user?.nombre || 'Admin'}:* ${txt}`;
+      const res = await api.post<{ ok: boolean; mensaje: string; autor: string; timestamp: string }>(`/api/tickets/${id}/chat/enviar`, { mensaje });
+      const displayText = `💬 *Técnico ${user?.nombre || 'Admin'}:* ${mensaje}`;
       setChatMsgs(prev => [...prev, { direccion: 'admin', mensaje: displayText, createdAt: res.timestamp, autor: res.autor }]);
     } catch (e: any) { setError(e.message); }
     finally { setChatEnviando(false); }
@@ -217,7 +230,10 @@ export default function TicketDetail() {
       <div className="card" style={{ marginBottom: '1.5rem', padding: '2rem' }}>
         <div style={{ marginBottom: '1.2rem' }}>
           <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)', marginBottom: '.2rem' }}>Ticket #{ticket.id}</div>
-          <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700 }}>{ticket.asunto}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700 }}>{ticket.asunto}</h2>
+            {saving && <span style={{ fontSize: '.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>guardando...</span>}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1.2rem' }}>
@@ -328,7 +344,7 @@ export default function TicketDetail() {
               </div>
               <div style={{ display: 'flex', gap: '.5rem' }}>
                 <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}><CircleCheckBig size={18} /> Cerrar ticket</button>
-                <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} style={{ color: 'var(--danger)' }}><UserX size={18} /> Dejar caso</button>
+                <ConfirmButton label="Dejar caso" message="¿Desvincularte del ticket?" danger onConfirm={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} />
               </div>
             </div>
           )}
@@ -338,7 +354,7 @@ export default function TicketDetail() {
             </div>
           )}
           {soyElTecnico && ticket.estado === 'en_proceso' && !puedeCerrar && (
-            <button className="btn btn-ghost" onClick={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} style={{ color: 'var(--danger)' }}><UserX size={18} /> Dejar caso</button>
+            <ConfirmButton label="Dejar caso" message="¿Desvincularte del ticket?" danger onConfirm={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} />
           )}
           {!puedeActuar && !puedeCerrar && !puedeReabrir && !soyElTecnico && !user?.superAdmin && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', textAlign: 'center', margin: 0 }}>
@@ -425,9 +441,7 @@ export default function TicketDetail() {
               </div>
               {user?.esAdmin && (
                 chatActivo ? (
-                  <button className="btn btn-ghost btn-sm" onClick={devolverControl} style={{ color: 'var(--danger)' }}>
-                    <X size={14} /> Devolver al bot
-                  </button>
+                  <ConfirmButton label="Devolver al bot" message="¿Devolver control al bot?" danger onConfirm={devolverControl} />
                 ) : (
                   <button className="btn btn-primary btn-sm" onClick={tomarControl}>
                     Tomar control
@@ -462,18 +476,29 @@ export default function TicketDetail() {
 
             {/* Input — only when chat is active */}
             {chatActivo && (
-              <div style={{ display: 'flex', gap: '.5rem', padding: '.8rem 1rem', borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
-                <input
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && enviarChatMsg()}
-                  placeholder="Escribí un mensaje..."
-                  style={{ flex: 1, padding: '.5rem .7rem', borderRadius: 8, border: '1px solid var(--border)', fontSize: '.9rem' }}
-                />
-                <button className="btn btn-primary btn-sm" onClick={enviarChatMsg} disabled={!chatInput.trim() || chatEnviando}>
+              <>
+                <div style={{ display: 'flex', gap: '.3rem', padding: '.4rem 1rem', flexWrap: 'wrap' }}>
+                  {['Ya lo estamos revisando', '¿Podés darnos más detalles?', 'Estamos trabajando en eso', '¿Probaste reiniciando?'].map(msg => (
+                    <button key={msg} className="btn btn-ghost btn-sm"
+                      onClick={() => enviarChatMsg(msg)}
+                      style={{ fontSize: '.75rem', borderRadius: 12, padding: '.2rem .6rem' }}>
+                      {msg}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '.5rem', padding: '.8rem 1rem', borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && enviarChatMsg()}
+                    placeholder="Escribí un mensaje..."
+                    style={{ flex: 1, padding: '.5rem .7rem', borderRadius: 8, border: '1px solid var(--border)', fontSize: '.9rem' }}
+                  />
+                <button className="btn btn-primary btn-sm" onClick={() => enviarChatMsg()} disabled={!chatInput.trim() || chatEnviando}>
                   {chatEnviando ? <span className="spinner spinner-sm" /> : <Send size={16} />}
                 </button>
               </div>
+              </>
             )}
           </div>
         )}

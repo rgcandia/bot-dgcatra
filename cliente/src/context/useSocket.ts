@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { api } from '../api/client';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
@@ -27,6 +28,14 @@ export function useSocket() {
   const [notificacion, setNotificacion] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const [ticketActualizado, setTicketActualizado] = useState<TicketFull | null>(null);
+  const [ticketsAbiertos, setTicketsAbiertos] = useState(0);
+
+  useEffect(() => {
+    if (!user?.token) return;
+    api.get<{ abiertos: number }>('/api/stats/resumen')
+      .then(res => setTicketsAbiertos(res.abiertos))
+      .catch(() => {});
+  }, [user?.token, tick]);
 
   useEffect(() => {
     if (!user?.token) return;
@@ -66,6 +75,15 @@ export function useSocket() {
   }, [user?.token]);
 
   const limpiarNotificacion = useCallback(() => setNotificacion(null), []);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  return { notificacion, limpiarNotificacion, tick, ticketActualizado };
+  useEffect(() => {
+    if (notificacion) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setNotificacion(null), 5000);
+    }
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [notificacion]);
+
+  return { notificacion, limpiarNotificacion, tick, ticketActualizado, socketRef, ticketsAbiertos };
 }

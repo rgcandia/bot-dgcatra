@@ -2,6 +2,17 @@
 
 ## En progreso
 
+### 2026-08-08 — UX Tickets: prioridad, paginación, búsqueda, badge, quick replies
+
+- [x] **Paso prioridad en creación de ticket WhatsApp**: nuevo paso `PEDIR_PRIORIDAD` (entre ubicación y confirmación). Agente elige *alta / media / baja* por número o texto. Se muestra en la confirmación con emoji de color (🔴🟡🟢) y se persiste en el ticket.
+- [x] **Paginación + búsqueda en TicketsList**: `findAndCountAll` con `limit`/`offset` en backend (20 por página). Barra de búsqueda con `Op.iLike` en asunto/descripción/técnico. Filtro "Sin técnico" (`sinAsignar=true`). Paginación con controles `< >` y contador.
+- [x] **Badge contador de tickets abiertos**: `NavItem` acepta `badge?: number` (círculo verde lima con número). `useSocket` expone `ticketsAbiertos` (fetch a `/stats/resumen`). DashboardLayout muestra el badge en el NavItem de Tickets.
+- [x] **TicketDetail — socket compartido**: en vez de crear un 2do Socket.IO, usa `socketRef` expuesto por `useSocket`. Listeners con `socket.off()` en cleanup (no `disconnect()`).
+- [x] **TicketDetail — ConfirmButton**: reemplaza `<button>` pelado de "Dejar caso" y "Devolver al bot" por `<ConfirmButton>` con confirmación inline.
+- [x] **TicketDetail — indicador "guardando..."**: estado `saving` visible junto al título del ticket mientras se hace PATCH. Rollback del estado si falla el cambio.
+- [x] **TicketDetail — quick replies**: botones rápidos predefinidos ("Ya lo estamos revisando", "¿Podés darnos más detalles?", etc.) en el chat takeover para respuestas ágiles.
+- [x] **useSocket — auto-cleanup de notificaciones**: timer de 5s para ocultar el toast automáticamente.
+
 ### 2026-08-08 — Deshardcodear sector admin: isAdmin + codigoAdmin por sector
 
 - [x] **Modelo Sector**: agregados campos `isAdmin: boolean` (default false) y `codigoAdmin: string` (nullable)

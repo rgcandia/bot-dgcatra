@@ -8,7 +8,7 @@ import NavItem from '../components/NavItem';
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { notificacion, limpiarNotificacion } = useSocket();
+  const { notificacion, limpiarNotificacion, ticketsAbiertos } = useSocket();
   const [menuOpen, setMenuOpen] = useState(false);
 
   function handleLogout() { logout(); navigate('/login', { replace: true }); }
@@ -28,7 +28,7 @@ export default function DashboardLayout() {
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1 }}>
           <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Inicio" end />
-          <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" />
+          <NavItem to="/tickets" icon={<Ticket size={18} />} label="Tickets" badge={ticketsAbiertos} />
           {user?.superAdmin && (
             <>
               <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1.5rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
