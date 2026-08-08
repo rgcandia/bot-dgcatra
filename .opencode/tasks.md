@@ -2,6 +2,14 @@
 
 ## En progreso
 
+### 2026-08-08 — Sonido: archivos MP3 en vez de Web Audio API
+
+- [x] **Reemplazo `playBeep()` → `playSound()`** (`useSocket.ts:11-17`): en vez de generar beeps con `AudioContext.createOscillator()`, ahora reproduce archivos MP3 con `new Audio()`. Más confiable, sonido profesional, sin problemas de autoplay (catch silencioso en play).
+- [x] **`ticket-creado.mp3`**: archivo descargado de Pixabay (sonido de notificación nueva). Se reproduce al recibir evento `ticket-creado` vía Socket.IO.
+- [x] **`ticket-asignado.mp3`**: archivo descargado de Pixabay (sonido de notificación de asignación). Se reproduce al recibir evento `ticket-asignado` solo si el técnico asignado coincide con el usuario actual.
+- [x] **`download-sounds2.mjs`**: script auxiliar para descargar MP3s desde Pixabay API. Búsqueda por query, seguimiento de redirects, guardado en `cliente/public/sounds/`.
+- [ ] **Commitear**: los 3 archivos están en working tree sin commitear.
+
 ### 2026-08-08 — Settings: limpiar DB + seed demo + ConfirmButton en UsuariosPage
 
 - [x] **Endpoint `POST /api/settings/limpiar-db`**: `TRUNCATE RESTART IDENTITY CASCADE` en conversaciones, tickets, usuarios, bases, sectores. IDs reinician desde 1. Código maestro sobrevive (en memoria).
