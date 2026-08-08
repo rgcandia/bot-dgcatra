@@ -2,7 +2,6 @@ import { User, Base, Sector } from '../../models/models.js';
 import { enviarTexto, enviarBotones, enviarLista } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { config } from '../../config/index.js';
-import { getSetting } from '../../config/settings.js';
 import { getIO } from '../../socket/server.js';
 import type { BtnDef } from '../enviar.js';
 
@@ -123,13 +122,12 @@ async function paso2Sector(ctx: Ctx): Promise<boolean> {
   const ctxData = (user.context || {}) as any;
   ctxData.sectorId = sectorId;
   ctxData.sectorNombre = sector.nombre;
+  ctxData.codigoAdmin = sector.codigoAdmin;
 
-  const esSoporte = sector.nombre.toLowerCase().includes('soporte');
-
-  if (esSoporte) {
+  if (sector.isAdmin) {
     await guardarUsuario(ctx.telefono, { pasoRegistro: 3, context: ctxData });
     return await enviarTexto(ctx.telefono,
-      '🔐 *Soporte Técnico requiere autorización*\n\nIngresá el *código de administrador*:\n\nEscribí *cancelar* para volver atrás.');
+      '🔐 *Autorización de administrador*\n\nIngresá el *código de acceso*:\n\nEscribí *cancelar* para volver atrás.');
   }
 
   await guardarUsuario(ctx.telefono, { pasoRegistro: 4, context: ctxData });
@@ -154,15 +152,18 @@ async function paso2SectorNumerico(ctx: Ctx): Promise<boolean> {
   const match = (btn.id as string).match(/^sector_(\d+)$/);
   if (!match) return false;
 
-  ctxData.sectorId = parseInt(match[1]);
-  ctxData.sectorNombre = btn.title;
+  const sectorId = parseInt(match[1]);
+  const sector = await Sector.findByPk(sectorId);
+  if (!sector) return false;
 
-  const esSoporte = btn.title.toLowerCase().includes('soporte');
+  ctxData.sectorId = sectorId;
+  ctxData.sectorNombre = sector.nombre;
+  ctxData.codigoAdmin = sector.codigoAdmin;
 
-  if (esSoporte) {
+  if (sector.isAdmin) {
     await guardarUsuario(ctx.telefono, { pasoRegistro: 3, context: ctxData });
     return await enviarTexto(ctx.telefono,
-      '🔐 *Soporte Técnico requiere autorización*\n\nIngresá el *código de administrador*:\n\nEscribí *cancelar* para volver atrás.');
+      '🔐 *Autorización de administrador*\n\nIngresá el *código de acceso*:\n\nEscribí *cancelar* para volver atrás.');
   }
 
   await guardarUsuario(ctx.telefono, { pasoRegistro: 4, context: ctxData });
@@ -176,18 +177,20 @@ async function paso3CodigoAdmin(ctx: Ctx): Promise<boolean> {
     const ctxData = (user.context || {}) as any;
     delete ctxData.sectorId;
     delete ctxData.sectorNombre;
+    delete ctxData.codigoAdmin;
     await guardarUsuario(ctx.telefono, { pasoRegistro: 2, context: ctxData });
     return await enviarTexto(ctx.telefono, 'Volvé a seleccionar tu sector:');
   }
 
-  const adminCode = getSetting('adminCode') || config.adminCode;
-  if (ctx.texto?.trim() !== adminCode) {
+  const user = await obtenerUsuario(ctx.telefono);
+  const ctxData = (user.context || {}) as any;
+  const codigoAdmin = ctxData.codigoAdmin;
+
+  if (ctx.texto?.trim() !== codigoAdmin) {
     await enviarTexto(ctx.telefono, '❌ Código incorrecto. Intentá de nuevo o escribí *cancelar*.');
     return false;
   }
 
-  const user = await obtenerUsuario(ctx.telefono);
-  const ctxData = (user.context || {}) as any;
   ctxData.esAdmin = true;
   await guardarUsuario(ctx.telefono, { pasoRegistro: 4, context: ctxData });
   return await enviarTexto(ctx.telefono,

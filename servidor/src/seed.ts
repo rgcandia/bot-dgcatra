@@ -9,7 +9,7 @@ async function seed() {
 
   await Sector.create({ nombre: 'Operativo' });
   await Sector.create({ nombre: 'Administrativo' });
-  await Sector.create({ nombre: 'Soporte Técnico' });
+  await Sector.create({ nombre: 'Soporte Técnico', isAdmin: true, codigoAdmin: 'admin2024' });
 
   console.log('✅ Seed completado');
   await sequelize.close();

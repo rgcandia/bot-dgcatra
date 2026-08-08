@@ -2,6 +2,15 @@
 
 ## En progreso
 
+### 2026-08-08 — Deshardcodear sector admin: isAdmin + codigoAdmin por sector
+
+- [x] **Modelo Sector**: agregados campos `isAdmin: boolean` (default false) y `codigoAdmin: string` (nullable)
+- [x] **Controller sectores**: `create` y `update` aceptan `isAdmin` y `codigoAdmin`. Si `isAdmin` está activo, `codigoAdmin` es requerido
+- [x] **Registro WhatsApp**: reemplazado `sector.nombre.includes('soporte')` por `sector.isAdmin`. El código a verificar se lee de `sector.codigoAdmin` (no más código global de settings)
+- [x] **Seed actualizado**: "Soporte Técnico" nace con `isAdmin: true, codigoAdmin: 'admin2024'`
+- [x] **SectoresPage**: toggle "Sector administrador" + input código (visible solo si toggle activo) en modal crear/editar. Columnas Admin y Código en tabla
+- [x] **SettingsPage**: eliminada sección "Código de autorización Admin" (ahora se configura por sector desde SectoresPage)
+
 ### 2026-08-06 — Reset DB + fix crear base + master code 6 dígitos
 
 - [x] **Limpieza total de BD**: script `reset-db.ts` (`sync({ force: true })` sin seed). Dropea y recrea todas las tablas vacías con IDs desde 1. Volumen PostgreSQL borrado y recreado.

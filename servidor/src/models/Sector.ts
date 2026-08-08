@@ -5,6 +5,8 @@ import type { InferAttributes, InferCreationAttributes, CreationOptional } from 
 export class Sector extends Model<InferAttributes<Sector>, InferCreationAttributes<Sector>> {
   declare id: CreationOptional<number>;
   declare nombre: string;
+  declare isAdmin: CreationOptional<boolean>;
+  declare codigoAdmin: CreationOptional<string | null>;
 }
 
 Sector.init({
@@ -17,6 +19,16 @@ Sector.init({
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
+  },
+  isAdmin: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  codigoAdmin: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null,
   },
 }, {
   sequelize,

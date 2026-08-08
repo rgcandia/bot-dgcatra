@@ -3,7 +3,7 @@ import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
 import ConfirmButton from '../../components/ConfirmButton';
 
-interface Sector { id: number; nombre: string; }
+interface Sector { id: number; nombre: string; isAdmin: boolean; codigoAdmin: string | null; }
 
 export default function SectoresPage() {
   const [sectores, setSectores] = useState<Sector[]>([]);
@@ -24,8 +24,9 @@ export default function SectoresPage() {
     if (!edit) return;
     setError('');
     try {
-      if (edit.id) await api.patch(`/api/sectores/${edit.id}`, { nombre: edit.nombre });
-      else await api.post('/api/sectores', { nombre: edit.nombre });
+      const body: Record<string, unknown> = { nombre: edit.nombre, isAdmin: edit.isAdmin, codigoAdmin: edit.codigoAdmin };
+      if (edit.id) await api.patch(`/api/sectores/${edit.id}`, body);
+      else await api.post('/api/sectores', body);
       setEdit(null); setShowNew(false);
       await load();
     } catch (e: any) { setError(e.message); }
@@ -42,17 +43,19 @@ export default function SectoresPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Sectores</h2>
-        <button className="btn btn-primary btn-sm" onClick={() => { setEdit({ nombre: '' }); setShowNew(true); setError(''); }}>
+        <button className="btn btn-primary btn-sm" onClick={() => { setEdit({ nombre: '', isAdmin: false, codigoAdmin: '' }); setShowNew(true); setError(''); }}>
           Nuevo sector
         </button>
       </div>
 
       <table>
-        <thead><tr><th>Nombre</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Admin</th><th>Código</th><th></th></tr></thead>
         <tbody>
           {sectores.map(s => (
             <tr key={s.id}>
               <td>{s.nombre}</td>
+              <td>{s.isAdmin ? <span className="badge badge-success">Sí</span> : <span className="badge">No</span>}</td>
+              <td>{s.codigoAdmin || '-'}</td>
               <td>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(s); setError(''); }}>Editar</button>
                 <ConfirmButton label="Borrar" danger message="¿Eliminar?" onConfirm={() => handleDelete(s.id)} />
@@ -71,6 +74,30 @@ export default function SectoresPage() {
               <label>Nombre</label>
               <input className="input" value={edit?.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} />
             </div>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!edit?.isAdmin}
+                  onChange={e => setEdit({ ...edit, isAdmin: e.target.checked, codigoAdmin: e.target.checked ? (edit?.codigoAdmin || '') : '' })}
+                />
+                Sector administrador
+              </label>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '.8rem', margin: '.2rem 0 0 1.7rem' }}>
+                Los usuarios que elijan este sector deberán ingresar un código durante el registro.
+              </p>
+            </div>
+            {edit?.isAdmin && (
+              <div className="form-group">
+                <label>Código de acceso</label>
+                <input
+                  className="input"
+                  value={edit?.codigoAdmin || ''}
+                  onChange={e => setEdit({ ...edit, codigoAdmin: e.target.value })}
+                  placeholder="admin2024"
+                />
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '.5rem' }}>
               <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
               <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>

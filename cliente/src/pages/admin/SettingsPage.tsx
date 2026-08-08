@@ -11,9 +11,7 @@ export default function SettingsPage() {
   const [masterCode, setMasterCode] = useState('');
   const [masterDigits, setMasterDigits] = useState(['', '', '', '', '', '']);
   const masterRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [adminCode, setAdminCode] = useState('');
   const [savedMaster, setSavedMaster] = useState(false);
-  const [savedAdmin, setSavedAdmin] = useState(false);
   const [botConnected, setBotConnected] = useState<boolean | null>(null);
   const [botPhone, setBotPhone] = useState('');
   const [qrCode, setQrCode] = useState('');
@@ -23,12 +21,11 @@ export default function SettingsPage() {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
-    api.get<{ masterCode: string; adminCode: string }>('/api/settings/master-code')
+    api.get<{ masterCode: string }>('/api/settings/master-code')
       .then((d) => {
         setMasterCode(d.masterCode);
         const digits = (d.masterCode || '').padEnd(6, '').slice(0, 6).split('');
         setMasterDigits(digits);
-        setAdminCode(d.adminCode);
       })
       .catch(() => {});
 
@@ -80,12 +77,6 @@ export default function SettingsPage() {
     setMasterCode(codigo);
     setSavedMaster(true);
     setTimeout(() => setSavedMaster(false), 2000);
-  }
-
-  async function saveAdmin() {
-    await api.patch('/api/settings/admin-code', { adminCode });
-    setSavedAdmin(true);
-    setTimeout(() => setSavedAdmin(false), 2000);
   }
 
   function showToast(msg: string) {
@@ -197,19 +188,6 @@ export default function SettingsPage() {
                 ))}
               </div>
               <button className="btn btn-primary btn-sm" onClick={saveMaster}>{savedMaster ? 'Guardado' : 'Guardar'}</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.5rem' }}>
-          <div className="form-group" style={{ marginBottom: '0' }}>
-            <label>Código de autorización Admin</label>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: '.5rem 0 1rem' }}>
-              Se pide al usuario durante el registro por WhatsApp si selecciona sector "Soporte Técnico".
-            </p>
-            <div style={{ display: 'flex', gap: '.5rem' }}>
-              <input value={adminCode} onChange={e => setAdminCode(e.target.value)} placeholder="admin2024" style={{ flex: 1 }} />
-              <button className="btn btn-primary btn-sm" onClick={saveAdmin}>{savedAdmin ? 'Guardado' : 'Guardar'}</button>
             </div>
           </div>
         </div>
