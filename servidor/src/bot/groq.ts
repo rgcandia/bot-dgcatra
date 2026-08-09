@@ -1,12 +1,21 @@
 const GROQ_KEY = process.env.GROQ_API_KEY;
 
-const SYSTEM = `Sos un generador de títulos para tickets de soporte técnico.
-Creá un título MUY corto (máximo 60 caracteres) que resuma el problema técnico.
-Usá sustantivos concretos: "Mouse sin funcionar", "Impresora atascada", "No hay internet".
-Respondé ÚNICAMENTE con el título. Sin comillas, sin explicaciones, sin viñetas.`;
+const SYSTEM = `Sos un asistente que resume problemas en títulos cortos para tickets de soporte.
+Reglas:
+- Máximo 60 caracteres.
+- NO inventes detalles que el usuario no mencionó.
+- Reformulá a lenguaje técnico solo si es obvio: "no prende la pc" → "PC no enciende".
+- Si el mensaje no describe un problema técnico de IT (saludos, quejas personales, chistes, emociones, preguntas no técnicas), respondé EXACTAMENTE "Consulta general".
+- Respondé ÚNICAMENTE con el título. Sin comillas, sin explicaciones, sin viñetas.`;
 
 export async function generarTituloTicket(descripcion: string, ubicacion: string): Promise<string> {
-  if (!GROQ_KEY) throw new Error('GROQ_API_KEY no configurada');
+  if (!descripcion || descripcion.trim().length < 20) {
+    return descripcion.trim().substring(0, 60) || 'Ticket de soporte';
+  }
+
+  if (!GROQ_KEY) {
+    return descripcion.trim().substring(0, 60);
+  }
 
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(), 4000);
@@ -37,6 +46,9 @@ export async function generarTituloTicket(descripcion: string, ubicacion: string
 
     if (!titulo || titulo.length < 3) throw new Error('Título vacío');
     return titulo.substring(0, 60);
+  } catch (e: any) {
+    console.log('🤖 IA título falló, usando fallback:', e?.message || e);
+    return descripcion.trim().substring(0, 60);
   } finally {
     clearTimeout(timeout);
   }

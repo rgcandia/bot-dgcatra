@@ -94,7 +94,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
 | **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes recientes con `ticketId`. |
 | **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
-| **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos automáticamente al crear tickets. Si la IA falla, usa las primeras 60 letras de la descripción. |
+| **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos al crear tickets. Si la descripción es muy corta (< 20 chars), se usa directamente sin llamar a la IA. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. |
 
 ---
 
@@ -140,21 +140,23 @@ bot-dgcatra/
 ## Flujo de registro (bot)
 
 1. Usuario envía "hola" al bot
-2. Bot pide **código de acceso de la base** (`PIE2026` / `ONC2026`)
-3. Muestra los **sectores** de esa base (Operativo, Administrativo, Soporte Técnico)
-4. Si elige **Soporte Técnico** → pide código de admin (`admin2024`) → será admin
-5. Si elige otro sector → usuario normal
-6. Nombre completo → confirmar → ✅
+2. Bot muestra bienvenida: *"¡Bienvenido! Sistema de Gestión de Tickets DGCATRA"* → escribe **SI** para empezar o **NO** para cancelar (acepta variantes: `sí`, `dale`, `ok`, `cancelar`, `salir`, etc.)
+3. Bot pide **código de acceso de la base** (`PIE2026` / `ONC2026`)
+4. Muestra los **sectores** con números (①②③). Puede elegir escribiendo el número o el nombre del sector (sin tildes, case-insensitive)
+5. Si elige **Soporte Técnico** → pide código de admin (`admin2024`) → será admin
+6. Si elige otro sector → usuario normal
+7. Nombre completo → confirmación: escribe **SI** o **NO** (sin botones, texto libre)
+8. ✅ Registro completo
 
 **Un solo código para todos. Los de Soporte Técnico ponen uno extra.**
 
 ## Flujo de creación de ticket (bot)
 
-1. Usuario escribe "ticket" o presiona el botón "🎫 Nuevo ticket"
-2. Bot pide **descripción del problema**
+1. Usuario escribe "ticket", "crear", "problema", "reportar" o elige `1` en el menú
+2. Bot: *"¡Dale, creemos un ticket!"* → pide **descripción del problema**
 3. Bot pide **ubicación** (dónde ocurre)
-4. Bot muestra resumen y pide confirmación
-5. Confirmado → la IA (Groq) genera un título corto y se crea el ticket con estado `abierto`. Si la IA falla, usa las primeras 60 letras de la descripción como título.
+4. Bot muestra resumen y pide confirmación (**SI** / **NO** en texto)
+5. Confirmado → la IA (Groq) genera un título corto. Si la descripción es < 20 chars, se usa directo. Si no es un problema técnico, titula `"Consulta general"`. Si la IA falla, usa las primeras 60 letras.
 6. El ticket aparece en el dashboard para que un admin lo adopte
 
 ## Tipos de usuarios
