@@ -41,25 +41,49 @@ async function cancelarRegistro(telefono: string, paso: number) {
   return await enviarTexto(telefono, msg);
 }
 
+const AFIRMATIVO = ['si', 'sí', 's', 'dale', 'ok', 'confirmo', 'registrarme', 'registrar', 'registro', 'comenzar', 'empezar', 'iniciar'];
+const NEGATIVO = ['no', 'cancelar', 'salir', 'n', 'cancelo', 'abortar', 'terminar', 'finalizar'];
+const CANCELAR = ['cancelar', 'salir', 'abortar', 'terminar', 'finalizar'];
+
+function esAfirmativo(texto: string): boolean {
+  const t = texto.toLowerCase().trim();
+  return AFIRMATIVO.some(p => t === p || t.startsWith(p));
+}
+
+function esNegativo(texto: string): boolean {
+  const t = texto.toLowerCase().trim();
+  return NEGATIVO.some(p => t === p || t.startsWith(p));
+}
+
+function esCancelar(texto: string): boolean {
+  const t = texto.toLowerCase().trim();
+  return CANCELAR.some(p => t === p || t.startsWith(p));
+}
+
+function normalizar(texto: string): string {
+  return texto.toLowerCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 async function paso0(ctx: Ctx): Promise<boolean> {
-  if (ctx.buttonId === 'reg_iniciar') {
+  const textoLower = (ctx.texto || '').toLowerCase().trim();
+  if (ctx.buttonId === 'cancelar') {
+    return await enviarTexto(ctx.telefono, 'Ok. Cuando quieras registrarte, escribí *hola*.');
+  }
+  if (esAfirmativo(textoLower)) {
     await guardarUsuario(ctx.telefono, { pasoRegistro: 1, context: null });
     return await enviarTexto(ctx.telefono,
       '🔑 Ingresá el *código de acceso* de tu base:\n\nEj: `ABC123`\n\nEscribí *cancelar* para salir.');
   }
-  if (ctx.buttonId === 'reg_salir' || ctx.buttonId === 'cancelar') {
+  if (esNegativo(textoLower)) {
     return await enviarTexto(ctx.telefono, 'Ok. Cuando quieras registrarte, escribí *hola*.');
   }
-  return await enviarBotones(ctx.telefono,
-    '🤖 *Bienvenido al sistema de gestión de tickets DGCATRA*\n\nPara acceder necesitás registrarte.\n¿Comenzamos?',
-    [
-      { id: 'reg_iniciar', title: 'SI' },
-      { id: 'reg_salir', title: 'NO' },
-    ]);
+  return await enviarTexto(ctx.telefono,
+    '🤖 *¡Bienvenido! Sistema de Gestión de Tickets DGCATRA*\n\nPara registrarte escribí *SI*.\nPara cancelar escribí *NO*.');
 }
 
 async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
-  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono, 1);
+  if (esCancelar(ctx.texto || '')) return await cancelarRegistro(ctx.telefono, 1);
 
   if (!ctx.texto || ctx.texto.length < 3) {
     await enviarTexto(ctx.telefono, '❌ El código debe tener al menos 3 caracteres. Intentá de nuevo:');
@@ -107,12 +131,12 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso2Sector(ctx: Ctx): Promise<boolean> {
-  const textoLower = ctx.texto?.toLowerCase() || '';
-  if (ctx.buttonId === 'cancelar' || textoLower === 'cancelar' || textoLower === 'salir') return await cancelarRegistro(ctx.telefono, 2);
+  const textoLower = (ctx.texto || '').toLowerCase().trim();
+  if (ctx.buttonId === 'cancelar' || esCancelar(textoLower)) return await cancelarRegistro(ctx.telefono, 2);
 
   const match = ctx.buttonId?.match(/^sector_(\d+)$/);
   if (!match) {
-    return await paso2SectorNumerico(ctx);
+    return await paso2SectorTexto(ctx);
   }
 
   const sectorId = parseInt(match[1]);
@@ -137,28 +161,60 @@ async function paso2Sector(ctx: Ctx): Promise<boolean> {
     '👤 Escribí tu *nombre completo*:\n\nEj: `Juan Pérez`\n\nEscribí *cancelar* para salir.');
 }
 
-async function paso2SectorNumerico(ctx: Ctx): Promise<boolean> {
-  const num = parseInt(ctx.texto?.trim() || '');
-  if (isNaN(num) || num < 1) return false;
-
+async function paso2SectorTexto(ctx: Ctx): Promise<boolean> {
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;
   const lastButtons: BtnDef[] | undefined = ctxData._lastButtons;
 
-  if (!lastButtons || num > lastButtons.length || lastButtons[num - 1].id === 'cancelar') {
-    await enviarTexto(ctx.telefono, `❌ Opción inválida. Elegí un número del 1 al ${lastButtons?.length || '?'}.`);
+  const texto = (ctx.texto || '').trim();
+  const textoNorm = normalizar(texto);
+  let sectorId: number | null = null;
+  let sectorNombre: string | null = null;
+
+  const num = parseInt(texto);
+  if (!isNaN(num) && num >= 1 && lastButtons && num <= lastButtons.length) {
+    const btn = lastButtons[num - 1];
+    if (btn.id === 'cancelar') {
+      await enviarTexto(ctx.telefono, `❌ Opción inválida. Elegí un número del 1 al ${lastButtons.length}.`);
+      return false;
+    }
+    const matchBtn = (btn.id as string).match(/^sector_(\d+)$/);
+    if (matchBtn) {
+      sectorId = parseInt(matchBtn[1]);
+    }
+  } else {
+    const sectores = await Sector.findAll({ order: [['nombre', 'ASC']] });
+    let filtered = sectores.filter(s => normalizar(s.nombre) === textoNorm);
+    if (filtered.length === 0) {
+      filtered = sectores.filter(s => normalizar(s.nombre).includes(textoNorm));
+    }
+    if (filtered.length === 0) {
+      filtered = sectores.filter(s => normalizar(s.nombre).includes(textoNorm.split(' ')[0]));
+    }
+    if (filtered.length === 0) {
+      await enviarTexto(ctx.telefono,
+        '❌ Sector no encontrado.\nEscribí el *número* o el *nombre* del sector.');
+      return false;
+    }
+    if (filtered.length > 1) {
+      const nombres = filtered.map(s => s.nombre).join(', ');
+      await enviarTexto(ctx.telefono,
+        `❓ Varios sectores coinciden: *${nombres}*\n\nEscribí el nombre exacto o el número de la opción.`);
+      return false;
+    }
+    sectorId = filtered[0].id;
+    sectorNombre = filtered[0].nombre;
+  }
+
+  if (!sectorId) {
+    await enviarTexto(ctx.telefono, '❌ Opción inválida. Escribí el número o el nombre del sector.');
     return false;
   }
 
-  const btn = lastButtons[num - 1]; 
-  const match = (btn.id as string).match(/^sector_(\d+)$/);
-  if (!match) return false;
-
-  const sectorId = parseInt(match[1]);
   const sector = await Sector.findByPk(sectorId);
   if (!sector) return false;
 
-  ctxData.sectorId = sectorId;
+  ctxData.sectorId = sector.id;
   ctxData.sectorNombre = sector.nombre;
   ctxData.codigoAdmin = sector.codigoAdmin;
   ctxData.sectorIsAdmin = sector.isAdmin;
@@ -175,7 +231,7 @@ async function paso2SectorNumerico(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso3CodigoAdmin(ctx: Ctx): Promise<boolean> {
-  if (ctx.texto?.toLowerCase() === 'cancelar') {
+  if (esCancelar(ctx.texto || '')) {
     const user = await obtenerUsuario(ctx.telefono);
     const ctxData = (user.context || {}) as any;
     delete ctxData.sectorId;
@@ -200,7 +256,7 @@ async function paso3CodigoAdmin(ctx: Ctx): Promise<boolean> {
 }
 
 async function paso4Nombre(ctx: Ctx): Promise<boolean> {
-  if (ctx.texto?.toLowerCase() === 'cancelar') return await cancelarRegistro(ctx.telefono, 4);
+  if (esCancelar(ctx.texto || '')) return await cancelarRegistro(ctx.telefono, 4);
 
   if (!ctx.texto || ctx.texto.length < 3) {
     await enviarTexto(ctx.telefono, '❌ El nombre debe tener al menos 3 caracteres. Escribilo de nuevo:');
@@ -219,27 +275,19 @@ async function paso4Nombre(ctx: Ctx): Promise<boolean> {
 async function mostrarConfirmacion(telefono: string, ctx: any): Promise<boolean> {
   const rol = ctx.sectorIsAdmin ? '🛡️ Admin' : '';
   const rolLine = rol ? `${rol}\n` : '';
-  return await enviarBotones(telefono,
+  return await enviarTexto(telefono,
     '✅ *Confirmá tus datos:*\n\n' +
     `👤 *Nombre:* ${ctx.nombre}\n` +
     `🏢 *Base:* ${ctx.baseNombre}\n` +
     `⚙️ *Sector:* ${ctx.sectorNombre}\n` +
     `${rolLine}` +
-    '¿Querés confirmar el registro?\nEscribí *SI* o *NO*.',
-    [
-      { id: 'conf_si', title: 'Confirmar' },
-      { id: 'conf_no', title: 'Cancelar' },
-    ],
-  );
+    '¿Querés confirmar el registro?\nEscribí *SI* o *NO*.');
 }
 
 async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
-  const textoLower = ctx.texto.toLowerCase().trim();
-  const confirma = ctx.buttonId === 'conf_si' || ['si', 'sí', 's', 'dale', 'ok', 'confirmo'].some(c => textoLower === c || textoLower.startsWith(c));
-  const cancela = ctx.buttonId === 'conf_no' || ctx.buttonId === 'cancelar' || ['no', 'cancelar', 'n', 'cancelo'].some(c => textoLower === c || textoLower.startsWith(c));
-
-  if (cancela) return await cancelarRegistro(ctx.telefono, 6);
-  if (!confirma) return false;
+  const textoLower = (ctx.texto || '').toLowerCase().trim();
+  if (ctx.buttonId === 'cancelar' || esNegativo(textoLower)) return await cancelarRegistro(ctx.telefono, 6);
+  if (!esAfirmativo(textoLower)) return false;
 
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;
