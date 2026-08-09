@@ -2,6 +2,7 @@ import { Ticket, User } from '../../models/models.js';
 import { getIO } from '../../socket/server.js';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
+import { esCortesia } from '../helpers.js';
 
 interface Ctx {
   telefono: string;
@@ -42,6 +43,11 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   if (ctx.buttonId === 'cmd_ticket') return false; // → inicia creación de ticket
   if (ctx.buttonId === 'cmd_mis_tickets') return await mostrarTickets(ctx.telefono);
 
+  // Iniciar ticket por texto
+  if (texto === 'nuevo ticket' || texto === 'crear ticket' || texto === 'crear' || texto === 'reportar' || texto === 'problema' || texto === 'incidente' || texto === 'falla' || texto === 'reporte') {
+    return false; // → inicia creación de ticket
+  }
+
   // Ayuda
   if (texto === 'ayuda' || texto === 'help' || texto === 'comandos' || ctx.buttonId === 'cmd_ayuda') {
     return await mostrarAyuda(ctx.telefono);
@@ -80,6 +86,11 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   if (texto === 'ticket' || texto === 'ver ticket' || texto === 'ver') {
     await guardarUsuario(ctx.telefono, { context: { pendingCommand: 'verTicket' } });
     await enviarTexto(ctx.telefono, '🔍 ¿Qué ticket querés *ver*?\nEscribí el número. Para cancelar, escribí *cancelar*.');
+    return true;
+  }
+
+  if (esCortesia(texto)) {
+    await enviarTexto(ctx.telefono, '😊 ¡De nada! Si necesitás algo más, escribí *ayuda* para ver los comandos.');
     return true;
   }
 

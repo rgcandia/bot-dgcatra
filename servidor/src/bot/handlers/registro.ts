@@ -4,6 +4,7 @@ import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { config } from '../../config/index.js';
 import { getIO } from '../../socket/server.js';
 import type { BtnDef } from '../enviar.js';
+import { esAfirmativo, esNegativo, esCancelar, normalizar } from '../helpers.js';
 
 interface Ctx {
   telefono: string;
@@ -39,30 +40,6 @@ async function cancelarRegistro(telefono: string, paso: number) {
   };
   const msg = mensajes[paso] || 'Registro cancelado. Cuando quieras intentarlo, escribí *hola*.';
   return await enviarTexto(telefono, msg);
-}
-
-const AFIRMATIVO = ['si', 'sí', 's', 'dale', 'ok', 'confirmo', 'registrarme', 'registrar', 'registro', 'comenzar', 'empezar', 'iniciar'];
-const NEGATIVO = ['no', 'cancelar', 'salir', 'n', 'cancelo', 'abortar', 'terminar', 'finalizar'];
-const CANCELAR = ['cancelar', 'salir', 'abortar', 'terminar', 'finalizar'];
-
-function esAfirmativo(texto: string): boolean {
-  const t = texto.toLowerCase().trim();
-  return AFIRMATIVO.some(p => t === p || t.startsWith(p));
-}
-
-function esNegativo(texto: string): boolean {
-  const t = texto.toLowerCase().trim();
-  return NEGATIVO.some(p => t === p || t.startsWith(p));
-}
-
-function esCancelar(texto: string): boolean {
-  const t = texto.toLowerCase().trim();
-  return CANCELAR.some(p => t === p || t.startsWith(p));
-}
-
-function normalizar(texto: string): string {
-  return texto.toLowerCase().trim()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 async function paso0(ctx: Ctx): Promise<boolean> {

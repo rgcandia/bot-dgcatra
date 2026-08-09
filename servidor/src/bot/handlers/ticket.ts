@@ -6,6 +6,7 @@ import { Op } from 'sequelize';
 import { enviarTexto, enviarBotones, iniciarTyping } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { generarTituloTicket } from '../groq.js';
+import { esAfirmativo, esNegativo, esCancelar } from '../helpers.js';
 
 interface Ctx {
   telefono: string;
@@ -25,7 +26,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
 
   const paso = (user.context?.ticketPaso ?? ESTADOS_TICKET.INICIAR) as number;
 
-  if (ctx.texto?.toLowerCase() === 'cancelar') {
+  if (esCancelar(ctx.texto || '')) {
     await guardarUsuario(ctx.telefono, { context: null });
     return await enviarTexto(ctx.telefono, 'Cancelado. Escribí *ayuda* para volver al menú.');
   }
@@ -36,7 +37,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         context: { ticketPaso: ESTADOS_TICKET.PEDIR_DESCRIPCION },
       });
       return await enviarTexto(ctx.telefono,
-        '📝 *Nuevo ticket*\n\n' +
+        '🎫 *¡Dale, creemos un ticket!*\n\n' +
         'Describí el problema técnico:\n\n' +
         'Ej: "La impresora no imprime" o "No tengo acceso a internet"\n\n' +
         'Escribí *cancelar* para salir.');
@@ -89,12 +90,12 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
     }
 
     case ESTADOS_TICKET.CONFIRMAR: {
-      const textoLower = ctx.texto.toLowerCase().trim();
-      if (['no', 'cancelar', 'cancelo', 'n'].includes(textoLower)) {
+      const textoLower = (ctx.texto || '').toLowerCase().trim();
+      if (esNegativo(textoLower)) {
         await guardarUsuario(ctx.telefono, { context: null });
         return await enviarTexto(ctx.telefono, 'Cancelado. Escribí *ayuda* para ver el menú.');
       }
-      if (!['si', 'sí', 's', 'dale', 'ok', 'confirmo', 'confirmar'].some(c => textoLower.startsWith(c))) {
+      if (!esAfirmativo(textoLower)) {
         await enviarTexto(ctx.telefono, 'Respondé *SI* para confirmar o *NO* para cancelar.');
         return false;
       }
