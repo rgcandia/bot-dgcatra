@@ -104,7 +104,7 @@ export async function enviarTexto(to: string, texto: string, ticketId?: number |
 
 export async function enviarBotones(to: string, body: string, buttons: BtnDef[], ticketId?: number | null): Promise<boolean> {
   try {
-    const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
+    const emojis = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
     const opts = buttons.map((b, i) => `${emojis[i] || `${i + 1}.`} *${b.title}*`).join('\n');
     const msg = `${body}\n\n${opts}`;
 
@@ -133,7 +133,7 @@ export async function enviarLista(
 ): Promise<boolean> {
   try {
     const chatId = await resolverChatId(to);
-    const emojis = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣', '🔟'];
+    const emojis = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
     let msg = `${body}\n\n`;
     let idx = 0;

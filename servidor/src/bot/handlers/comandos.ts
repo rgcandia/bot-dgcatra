@@ -108,7 +108,7 @@ async function ejecutarPendiente(telefono: string, cmd: PendingCmd, id: number):
 
 async function mostrarMenu(telefono: string): Promise<boolean> {
   return await enviarBotones(telefono,
-    '👋 *Hola!* ¿Qué querés hacer?\n\n' +
+    '👋 ¡Hola! ¿En qué te puedo ayudar?\n\n' +
     'Escribí el número de la opción:',
     [
       { id: 'cmd_ticket', title: 'Nuevo ticket' },
