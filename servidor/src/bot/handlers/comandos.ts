@@ -70,14 +70,14 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
     return await mostrarTicket(ctx.telefono, parseInt(ticketConNum[1]));
   }
 
-  // cerrar N o cerrar ticket N
-  const cerrarConNum = texto.match(/^(?:\/cerrar|cerrar(?:\s+ticket)?)\s+#?(\d+)$/i);
+  // cerrar N / cerrar ticket N / cancelar N / cancelar ticket N
+  const cerrarConNum = texto.match(/^(?:\/cerrar|cerrar|cancelar)(?:\s+ticket)?\s+#?(\d+)$/i);
   if (cerrarConNum) {
     return await cambiarEstado(ctx.telefono, parseInt(cerrarConNum[1]), 'cerrado');
   }
 
   // ── Comandos sin número → pedir número ──
-  if (texto === 'cerrar') {
+  if (texto === 'cerrar' || texto === 'cancelar') {
     await guardarUsuario(ctx.telefono, { context: { pendingCommand: 'cerrar' } });
     await enviarTexto(ctx.telefono, '🔒 ¿Qué ticket querés *cerrar*?\nEscribí el número. Para cancelar, escribí *cancelar*.');
     return true;
