@@ -415,9 +415,8 @@ export default function TicketDetail() {
                     <div key={i} style={{ position: 'relative', paddingLeft: '1.2rem', paddingBottom: i < historial.length - 1 ? '1rem' : 0 }}>
                       <div style={{ position: 'absolute', left: -11, top: 3, width: 20, height: 20, borderRadius: '50%', background: 'var(--surface)', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{iconoHistorial(h.accion)}</div>
                       <div style={{ marginBottom: 2 }}><span style={{ fontWeight: 600, fontSize: '.9rem', color: 'var(--text)' }}>{h.accion}</span></div>
-                      <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '.4rem' }}>
-                        {h.autor && <span>{h.autor}</span>}
-                        {fecha && <><span style={{ opacity: .4 }}>·</span><span>{fecha}</span></>}
+                      <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)' }}>
+                        {fecha && <span>{fecha}</span>}
                       </div>
                     </div>
                   );
