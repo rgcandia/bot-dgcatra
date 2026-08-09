@@ -5,16 +5,12 @@ Reglas:
 - Máximo 60 caracteres.
 - NO inventes detalles que el usuario no mencionó.
 - Reformulá a lenguaje técnico solo si es obvio: "no prende la pc" → "PC no enciende".
-- Si el mensaje no describe un problema técnico de IT (saludos, quejas personales, chistes, emociones, preguntas no técnicas), respondé EXACTAMENTE "Consulta general".
+- Si el mensaje no describe un problema técnico de IT (saludos, quejas personales, pedidos genéricos como "ayuda", "necesito ayuda", chistes, emociones), respondé EXACTAMENTE "Consulta general".
 - Respondé ÚNICAMENTE con el título. Sin comillas, sin explicaciones, sin viñetas.`;
 
 export async function generarTituloTicket(descripcion: string, ubicacion: string): Promise<string> {
-  if (!descripcion || descripcion.trim().length < 20) {
-    return descripcion.trim().substring(0, 60) || 'Ticket de soporte';
-  }
-
   if (!GROQ_KEY) {
-    return descripcion.trim().substring(0, 60);
+    return (descripcion || '').trim().substring(0, 60) || 'Ticket de soporte';
   }
 
   const ctrl = new AbortController();

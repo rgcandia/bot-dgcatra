@@ -94,7 +94,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
 | **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes recientes con `ticketId`. |
 | **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
-| **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos al crear tickets. Si la descripción es muy corta (< 20 chars), se usa directamente sin llamar a la IA. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. |
+| **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos al crear tickets. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. |
 
 ---
 
@@ -156,7 +156,7 @@ bot-dgcatra/
 2. Bot: *"¡Dale, creemos un ticket!"* → pide **descripción del problema**
 3. Bot pide **ubicación** (dónde ocurre)
 4. Bot muestra resumen y pide confirmación (**SI** / **NO** en texto)
-5. Confirmado → la IA (Groq) genera un título corto. Si la descripción es < 20 chars, se usa directo. Si no es un problema técnico, titula `"Consulta general"`. Si la IA falla, usa las primeras 60 letras.
+5. Confirmado → la IA (Groq) genera un título corto. Si no es un problema técnico, titula `"Consulta general"`. Si la IA falla, usa las primeras 60 letras.
 6. El ticket aparece en el dashboard para que un admin lo adopte
 
 ## Tipos de usuarios
