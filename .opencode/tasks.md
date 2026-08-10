@@ -2,6 +2,11 @@
 
 ## En progreso
 
+### 2026-08-10 — Hardening: credenciales DB externalizadas
+- [x] **`.env`**: agregadas variables `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` separadas de `DATABASE_URL`
+- [x] **`docker-compose.yml`**: db service ahora usa `${POSTGRES_USER}` / `${POSTGRES_PASSWORD}` / `${POSTGRES_DB}` en vez de hardcodear `dgcatra`. Healthcheck también parametrizado.
+- [x] **`.env.example`**: corregido `norbridge` → `dgcatra`, agregadas variables DB con placeholder seguro
+
 ### 2026-08-08 — Sonido: archivos MP3 en vez de Web Audio API
 
 - [x] **Reemplazo `playBeep()` → `playSound()`** (`useSocket.ts:11-17`): en vez de generar beeps con `AudioContext.createOscillator()`, ahora reproduce archivos MP3 con `new Audio()`. Más confiable, sonido profesional, sin problemas de autoplay (catch silencioso en play).
