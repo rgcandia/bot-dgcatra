@@ -5,6 +5,7 @@ import { User } from '../models/models.js';
 import { config } from '../config/index.js';
 import { getSetting } from '../config/settings.js';
 import { getBotStatus } from '../socket/server.js';
+import { logger } from '../config/logger.js';
 
 const codigos = new Map<string, { codigo: string; expires: number }>();
 const OTP_EXPIRY = 5 * 60 * 1000; // 5 minutos
@@ -38,11 +39,11 @@ export async function solicitarCodigo(req: Request, res: Response) {
     const { enviarTexto } = await import('../bot/enviar.js');
     await enviarTexto(telefono,
       `🔐 *Código de acceso*\n\nTu código es: *${codigo}*\n\nExpira en 5 minutos.\nSi no lo pediste vos, ignorá este mensaje.`);
-    console.log(`📱 Código para ${telefono}: ${codigo}`);
+    logger.info({ telefono }, 'Código OTP generado');
 
     res.json({ message: 'Código enviado a tu WhatsApp' });
   } catch (e) {
-    console.error('Error en solicitarCodigo:', e);
+    logger.error({ err: e }, 'Error en solicitarCodigo');
     res.status(500).json({ error: 'Error interno' });
   }
 }
@@ -79,7 +80,7 @@ export async function verificarCodigo(req: Request, res: Response) {
 
     res.json({ token, esAdmin, superAdmin: false, nombre: user?.nombreCompleto || telefono });
   } catch (e) {
-    console.error('Error en verificarCodigo:', e);
+    logger.error({ err: e }, 'Error en verificarCodigo');
     res.status(500).json({ error: 'Error interno' });
   }
 }

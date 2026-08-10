@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.js';
 import { Ticket, User, Base, Conversacion } from '../models/models.js';
 import { sequelize } from '../config/database.js';
 import { Op } from 'sequelize';
+import { logger } from '../config/logger.js';
 
 export async function resumen(_req: AuthRequest, res: Response) {
   try {
@@ -17,7 +18,7 @@ export async function resumen(_req: AuthRequest, res: Response) {
 
     res.json({ total, abiertos, en_proceso: enProceso, cerrados, alta_prioridad: altaPrioridad, usuarios_activos: usuariosActivos });
   } catch (e) {
-    console.error('Error en stats resumen:', e);
+    logger.error({ err: e }, 'Error en stats resumen');
     res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 }
@@ -40,7 +41,7 @@ export async function porBase(_req: AuthRequest, res: Response) {
 
     res.json(data.sort((a: any, b: any) => b.total - a.total));
   } catch (e) {
-    console.error('Error en stats porBase:', e);
+    logger.error({ err: e }, 'Error en stats porBase');
     res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 }
@@ -59,7 +60,7 @@ export async function porMes(_req: AuthRequest, res: Response) {
     `);
     res.json(data[0]);
   } catch (e) {
-    console.error('Error en stats porMes:', e);
+    logger.error({ err: e }, 'Error en stats porMes');
     res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 }
@@ -91,7 +92,7 @@ export async function topUsuarios(_req: AuthRequest, res: Response) {
 
     res.json(data);
   } catch (e) {
-    console.error('Error en stats topUsuarios:', e);
+    logger.error({ err: e }, 'Error en stats topUsuarios');
     res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 }
@@ -102,7 +103,7 @@ export async function eliminarTickets(_req: AuthRequest, res: Response) {
     await Ticket.destroy({ where: {} });
     res.json({ ok: true, mensaje: 'Todos los tickets eliminados' });
   } catch (e) {
-    console.error('Error en eliminarTickets:', e);
+    logger.error({ err: e }, 'Error en eliminarTickets');
     res.status(500).json({ error: 'Error al eliminar tickets' });
   }
 }
@@ -112,7 +113,7 @@ export async function eliminarUsuarios(_req: AuthRequest, res: Response) {
     await User.destroy({ where: { esAdmin: false } });
     res.json({ ok: true, mensaje: 'Usuarios no-admin eliminados' });
   } catch (e) {
-    console.error('Error en eliminarUsuarios:', e);
+    logger.error({ err: e }, 'Error en eliminarUsuarios');
     res.status(500).json({ error: 'Error al eliminar usuarios' });
   }
 }

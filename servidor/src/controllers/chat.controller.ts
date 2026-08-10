@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
 import { Ticket, User, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
+import { logger } from '../config/logger.js';
 
 async function invalidarCacheUsuario(telefono: string) {
   try {
@@ -75,7 +76,7 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
 
     res.json({ ok: true, estado: 'activo' });
   } catch (e) {
-    console.error('Error en iniciarChat:', e);
+    logger.error({ err: e }, 'Error en iniciarChat');
     res.status(500).json({ error: 'Error interno' });
   }
 }
@@ -107,7 +108,7 @@ export async function enviarMensaje(req: AuthRequest, res: Response) {
 
     res.json({ ok: true, mensaje, autor: adminNombre, timestamp: new Date().toISOString() });
   } catch (e) {
-    console.error('Error en enviarMensaje:', e);
+    logger.error({ err: e }, 'Error en enviarMensaje');
     res.status(500).json({ error: 'Error interno' });
   }
 }
@@ -142,7 +143,7 @@ export async function finalizarChat(req: AuthRequest, res: Response) {
 
     res.json({ ok: true, estado: 'inactivo' });
   } catch (e) {
-    console.error('Error en finalizarChat:', e);
+    logger.error({ err: e }, 'Error en finalizarChat');
     res.status(500).json({ error: 'Error interno' });
   }
 }
@@ -162,7 +163,7 @@ export async function estadoChat(req: AuthRequest, res: Response) {
       res.json({ activo: false, admin: null });
     }
   } catch (e) {
-    console.error('Error en estadoChat:', e);
+    logger.error({ err: e }, 'Error en estadoChat');
     res.status(500).json({ error: 'Error interno' });
   }
 }

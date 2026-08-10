@@ -1,6 +1,7 @@
 import type { Client } from 'whatsapp-web.js';
 import { registrarMensajeSaliente, guardarUltimosBotones } from './session.js';
 import { User } from '../models/models.js';
+import { logger } from '../config/logger.js';
 
 let _client: Client | null = null;
 let _ready = false;
@@ -52,7 +53,7 @@ async function simularEscritura(chatId: string, texto: string): Promise<void> {
     const delay = 1500 + texto.length * 15 + Math.random() * 2000;
     await new Promise(r => setTimeout(r, delay));
   } catch (e: any) {
-    console.warn('⚠️ [Typing] Error al simular escritura:', e?.message || e);
+    logger.warn({ err: e?.message }, 'Error al simular escritura');
     const delay = 1500 + Math.random() * 2000;
     await new Promise(r => setTimeout(r, delay));
   }
@@ -97,7 +98,7 @@ export async function enviarTexto(to: string, texto: string, ticketId?: number |
     registrarMensajeSaliente(to, texto, ticketId);
     return true;
   } catch (e) {
-    console.error('❌ Error enviando texto:', e);
+    logger.error({ err: e }, 'Error enviando texto');
     return false;
   }
 }
@@ -119,7 +120,7 @@ export async function enviarBotones(to: string, body: string, buttons: BtnDef[],
     registrarMensajeSaliente(to, msg, ticketId);
     return true;
   } catch (e) {
-    console.error('❌ Error enviando botones:', e);
+    logger.error({ err: e }, 'Error enviando botones');
     return false;
   }
 }
@@ -158,7 +159,7 @@ export async function enviarLista(
     registrarMensajeSaliente(to, body, ticketId);
     return true;
   } catch (e) {
-    console.error('❌ Error enviando lista:', e);
+    logger.error({ err: e }, 'Error enviando lista');
     return false;
   }
 }

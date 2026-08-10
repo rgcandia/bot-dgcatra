@@ -2,6 +2,14 @@
 
 ## En progreso
 
+### 2026-08-10 — Refactor: console.log/error → pino logger
+- [x] **Controllers (7 archivos)**: `auth`, `bases`, `chat`, `sectores`, `tickets`, `stats`, `usuarios` — todos los `console.error` reemplazados por `logger.error({ err: e }, 'msg')`. Agregado import de logger.
+- [x] **Bot (5 archivos)**: `enviar.ts`, `index.ts`, `historial.ts`, `session.ts`, `groq.ts`, `handlers/ticket.ts` — `console.log`/`console.error`/`console.warn` → `logger.info`/`logger.error`/`logger.warn`
+- [x] **Socket**: `server.ts` — logs de conexión e inicialización
+- [x] **Routes**: `settings.routes.ts` — logout/desvincular WhatsApp
+- [x] **Conservados**: `seed.ts`, `seed-demo.ts`, `reset-db.ts` (scripts CLI), `config/index.ts` (fatal antes del logger), `api/index.ts` shutdown (más confiable con console durante cierre)
+- [x] **Seguridad**: el OTP code ya no se loguea en texto plano (`📱 Código para ${telefono}: ${codigo}` → `logger.info({ telefono }, 'Código OTP generado')`)
+
 ### 2026-08-10 — Hardening: guard de ruta superAdmin en frontend
 - [x] **`App.tsx`**: componente `AdminOnly` que verifica `user?.superAdmin`. Si no es superAdmin, redirige a `/`. Si no hay usuario, redirige a `/login`.
 - [x] Las 4 rutas `/admin/*` ahora usan `<AdminOnly>` como wrapper. Ya no alcanza con navegar directo por URL.

@@ -1,4 +1,5 @@
 import { Conversacion } from '../models/models.js';
+import { logger } from '../config/logger.js';
 
 export function guardarMensaje(
   telefono: string,
@@ -16,5 +17,5 @@ export function guardarMensaje(
     mensaje: truncated,
     direccion,
     metadata: metadata ?? null,
-  }).catch(e => console.error('❌ historial:', e?.message || e));
+  }).catch(e => logger.error({ err: e?.message }, 'historial'));
 }

@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth.js';
 import { Ticket, User, Base, Sector, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
+import { logger } from '../config/logger.js';
 
 async function notificarAgente(telefono: string, mensaje: string) {
   try {
@@ -67,7 +68,7 @@ export async function getAll(req: AuthRequest, res: Response) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (e) {
-    console.error('Error en getAll tickets:', e);
+    logger.error({ err: e }, 'Error en getAll tickets');
     res.status(500).json({ error: 'Error al obtener tickets' });
   }
 }
@@ -84,7 +85,7 @@ export async function getById(req: AuthRequest, res: Response) {
     if (!ticket) return res.status(404).json({ error: 'No encontrado' });
     res.json(ticket);
   } catch (e) {
-    console.error('Error en getById ticket:', e);
+    logger.error({ err: e }, 'Error en getById ticket');
     res.status(500).json({ error: 'Error al obtener ticket' });
   }
 }
@@ -117,7 +118,7 @@ export async function create(req: AuthRequest, res: Response) {
 
     res.status(201).json(created);
   } catch (e) {
-    console.error('Error en create ticket:', e);
+    logger.error({ err: e }, 'Error en create ticket');
     res.status(500).json({ error: 'Error al crear ticket' });
   }
 }
@@ -206,7 +207,7 @@ export async function update(req: AuthRequest, res: Response) {
 
     res.json(updated);
   } catch (e) {
-    console.error('Error en update ticket:', e);
+    logger.error({ err: e }, 'Error en update ticket');
     res.status(500).json({ error: 'Error al actualizar ticket' });
   }
 }
@@ -224,7 +225,7 @@ export async function getConversacion(req: AuthRequest, res: Response) {
 
     res.json(mensajes);
   } catch (e) {
-    console.error('Error en getConversacion:', e);
+    logger.error({ err: e }, 'Error en getConversacion');
     res.status(500).json({ error: 'Error al obtener conversación' });
   }
 }

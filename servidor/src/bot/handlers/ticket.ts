@@ -7,6 +7,7 @@ import { enviarTexto, enviarBotones, iniciarTyping } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { generarTituloTicket } from '../groq.js';
 import { esAfirmativo, esNegativo, esCancelar } from '../helpers.js';
+import { logger } from '../../config/logger.js';
 
 interface Ctx {
   telefono: string;
@@ -110,7 +111,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         const t = await generarTituloTicket(descripcion, ubicacion);
         if (t) asunto = t;
       } catch (e: any) {
-        console.log('🤖 IA título falló, usando fallback:', e?.message || e);
+        logger.warn({ err: e?.message }, 'IA título falló, usando fallback');
       }
 
       if (!user.baseId) {
@@ -143,7 +144,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
             createdAt: { [Op.gte]: new Date(Date.now() - 10 * 60 * 1000) },
           },
         },
-      ).catch(e => console.error('❌ backfill Conversacion:', e?.message || e));
+      ).catch(e => logger.error({ err: e?.message }, 'backfill Conversacion'));
 
       await guardarUsuario(ctx.telefono, { context: null });
 
@@ -156,7 +157,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
           ],
         }).then(fullTicket => {
           if (fullTicket) io.emit('ticket-creado', fullTicket);
-        }).catch(e => console.error('❌ socket ticket-creado:', e?.message || e));
+        }).catch(e => logger.error({ err: e?.message }, 'socket ticket-creado'));
       }
 
       return await enviarTexto(ctx.telefono,

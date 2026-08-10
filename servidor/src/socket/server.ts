@@ -2,6 +2,7 @@ import { Server as SocketServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import { usuariosBaneados } from '../middleware/auth.js';
+import { logger } from '../config/logger.js';
 
 let io: SocketServer | null = null;
 let botStatus: { connected: boolean; phone?: string } = { connected: false };
@@ -46,11 +47,11 @@ export function initSocket(httpServer: any) {
   });
 
   io.on('connection', (socket) => {
-    console.log(`🔌 Socket conectado: ${(socket as any).user?.telefono}`);
+    logger.info(`Socket conectado: ${(socket as any).user?.telefono}`);
     socket.emit('bot-status', botStatus);
   });
 
-  console.log('🔌 Socket.IO inicializado con autenticación');
+  logger.info('Socket.IO inicializado con autenticación');
   return io;
 }
 

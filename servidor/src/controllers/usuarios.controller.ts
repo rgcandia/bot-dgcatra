@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { AuthRequest, banearUsuario } from '../middleware/auth.js';
 import { User, Base, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
+import { logger } from '../config/logger.js';
 
 export async function getAll(req: AuthRequest, res: Response) {
   try {
@@ -55,7 +56,7 @@ export async function getAll(req: AuthRequest, res: Response) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (e) {
-    console.error('Error en getAll usuarios:', e);
+    logger.error({ err: e }, 'Error en getAll usuarios');
     res.status(500).json({ error: 'Error al obtener usuarios' });
   }
 }
@@ -71,7 +72,7 @@ export async function getByTelefono(req: AuthRequest, res: Response) {
     if (!user) return res.status(404).json({ error: 'No encontrado' });
     res.json(user);
   } catch (e) {
-    console.error('Error en getByTelefono:', e);
+    logger.error({ err: e }, 'Error en getByTelefono');
     res.status(500).json({ error: 'Error al obtener usuario' });
   }
 }
@@ -103,7 +104,7 @@ export async function update(req: AuthRequest, res: Response) {
     });
     res.json(updated);
   } catch (e) {
-    console.error('Error en update usuario:', e);
+    logger.error({ err: e }, 'Error en update usuario');
     res.status(500).json({ error: 'Error al actualizar usuario' });
   }
 }
@@ -118,7 +119,7 @@ export async function remove(req: AuthRequest, res: Response) {
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.json({ message: 'Usuario eliminado' });
   } catch (e) {
-    console.error('Error en remove usuario:', e);
+    logger.error({ err: e }, 'Error en remove usuario');
     res.status(500).json({ error: 'Error al eliminar usuario' });
   }
 }

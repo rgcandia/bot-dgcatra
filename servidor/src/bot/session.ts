@@ -1,6 +1,7 @@
 import { User } from '../models/models.js';
 import { guardarMensaje } from './historial.js';
 import { TicketContextSchema } from './schemas.js';
+import { logger } from '../config/logger.js';
 
 const cache = new Map<string, { user: User | null; ts: number }>();
 const CACHE_TTL = 60_000;
@@ -77,7 +78,7 @@ export async function guardarUsuario(telefono: string, data: Partial<SessionUser
     if (typeof (data.context as any).ticketPaso === 'number') {
       const parsed = TicketContextSchema.safeParse(data.context);
       if (!parsed.success && process.env.NODE_ENV !== 'production') {
-        console.warn('⚠️ [Zod] Context inválido:', parsed.error.flatten());
+        logger.warn({ errors: parsed.error.flatten() }, 'Context inválido');
       }
     }
   }
@@ -87,7 +88,7 @@ export async function guardarUsuario(telefono: string, data: Partial<SessionUser
     if (!existente) {
       const otro = await User.findOne({ where: { email: data.email } });
       if (otro) {
-        console.warn(`⚠️ Email duplicado: ${data.email} ya lo usa ${otro.telefono}, no se asignó a ${telefono}`);
+        logger.warn({ email: data.email, duplicado: otro.telefono, telefono }, 'Email duplicado');
         delete data.email;
       }
     }
@@ -108,7 +109,7 @@ export async function guardarUltimosBotones(telefono: string, buttons: { id: str
     const currentCtx = (entry.user as any).context || {};
     currentCtx._lastButtons = buttons;
     currentCtx._lastActivity = Date.now();
-    User.update({ context: currentCtx }, { where: { telefono } }).catch(e => console.error('❌ guardarUltimosBotones:', e?.message || e));
+    User.update({ context: currentCtx }, { where: { telefono } }).catch(e => logger.error({ err: e?.message }, 'guardarUltimosBotones'));
     return;
   }
 

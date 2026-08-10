@@ -1,5 +1,7 @@
 const GROQ_KEY = process.env.GROQ_API_KEY;
 
+import { logger } from '../config/logger.js';
+
 const SYSTEM = `Sos un asistente que resume problemas en títulos cortos para tickets de soporte.
 Reglas:
 - Máximo 60 caracteres.
@@ -43,7 +45,7 @@ export async function generarTituloTicket(descripcion: string, ubicacion: string
     if (!titulo || titulo.length < 3) throw new Error('Título vacío');
     return titulo.substring(0, 60);
   } catch (e: any) {
-    console.log('🤖 IA título falló, usando fallback:', e?.message || e);
+    logger.warn({ err: e?.message }, 'IA título falló, usando fallback');
     return descripcion.trim().substring(0, 60);
   } finally {
     clearTimeout(timeout);
