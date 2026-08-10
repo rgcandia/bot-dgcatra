@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import http from 'http';
 import { initSocket } from '../socket/server.js';
 import authRoutes from '../routes/auth.routes.js';
@@ -36,6 +37,7 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(helmet());
 app.use(express.json());
 
 // --- Dashboard API ---

@@ -2,6 +2,10 @@
 
 ## En progreso
 
+### 2026-08-10 — Hardening: helmet.js para headers de seguridad HTTP
+- [x] **`servidor/`**: instalado `helmet@8.3.0` (sin necesidad de `@types/helmet`, incluye tipos propios)
+- [x] **`api/index.ts`**: `app.use(helmet())` después de CORS. Agrega headers: CSP, X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, X-DNS-Prefetch-Control, etc.
+
 ### 2026-08-10 — Hardening: credenciales DB externalizadas
 - [x] **`.env`**: agregadas variables `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` separadas de `DATABASE_URL`
 - [x] **`docker-compose.yml`**: db service ahora usa `${POSTGRES_USER}` / `${POSTGRES_PASSWORD}` / `${POSTGRES_DB}` en vez de hardcodear `dgcatra`. Healthcheck también parametrizado.
