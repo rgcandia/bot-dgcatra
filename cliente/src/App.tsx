@@ -15,6 +15,13 @@ function Private({ children }: { children: React.ReactNode }) {
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.superAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -23,10 +30,10 @@ export default function App() {
         <Route index element={<DashboardHome />} />
         <Route path="tickets" element={<TicketsList />} />
         <Route path="tickets/:id" element={<TicketDetail />} />
-        <Route path="admin/bases" element={<BasesPage />} />
-        <Route path="admin/sectores" element={<SectoresPage />} />
-        <Route path="admin/usuarios" element={<UsuariosPage />} />
-        <Route path="admin/settings" element={<SettingsPage />} />
+        <Route path="admin/bases" element={<AdminOnly><BasesPage /></AdminOnly>} />
+        <Route path="admin/sectores" element={<AdminOnly><SectoresPage /></AdminOnly>} />
+        <Route path="admin/usuarios" element={<AdminOnly><UsuariosPage /></AdminOnly>} />
+        <Route path="admin/settings" element={<AdminOnly><SettingsPage /></AdminOnly>} />
       </Route>
     </Routes>
   );

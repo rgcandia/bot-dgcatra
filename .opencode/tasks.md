@@ -2,6 +2,10 @@
 
 ## En progreso
 
+### 2026-08-10 — Hardening: guard de ruta superAdmin en frontend
+- [x] **`App.tsx`**: componente `AdminOnly` que verifica `user?.superAdmin`. Si no es superAdmin, redirige a `/`. Si no hay usuario, redirige a `/login`.
+- [x] Las 4 rutas `/admin/*` ahora usan `<AdminOnly>` como wrapper. Ya no alcanza con navegar directo por URL.
+
 ### 2026-08-10 — Hardening: helmet.js para headers de seguridad HTTP
 - [x] **`servidor/`**: instalado `helmet@8.3.0` (sin necesidad de `@types/helmet`, incluye tipos propios)
 - [x] **`api/index.ts`**: `app.use(helmet())` después de CORS. Agrega headers: CSP, X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, X-DNS-Prefetch-Control, etc.
