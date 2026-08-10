@@ -2,6 +2,9 @@
 
 ## En progreso
 
+### 2026-08-10 — Limpieza: fix menor
+- [x] **`DashboardLayout.tsx`**: eliminado import no usado `X` de lucide-react
+
 ### 2026-08-10 — Refactor: console.log/error → pino logger
 - [x] **Controllers (7 archivos)**: `auth`, `bases`, `chat`, `sectores`, `tickets`, `stats`, `usuarios` — todos los `console.error` reemplazados por `logger.error({ err: e }, 'msg')`. Agregado import de logger.
 - [x] **Bot (5 archivos)**: `enviar.ts`, `index.ts`, `historial.ts`, `session.ts`, `groq.ts`, `handlers/ticket.ts` — `console.log`/`console.error`/`console.warn` → `logger.info`/`logger.error`/`logger.warn`

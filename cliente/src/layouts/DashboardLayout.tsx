@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
 import NavItem from '../components/NavItem';
