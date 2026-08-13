@@ -27,15 +27,14 @@ export async function generarTituloTicket(descripcion: string, ubicacion: string
         'Authorization': `Bearer ${GROQ_KEY}`,
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'user', content: `Problema: ${descripcion}\nUbicación: ${ubicacion}` },
         ],
         temperature: 0.1,
         max_tokens: 30,
-        reasoning_effort: 'medium',
-        include_reasoning: false,
+        reasoning_effort: 'none',
       }),
     });
 

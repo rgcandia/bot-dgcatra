@@ -22,6 +22,17 @@ Sin cambios de endpoint ni API key. Se verificó `tsc` y se rebuildeó Docker (`
 
 Se subió `reasoning_effort` de `"low"` a `"medium"` para mejor calidad de los títulos generados (consistente con bot-norbridge). Sigue dentro del free tier.
 
+### Fix 3: migración a qwen3.6-27b (no-reasoning)
+
+GPT-OSS es un *reasoning model* que no es apto para conversación de soporte (en norbridge causaba loop multi-turno). Se migró a `qwen/qwen3.6-27b` con `reasoning_effort: "none"` (deshabilita razonamiento), alineado con bot-norbridge.
+
+```js
+model: 'qwen/qwen3.6-27b',
+temperature: 0.1,
+max_tokens: 30,
+reasoning_effort: 'none',
+```
+
 ---
 
 ## En progreso
