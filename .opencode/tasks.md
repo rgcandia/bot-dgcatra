@@ -18,6 +18,10 @@ Sin cambios de endpoint ni API key. Se verificó `tsc` y se rebuildeó Docker (`
 
 **Problema:** GPT-OSS es un *reasoning model*. Genera tokens de razonamiento interno que consumen el límite del free tier (8K tokens/min). Se mitigó con `reasoning_effort: "low"` + `include_reasoning: false` en el request.
 
+### Fix 2: reasoning_effort medium
+
+Se subió `reasoning_effort` de `"low"` a `"medium"` para mejor calidad de los títulos generados (consistente con bot-norbridge). Sigue dentro del free tier.
+
 ---
 
 ## En progreso
