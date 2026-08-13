@@ -14,6 +14,10 @@ Groq anunció la deprecación de `llama-3.1-8b-instant` (shutdown 16/08/26). Se 
 
 Sin cambios de endpoint ni API key. Se verificó `tsc` y se rebuildeó Docker (`docker compose up -d --build api`).
 
+### Fix: rate limit por reasoning tokens
+
+**Problema:** GPT-OSS es un *reasoning model*. Genera tokens de razonamiento interno que consumen el límite del free tier (8K tokens/min). Se mitigó con `reasoning_effort: "low"` + `include_reasoning: false` en el request.
+
 ---
 
 ## En progreso

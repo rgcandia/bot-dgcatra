@@ -34,6 +34,8 @@ export async function generarTituloTicket(descripcion: string, ubicacion: string
         ],
         temperature: 0.1,
         max_tokens: 30,
+        reasoning_effort: 'low',
+        include_reasoning: false,
       }),
     });
 
