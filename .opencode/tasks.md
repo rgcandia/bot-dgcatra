@@ -1,5 +1,21 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-13 — Migración de modelo IA (deprecación Groq)
+
+Groq anunció la deprecación de `llama-3.1-8b-instant` (shutdown 16/08/26). Se migró al reemplazo recomendado.
+
+| Detalle | Valor |
+|---------|-------|
+| Archivo | `servidor/src/bot/groq.ts` |
+| Modelo anterior | `llama-3.1-8b-instant` |
+| Modelo nuevo | `openai/gpt-oss-20b` |
+| Costo | $0 (tier gratuito de Groq, Free Plan) |
+| Función | `generarTituloTicket` (títulos ≤60 chars) |
+
+Sin cambios de endpoint ni API key. Se verificó `tsc` y se rebuildeó Docker (`docker compose up -d --build api`).
+
+---
+
 ## En progreso
 
 ### 2026-08-10 — Limpieza: fix menor

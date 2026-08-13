@@ -27,7 +27,7 @@ export async function generarTituloTicket(descripcion: string, ubicacion: string
         'Authorization': `Bearer ${GROQ_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'user', content: `Problema: ${descripcion}\nUbicación: ${ubicacion}` },
