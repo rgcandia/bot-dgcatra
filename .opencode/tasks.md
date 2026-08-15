@@ -42,6 +42,7 @@ reasoning_effort: 'none',
 - [x] **`TicketsList.tsx`**: agregada columna "Prioridad" (con `SortHeader` clickeable) y badge `badge-${t.prioridad}` en cada fila. Antes la prioridad solo se veía en el detalle del ticket.
 - [x] **`tickets.controller.ts`**: agregado `prioridad` al `SORT_MAP` del backend para que la columna sea ordenable.
 - [x] **Verificación**: `cliente/` `npm run build` OK y `servidor/` `tsc --noEmit` OK.
+- [x] **Fix orden (2026-08-15)**: el orden no surtía efecto porque el contenedor `dgcatra-api` no se había rebuildeado. Rebuild `docker compose up --build -d api` y verificado vía API: `sortBy=prioridad` devuelve `baja → media → alta` (ASC) y `alta → media → baja` (DESC), aprovechando el orden nativo del ENUM de Postgres.
 
 ### 2026-08-10 — Limpieza: fix menor
 - [x] **`DashboardLayout.tsx`**: eliminado import no usado `X` de lucide-react
