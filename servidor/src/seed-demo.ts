@@ -16,6 +16,31 @@ function daysAgo(days: number): Date {
   return d;
 }
 
+function telefonoRandom(): string {
+  return '54911' + String(rand(10000000, 99999999));
+}
+
+function nombreRandom(): string {
+  const nombres = [
+    'Juan', 'Pedro', 'María', 'Sofía', 'Diego', 'Lucía', 'Martín', 'Valentina',
+    'Federico', 'Camila', 'Nicolás', 'Florencia', 'Emiliano', 'Julieta', 'Gonzalo',
+    'Bárbara', 'Laura', 'Carlos', 'Ana', 'Facundo', 'Agustina', 'Rodrigo',
+    'Milagros', 'Sebastián', 'Carolina', 'Matías', 'Daniela', 'Leandro', 'Jimena',
+    'Pablo', 'Romina', 'Ariel', 'Débora', 'Maximiliano', 'Micaela', 'Ezequiel',
+    'Brenda', 'Cristian', 'Melina', 'Iván', 'Hernán', 'Soledad', 'Germán',
+    'Tatiana', 'Ayelén', 'Bruno', 'Celeste', 'Damián', 'Estefanía', 'Franco',
+  ];
+  const apellidos = [
+    'Pérez', 'García', 'Gómez', 'Martínez', 'Fernández', 'Sánchez', 'Torres',
+    'Rojas', 'Álvarez', 'Castro', 'Herrera', 'Vega', 'Morales', 'Ramos', 'Silva',
+    'Flores', 'Candia', 'Díaz', 'Ruiz', 'López', 'Acosta', 'Benítez', 'Cabrera',
+    'Domínguez', 'Escobar', 'Figueroa', 'Giménez', 'Ibarra', 'Juárez', 'Luna',
+    'Medina', 'Navarro', 'Ortega', 'Paz', 'Quiroga', 'Ríos', 'Sosa', 'Toledo',
+    'Varela', 'Zárate', 'Méndez', 'Aguilar', 'Bustamante', 'Cardozo', 'Delgado',
+  ];
+  return `${pick(nombres)} ${pick(apellidos)}`;
+}
+
 async function seed() {
   console.log('🧹 Limpiando DB...');
   await sequelize.sync({ force: true });
@@ -23,9 +48,8 @@ async function seed() {
   // --- Bases ---
   const bases = await Promise.all([
     Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123, CABA', codigoAcceso: 'PIE2026' }),
-    Base.create({ nombre: 'Base Once', direccion: 'Av. Rivadavia 456, CABA', codigoAcceso: 'ONC2026' }),
-    Base.create({ nombre: 'Base Constituyentes', direccion: 'Av. Constituyentes 789, CABA', codigoAcceso: 'CON2026' }),
-    Base.create({ nombre: 'Base Retiro', direccion: 'Av. Ramos Mejía 321, CABA', codigoAcceso: 'RET2026' }),
+    Base.create({ nombre: 'Playa Sarmiento', direccion: 'Av. Sarmiento 2500, CABA', codigoAcceso: 'PLA2026' }),
+    Base.create({ nombre: 'Base Tacuari', direccion: 'Av. Tacuarí 456, CABA', codigoAcceso: 'TAC2026' }),
   ]);
   console.log(`  ✅ ${bases.length} bases`);
 
@@ -37,37 +61,40 @@ async function seed() {
   ]);
   console.log(`  ✅ ${sectores.length} sectores`);
 
-  // --- Admins (Soporte Técnico) ---
-  const admins = await Promise.all([
+  // --- Técnicos (admins - Soporte Técnico) ---
+  const tecnicos = await Promise.all([
     User.create({ telefono: '5491112345678', nombreCompleto: 'Ale Candia', baseId: bases[0].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
     User.create({ telefono: '5491123456789', nombreCompleto: 'María López', baseId: bases[1].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
     User.create({ telefono: '5491134567890', nombreCompleto: 'Carlos Ruiz', baseId: bases[2].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
-    User.create({ telefono: '5491145678901', nombreCompleto: 'Laura Díaz', baseId: bases[3].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
   ]);
-  console.log(`  ✅ ${admins.length} admins`);
+  console.log(`  ✅ ${tecnicos.length} técnicos (admins)`);
 
-  // --- Agentes normales ---
-  const nombresAgentes = [
-    'Juan Pérez', 'Ana García', 'Pedro Gómez', 'Sofía Martínez',
-    'Diego Fernández', 'Lucía Sánchez', 'Martín Torres', 'Valentina Rojas',
-    'Federico Álvarez', 'Camila Castro', 'Nicolás Herrera', 'Florencia Vega',
-    'Emiliano Morales', 'Julieta Ramos', 'Gonzalo Silva', 'Bárbara Flores',
-  ];
-  const agentes = await Promise.all(
-    nombresAgentes.map((nombre, i) =>
-      User.create({
-        telefono: `549115${String(i).padStart(7, '0')}`,
-        nombreCompleto: nombre,
-        baseId: pick(bases).id,
-        sectorId: pick([sectores[0], sectores[1]]).id,
-        esAdmin: false,
-        registroCompleto: true,
-        pasoRegistro: 4,
-        activo: true,
-      }),
-    ),
-  );
-  const todos = [...admins, ...agentes];
+  // --- Agentes normales (personas random) ---
+  const nombresUsados = new Set<string>(tecnicos.map(t => t.nombreCompleto!));
+  const agentes: any[] = [];
+  for (let i = 0; i < 25; i++) {
+    let nombre = nombreRandom();
+    while (nombresUsados.has(nombre)) nombre = nombreRandom();
+    nombresUsados.add(nombre);
+
+    let telefono = telefonoRandom();
+    while (agentes.some(a => a.telefono === telefono) || tecnicos.some(t => t.telefono === telefono)) {
+      telefono = telefonoRandom();
+    }
+
+    const agente = await User.create({
+      telefono,
+      nombreCompleto: nombre,
+      baseId: pick(bases).id,
+      sectorId: pick([sectores[0], sectores[1]]).id,
+      esAdmin: false,
+      registroCompleto: true,
+      pasoRegistro: 4,
+      activo: true,
+    });
+    agentes.push(agente);
+  }
+  const todos = [...tecnicos, ...agentes];
   console.log(`  ✅ ${agentes.length} agentes (${todos.length} usuarios total)`);
 
   // --- Tickets ---
@@ -92,7 +119,7 @@ async function seed() {
     'Pantalla azul al abrir el gestor de turnos',
     'Impresora fiscal atascada',
     'Conexión intermitente en toda la base',
-    'Microfono no funciona en videollamada',
+    'Micrófono no funciona en videollamada',
     'No recibo notificaciones del sistema',
     'Token de autenticación expirado',
     'Registro duplicado en padrón vehicular',
@@ -117,7 +144,19 @@ async function seed() {
     'Cuando hay mucha gente en la base, el sistema se pone especialmente lento.',
   ];
 
-  const tecnicos = ['Ale Candia', 'María López', 'Carlos Ruiz', 'Laura Díaz'];
+  const ubicaciones = [
+    'Planta baja', 'Primer piso', 'Segundo piso', 'Oficina central',
+    'Mostrador', 'Sala de reuniones', 'Entrada principal', 'Depósito',
+    'Garaje', 'Playón de operaciones', 'Puesto de control', 'Sala de servidores',
+  ];
+
+  const soluciones = [
+    'Reinicio de equipo', 'Actualización de driver', 'Reconfiguración de red',
+    'Reemplazo de hardware', 'Parche aplicado', 'Restablecimiento de contraseña',
+    'Limpieza de caché', 'Reinstalación del software',
+  ];
+
+  const tecnicosNombres = tecnicos.map(t => t.nombreCompleto!);
   const estados: Array<'abierto' | 'en_proceso' | 'cerrado'> = ['abierto', 'en_proceso', 'cerrado'];
   const prioridades: Array<'baja' | 'media' | 'alta'> = ['baja', 'media', 'alta'];
 
@@ -125,12 +164,13 @@ async function seed() {
   for (let i = 0; i < 200; i++) {
     const createdAt = daysAgo(rand(1, 180)); // 6 meses atrás
     const estado = pick(estados);
-    const tecnicoAsignado = estado === 'abierto' ? null : pick(tecnicos);
+    const tecnicoAsignado = estado === 'abierto' ? null : pick(tecnicosNombres);
     const updatedAt = new Date(createdAt.getTime() + rand(60, 300) * 60 * 1000); // +1 a 5 horas después
 
+    const agente = pick(todos);
     const historial: any[] = [{
-      accion: `${pick(todos).nombreCompleto} creó el ticket`,
-      autor: pick(todos).nombreCompleto,
+      accion: `${agente.nombreCompleto} creó el ticket`,
+      autor: agente.nombreCompleto,
       timestamp: createdAt.toISOString(),
     }];
 
@@ -149,26 +189,25 @@ async function seed() {
         timestamp: new Date(createdAt.getTime() + rand(30, 120) * 60 * 1000).toISOString(),
       });
       historial.push({
-        accion: `${tecnicoAsignado} cerró el ticket — Solución: ${pick(['Reinicio de equipo', 'Actualización de driver', 'Reconfiguración de red', 'Reemplazo de hardware', 'Parche aplicado', 'Restablecimiento de contraseña', 'Limpieza de caché', 'Reinstalación del software'])}`,
+        accion: `${tecnicoAsignado} cerró el ticket — Solución: ${pick(soluciones)}`,
         autor: tecnicoAsignado,
         timestamp: updatedAt.toISOString(),
       });
     }
 
     const asunto = pick(asuntos) + (rand(0, 2) === 0 ? '' : ` #${rand(100, 999)}`);
-    const agente = pick(todos);
 
     tickets.push({
       asunto,
       descripcion: pick(descripciones),
-      ubicacion: pick(['Planta baja', 'Primer piso', 'Segundo piso', 'Oficina central', 'Mostrador', 'Sala de reuniones', 'Entrada principal', 'Depósito']),
+      ubicacion: pick(ubicaciones),
       estado,
       prioridad: pick(prioridades),
       baseId: pick(bases).id,
       sectorId: pick([sectores[0], sectores[1]]).id,
       userTelefono: agente.telefono,
       tecnicoAsignado,
-      solucion: estado === 'cerrado' ? pick(['Reinicio de equipo', 'Actualización de driver', 'Reconfiguración de red', 'Reemplazo de hardware', 'Parche aplicado', 'Reset de configuración']) : null,
+      solucion: estado === 'cerrado' ? pick(soluciones) : null,
       historial,
       createdAt,
       updatedAt,
@@ -207,7 +246,7 @@ async function seed() {
     '¿Podés probar de nuevo ahora?',
   ];
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 80; i++) {
     const ticket = pick(tickets) as any;
     const isInbound = Math.random() < 0.5;
     const ts = new Date(new Date(ticket.createdAt).getTime() + rand(1, 1440) * 60 * 1000);
@@ -226,8 +265,8 @@ async function seed() {
 
   console.log('\n✅ Seed demo completado');
   console.log('   Usá el código maestro para loguearte al dashboard.');
-  console.log('   Admins: 5491112345678 (Ale Candia) y otros 3 más.');
-  console.log('   Registro por WhatsApp: código de base PIE2026 / ONC2026 / CON2026 / RET2026');
+  console.log('   Técnicos: Ale Candia (5491112345678), María López, Carlos Ruiz.');
+  console.log('   Registro por WhatsApp: código de base PIE2026 / PLA2026 / TAC2026');
 
   await sequelize.close();
 }
