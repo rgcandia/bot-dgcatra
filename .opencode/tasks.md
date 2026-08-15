@@ -37,6 +37,12 @@ reasoning_effort: 'none',
 
 ## En progreso
 
+### 2026-08-15 — Mostrar prioridad en la tabla de tickets
+
+- [x] **`TicketsList.tsx`**: agregada columna "Prioridad" (con `SortHeader` clickeable) y badge `badge-${t.prioridad}` en cada fila. Antes la prioridad solo se veía en el detalle del ticket.
+- [x] **`tickets.controller.ts`**: agregado `prioridad` al `SORT_MAP` del backend para que la columna sea ordenable.
+- [x] **Verificación**: `cliente/` `npm run build` OK y `servidor/` `tsc --noEmit` OK.
+
 ### 2026-08-10 — Limpieza: fix menor
 - [x] **`DashboardLayout.tsx`**: eliminado import no usado `X` de lucide-react
 

@@ -175,7 +175,7 @@ Dashboard React con autenticación JWT.
 |------|-----------|------------|
 | `/login` | `LoginPage` | Login: teléfono → OTP por WhatsApp (backup: código maestro) |
 | `/` | `DashboardHome` | Panel principal |
-| `/tickets` | `TicketsList` | Lista de tickets con filtros (estado, prioridad) |
+| `/tickets` | `TicketsList` | Lista de tickets con filtros (estado, prioridad) y columna Prioridad ordenable |
 | `/tickets/:id` | `TicketDetail` | Detalle del ticket + adoptar/cerrar + historial |
 
 ---

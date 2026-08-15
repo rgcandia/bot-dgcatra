@@ -138,6 +138,7 @@ export default function TicketsList() {
                 <SortHeader col="asunto" label="Asunto" />
                 <SortHeader col="base" label="Base" />
                 <SortHeader col="estado" label="Estado" />
+                <SortHeader col="prioridad" label="Prioridad" />
                 <SortHeader col="tecnicoAsignado" label="Técnico" />
                 <SortHeader col="createdAt" label="Fecha" />
               </tr>
@@ -149,6 +150,7 @@ export default function TicketsList() {
                   <td style={{ fontWeight: 500 }}>{t.asunto}</td>
                   <td>{t.base?.nombre}</td>
                   <td><span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span></td>
+                  <td><span className={`badge badge-${t.prioridad}`}>{t.prioridad}</span></td>
                   <td style={{ fontSize: '.85rem' }}>{t.tecnicoAsignado || '—'}</td>
                   <td style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>
                     {new Date(t.createdAt).toLocaleDateString('es-AR')}

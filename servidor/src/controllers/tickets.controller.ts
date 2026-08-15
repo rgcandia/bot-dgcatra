@@ -42,6 +42,7 @@ export async function getAll(req: AuthRequest, res: Response) {
       asunto: ['asunto'],
       base: [{ model: Base, as: 'base' }, 'nombre'],
       estado: ['estado'],
+      prioridad: ['prioridad'],
       tecnicoAsignado: ['tecnicoAsignado'],
       createdAt: ['createdAt'],
     };
