@@ -92,7 +92,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | **Cola FIFO** | Mensajes inbound procesados secuencialmente por usuario (`Map<tel, Promise>`) |
 | **Botones** | Texto con emojis numerados + `parsearBotonNumerico()` + `_lastButtons`. Los `Buttons`/`List` nativos de whatsapp-web.js están deprecados por WhatsApp y no funcionan. |
 | **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
-| **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes recientes con `ticketId`. |
+| **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes del flujo actual (desde `_ticketStart`) con `ticketId`. |
 | **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
 | **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos al crear tickets. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. |
 

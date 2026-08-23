@@ -35,7 +35,7 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
   switch (paso) {
     case ESTADOS_TICKET.INICIAR: {
       await guardarUsuario(ctx.telefono, {
-        context: { ticketPaso: ESTADOS_TICKET.PEDIR_DESCRIPCION },
+        context: { ticketPaso: ESTADOS_TICKET.PEDIR_DESCRIPCION, _ticketStart: Date.now() },
       });
       return await enviarTexto(ctx.telefono,
         '🎫 *¡Dale, creemos un ticket!*\n\n' +
@@ -49,12 +49,10 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         await enviarTexto(ctx.telefono, '❌ Describí el problema con más detalle (mínimo 5 caracteres):');
         return false;
       }
-      await guardarUsuario(ctx.telefono, {
-        context: {
-          ticketPaso: ESTADOS_TICKET.PEDIR_UBICACION,
-          descripcion: ctx.texto,
-        },
-      });
+      const ctxData = (user.context || {}) as any;
+      ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_UBICACION;
+      ctxData.descripcion = ctx.texto;
+      await guardarUsuario(ctx.telefono, { context: ctxData });
       let msjUbicacion = '📍 ¿Dónde ocurre el problema?\n\n' +
         'Ej: "Oficina 3, primer piso" o "Entrada principal"';
       if (user.baseId) {
@@ -135,13 +133,14 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         }],
       });
 
+      const ticketStart = (ctxData._ticketStart as number | undefined) ?? Date.now() - 10 * 60 * 1000;
       Conversacion.update(
         { ticketId: ticket.id },
         {
           where: {
             userTelefono: ctx.telefono,
             ticketId: null,
-            createdAt: { [Op.gte]: new Date(Date.now() - 10 * 60 * 1000) },
+            createdAt: { [Op.gte]: new Date(ticketStart) },
           },
         },
       ).catch(e => logger.error({ err: e?.message }, 'backfill Conversacion'));

@@ -6,7 +6,6 @@ import { registrarChatId } from './enviar.js';
 import { User } from '../models/models.js';
 import { logger } from '../config/logger.js';
 import { getIO } from '../socket/server.js';
-import { Ticket } from '../models/models.js';
 
 const colas = new Map<string, Promise<void>>();
 const mensajesProcesados = new Set<string>();
@@ -61,6 +60,12 @@ export async function procesarMensaje(msg: any) {
   const from = limpiarNumero(rawFrom);
   registrarChatId(from, rawFrom);
 
+  // Asegurar que el usuario exista antes de guardar historial (evita FK violation en conversaciones)
+  await User.findOrCreate({
+    where: { telefono: from },
+    defaults: { telefono: from, chatId: rawFrom },
+  }).catch(e => logger.error({ err: e?.message }, 'findOrCreate user'));
+
   // Guardar formato real de WhatsApp (@c.us o @lid) en la DB
   User.update({ chatId: rawFrom }, { where: { telefono: from } }).catch(e => logger.error({ err: e?.message }, 'update chatId'));
 
@@ -93,18 +98,16 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
     return;
   }
 
+  if (!(text || '').trim()) {
+    return;
+  }
+
   const user = await obtenerUsuario(from);
 
   // Chat con admin activo → forward mensajes al dashboard
   const chatAdmin = (user.context as any)?.chatConAdmin;
   if (chatAdmin?.adminId) {
-    // Guardar en DB
-    const ticketReciente = await Ticket.findOne({
-      where: { userTelefono: from },
-      order: [['createdAt', 'DESC']],
-    }).catch(() => null);
-    registrarMensajeEntrante(from, text || '', ticketReciente?.id);
-
+    // El mensaje ya fue registrado en procesarMensaje; acá solo se reenvía al dashboard.
     const io = getIO();
     if (io) {
       io.emit('chat-mensaje-entrante', {

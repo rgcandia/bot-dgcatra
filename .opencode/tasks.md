@@ -37,6 +37,21 @@ reasoning_effort: 'none',
 
 ## En progreso
 
+### 2026-08-23 — Bug: bienvenida repetida en registro + pérdida de historial (usuario `56212716531856` Ana)
+
+Diagnóstico sobre la sesión real del usuario Ana (`56212716531856@lid`): no había loop infinito; recibió la bienvenida 3 veces porque mandó 3 mensajes seguidos antes de escribir "SI" (`(sin texto)`, `(sin texto)`, `...`), y cada uno disparó la bienvenida (con `simularEscritura` + rate-limit quedaron espaciados ~15s). Además se detectaron bugs de datos.
+
+- [x] **`bot/index.ts` — FK violation en `conversaciones`**: la fila de `usuarios` recién se creaba al escribir "SI" (`guardarUsuario` en paso 1), pero `registrarMensajeEntrante`/`registrarMensajeSaliente` ya intentaban insertar en `conversaciones.userTelefono` (FK a `usuarios.telefono`). Resultado: la bienvenida y los primeros mensajes de un usuario nuevo **no se guardaban** (`ERROR historial: violates foreign key constraint`). Fix: `await User.findOrCreate({ where: { telefono: from }, defaults: {...} })` antes de registrar historial.
+- [x] **`bot/index.ts` — mensajes vacíos disparaban la bienvenida**: mensajes sin texto (stickers / mensajes en blanco) caían en `paso0` y respondían la bienvenida. Fix: `if (!(text || '').trim()) return;` en `procesarMensajeCola`.
+- [x] **`bot/index.ts` — "Hola" duplicado en el historial**: en chat con admin activo, `registrarMensajeEntrante` se llamaba dos veces (una en `procesarMensaje` y otra en el bloque `chatConAdmin`). Fix: eliminada la segunda llamada (y el lookup de `Ticket` que quedaba sin uso); el mensaje ya se registra una sola vez.
+- [x] **`bot/helpers.ts` — `esAfirmativo`/`esNegativo`/`esCancelar` sobre-coincidían**: usaban `startsWith` con entradas de una letra (`s`, `n`), por lo que "salir"/"sistema" contaban como afirmativo y "normal" como negativo. Fix: removidas las entradas de una letra y matcheo por palabra completa (exacto o `palabra + espacio`), ignorando puntuación.
+- [x] **`bot/handlers/ticket.ts` — backfill contaminaba el historial**: al crear un ticket, `Conversacion.update` asociaba todos los mensajes de los últimos 10 minutos (incluido el registro del usuario) con `ticketId`. Fix: se guarda `_ticketStart` al iniciar el flujo y el backfill solo asocia mensajes desde ese instante. También `PEDIR_DESCRIPCION` ahora preserva el `context` (antes lo reemplazaba y perdía `_ticketStart`).
+- [x] **`bot/schemas.ts`**: agregado `_ticketStart` opcional a `TicketContextSchema`.
+- [x] **Verificación**: `npm run build` (tsc) OK y `npm test` OK (18 tests).
+
+#### Pendiente (documentado, no implementado)
+- [ ] **Typos/comandos dentro del flujo de ticket**: "tikets" no matchea "tickets" y arranca creación de ticket; "ayuda"/"canelar" (typo de cancelar) se tragan como descripción/ubicación. Se podría agregar fuzzy para "tickets" y reconocer "ayuda"/"cancelar" dentro de `manejarCreacionTicket`.
+
 ### 2026-08-15 — Mostrar prioridad en la tabla de tickets
 
 - [x] **`TicketsList.tsx`**: agregada columna "Prioridad" (con `SortHeader` clickeable) y badge `badge-${t.prioridad}` en cada fila. Antes la prioridad solo se veía en el detalle del ticket.

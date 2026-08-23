@@ -4,6 +4,7 @@ export const TicketContextSchema = z.object({
   ticketPaso: z.number().int().min(0).max(3),
   descripcion: z.string().optional(),
   ubicacion: z.string().optional(),
+  _ticketStart: z.number().optional(),
   _lastActivity: z.number().optional(),
 });
 
