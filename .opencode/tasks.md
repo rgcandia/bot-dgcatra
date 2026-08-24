@@ -1,5 +1,12 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-24 — Ticket manual + loader chat
+
+- [x] **Ticket manual**: botón "+ Nuevo ticket" en `TicketsList` con modal (asunto/descripción/ubicación/base) → `POST /api/tickets`. Cualquier usuario autenticado puede crear.
+- [x] **Loader chat**: spinner en "Tomar control" y "Devolver al bot" (`chatLoading` en `TicketDetail`). `ConfirmButton` acepta prop `loading`.
+
+---
+
 ## 2026-08-13 — Migración de modelo IA (deprecación Groq)
 
 Groq anunció la deprecación de `llama-3.1-8b-instant` (shutdown 16/08/26). Se migró al reemplazo recomendado.

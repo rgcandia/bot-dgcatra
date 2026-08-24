@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { useSocket } from '../context/useSocket';
@@ -41,11 +41,32 @@ export default function TicketsList() {
   const [total, setTotal] = useState(0);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('DESC');
+  const [showNew, setShowNew] = useState(false);
+  const [newTicket, setNewTicket] = useState({ asunto: '', descripcion: '', ubicacion: '', baseId: '' });
+  const [saving, setSaving] = useState(false);
+  const [bases, setBases] = useState<{ id: number; nombre: string }[]>([]);
 
   function toggleSort(col: string) {
     if (sortBy === col) setSortDir(d => d === 'ASC' ? 'DESC' : 'ASC');
     else { setSortBy(col); setSortDir(col === 'base' ? 'ASC' : 'DESC'); }
     setPage(1);
+  }
+
+  useEffect(() => {
+    api.get<{ id: number; nombre: string }[]>('/api/bases').then(setBases).catch(() => {});
+  }, []);
+
+  async function handleCreateManual(e: FormEvent) {
+    e.preventDefault();
+    if (!newTicket.asunto.trim() || !newTicket.descripcion.trim() || !newTicket.ubicacion.trim() || !newTicket.baseId) return;
+    setSaving(true);
+    try {
+      await api.post('/api/tickets', { ...newTicket, baseId: Number(newTicket.baseId) });
+      setShowNew(false);
+      setNewTicket({ asunto: '', descripcion: '', ubicacion: '', baseId: '' });
+      setPage(1);
+    } catch { }
+    finally { setSaving(false); }
   }
 
   const fetchTickets = useCallback(() => {
@@ -90,6 +111,9 @@ export default function TicketsList() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '.5rem' }}>
         <h2 style={{ margin: 0 }}>Tickets</h2>
         <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowNew(true)}>
+            <Plus size={16} /> Nuevo ticket
+          </button>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input
@@ -174,6 +198,39 @@ export default function TicketsList() {
             </div>
           )}
         </>
+      )}
+
+      {showNew && (
+        <div className="modal-overlay" onClick={() => setShowNew(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Nuevo ticket manual</h3>
+            <form onSubmit={handleCreateManual}>
+              <div className="form-group">
+                <label>Asunto *</label>
+                <input className="input" value={newTicket.asunto} onChange={e => setNewTicket({ ...newTicket, asunto: e.target.value })} placeholder="Ej: Proyector no enciende" required />
+              </div>
+              <div className="form-group">
+                <label>Descripción *</label>
+                <textarea className="input" rows={4} value={newTicket.descripcion} onChange={e => setNewTicket({ ...newTicket, descripcion: e.target.value })} placeholder="Detallá el problema..." required />
+              </div>
+              <div className="form-group">
+                <label>Ubicación *</label>
+                <input className="input" value={newTicket.ubicacion} onChange={e => setNewTicket({ ...newTicket, ubicacion: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Base *</label>
+                <select className="input" value={newTicket.baseId} onChange={e => setNewTicket({ ...newTicket, baseId: e.target.value })} required>
+                  <option value="">-- Elegir base --</option>
+                  {bases.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowNew(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>{saving ? 'Creando...' : 'Crear ticket'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
