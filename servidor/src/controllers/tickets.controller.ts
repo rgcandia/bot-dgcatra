@@ -129,7 +129,7 @@ export async function update(req: AuthRequest, res: Response) {
     const ticket = await Ticket.findByPk(req.params.id);
     if (!ticket) return res.status(404).json({ error: 'No encontrado' });
 
-    const { estado, prioridad, tecnicoAsignado, solucion } = req.body;
+    const { estado, prioridad, tecnicoAsignado, solucion, nuevaNota } = req.body;
     const autor = req.user?.nombre || req.user?.telefono || 'Sistema';
     const isSuperAdmin = req.user?.superAdmin || false;
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
@@ -166,6 +166,14 @@ export async function update(req: AuthRequest, res: Response) {
     if (solucion !== undefined && solucion !== ticket.solucion) {
       historial.push({ accion: `${autor} registró la solución`, autor, timestamp: new Date().toISOString() });
       ticket.solucion = solucion || null;
+    }
+
+    if (nuevaNota && nuevaNota.trim() !== '') {
+      const comentarios: any[] = Array.isArray(ticket.comentarios) ? ticket.comentarios : [];
+      comentarios.push({ fecha: new Date().toLocaleString('es-AR'), autor, texto: nuevaNota.trim() });
+      historial.push({ accion: `${autor} agregó un comentario`, autor, timestamp: new Date().toISOString() });
+      ticket.comentarios = comentarios;
+      ticket.changed('comentarios', true);
     }
 
     ticket.historial = historial;

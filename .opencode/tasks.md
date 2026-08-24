@@ -1,5 +1,13 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-24 — Comentarios en tickets
+
+- [x] **Modelo `Ticket`**: agregado campo `comentarios` (JSON, `[{ fecha, autor, texto }]`).
+- [x] **Controller `tickets.controller.update`**: soporta `nuevaNota` → `comentarios` + evento `"{autor} agregó un comentario"` en `historial`.
+- [x] **Frontend `TicketDetail`**: solapa **Comentarios** (lista + input), junto a Historial/Conversación.
+
+---
+
 ## 2026-08-24 — Ticket manual + loader chat
 
 - [x] **Ticket manual**: botón "+ Nuevo ticket" en `TicketsList` con modal (asunto/descripción/ubicación/base) → `POST /api/tickets`. Cualquier usuario autenticado puede crear.
