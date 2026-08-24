@@ -220,7 +220,7 @@ async function cambiarEstado(telefono: string, ticketId: number, _estado: string
   if (io) io.emit('ticket-actualizado', ticket);
 
   await enviarTexto(telefono,
-    `✅ *Ticket #${ticketId} cerrado*\n\n` +
+    `✅ *Ticket #${ticketId}*: "${ticket.asunto}" cerrado\n\n` +
     `Escribí *ayuda* para ver el menú.`,
     ticketId);
   return true;

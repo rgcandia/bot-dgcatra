@@ -1,5 +1,11 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-24 — Asunto en los mensajes del bot
+
+- [x] Mensajes con número de ticket ahora incluyen el asunto (`*Ticket #N*: "asunto"`): notificaciones de estado (`tickets.controller`), chat (`chat.controller`), `ticket #N creado` (`handlers/ticket.ts`) y `ticket #N cerrado` (`handlers/comandos.ts`).
+
+---
+
 ## 2026-08-24 — Comentarios en tickets
 
 - [x] **Modelo `Ticket`**: agregado campo `comentarios` (JSON, `[{ fecha, autor, texto }]`).

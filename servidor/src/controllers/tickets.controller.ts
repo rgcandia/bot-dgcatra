@@ -183,15 +183,15 @@ export async function update(req: AuthRequest, res: Response) {
     if (estado && estado !== oldEstado && ticket.userTelefono) {
       let msg = '';
       if (estado === 'en_proceso') {
-        msg = `📋 *Ticket #${ticket.id}*\n` +
+        msg = `📋 *Ticket #${ticket.id}*: "${ticket.asunto}"\n` +
           `🔧 ${autor} ya está trabajando en tu caso.\n` +
           `Si ya se solucionó, escribí *cerrar ticket ${ticket.id}*.`;
       } else if (estado === 'cerrado') {
-        msg = `📋 *Ticket #${ticket.id}*\n` +
+        msg = `📋 *Ticket #${ticket.id}*: "${ticket.asunto}"\n` +
           `✅ ${autor} lo marcó como *resuelto*.`;
         if (solucion) msg += `\n🔧 Solución: ${(solucion as string).substring(0, 200)}`;
       } else if (estado === 'abierto') {
-        msg = `📋 *Ticket #${ticket.id}*\n` +
+        msg = `📋 *Ticket #${ticket.id}*: "${ticket.asunto}"\n` +
           `🔄 ${autor} reabrió el ticket.\n` +
           `Un técnico va a revisarlo nuevamente.`;
       }
