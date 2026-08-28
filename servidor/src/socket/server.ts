@@ -28,7 +28,12 @@ export function getBotStatus() {
 export function initSocket(httpServer: any) {
   io = new SocketServer(httpServer, {
     cors: {
-      origin: ['https://dgcatra.alejndrogcandia.online', 'http://localhost:5173', 'http://172.17.0.202:5173'],
+      origin: [
+        'https://dgcatra.alejndrogcandia.online',
+        'http://localhost:5173',
+        'http://172.17.0.202:5173',
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+      ],
       methods: ['GET', 'POST'],
     },
   });

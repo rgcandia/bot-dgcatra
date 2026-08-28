@@ -50,12 +50,14 @@ export async function update(req: AuthRequest, res: Response) {
     const sector = await Sector.findByPk(req.params.id, { transaction: t });
     if (!sector) { await t.rollback(); return res.status(404).json({ error: 'No encontrado' }); }
     const { nombre, isAdmin, codigoAdmin } = req.body;
-    if (isAdmin && !codigoAdmin && !sector.codigoAdmin) {
+    const nuevoIsAdmin = isAdmin !== undefined ? !!isAdmin : sector.isAdmin;
+    const codigo = (codigoAdmin !== undefined && codigoAdmin !== '') ? codigoAdmin : sector.codigoAdmin;
+    if (nuevoIsAdmin && !codigo) {
       await t.rollback();
       return res.status(400).json({ error: 'El código de admin es requerido para sectores admin' });
     }
-    if (isAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true, id: { [Op.ne]: sector.id } }, transaction: t });
-    await sector.update({ nombre, isAdmin, codigoAdmin: codigoAdmin ?? null }, { transaction: t });
+    if (nuevoIsAdmin) await Sector.update({ isAdmin: false }, { where: { isAdmin: true, id: { [Op.ne]: sector.id } }, transaction: t });
+    await sector.update({ nombre: nombre ?? sector.nombre, isAdmin: nuevoIsAdmin, codigoAdmin: nuevoIsAdmin ? codigo : null }, { transaction: t });
     await t.commit();
     const reloaded = await Sector.findByPk(sector.id);
     const io = getIO(); if (io) io.emit('datos-actualizados');

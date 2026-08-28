@@ -20,7 +20,15 @@ const verifyLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.get('/admins', listarAdmins);
+const adminsLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 60,
+  message: { error: 'Demasiadas solicitudes. Esperá 5 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.get('/admins', adminsLimiter, listarAdmins);
 router.post('/solicitar-codigo', codeLimiter, solicitarCodigo);
 router.post('/verificar-codigo', verifyLimiter, verificarCodigo);
 

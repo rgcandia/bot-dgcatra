@@ -1,4 +1,5 @@
 import { User, Base, Sector } from '../../models/models.js';
+import { Op } from 'sequelize';
 import { enviarTexto, enviarBotones, enviarLista } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
 import { config } from '../../config/index.js';
@@ -67,7 +68,7 @@ async function paso1CodigoBase(ctx: Ctx): Promise<boolean> {
     return false;
   }
 
-  const base = await Base.findOne({ where: { codigoAcceso: ctx.texto } });
+  const base = await Base.findOne({ where: { codigoAcceso: { [Op.iLike]: ctx.texto.trim() } } });
   if (!base) {
     await enviarTexto(ctx.telefono, '❌ Código incorrecto. Intentá de nuevo o escribí *cancelar* para salir.');
     return false;
@@ -227,6 +228,7 @@ async function paso3CodigoAdmin(ctx: Ctx): Promise<boolean> {
     return false;
   }
 
+  ctxData.adminVerificado = true;
   await guardarUsuario(ctx.telefono, { pasoRegistro: 4, context: ctxData });
   return await enviarTexto(ctx.telefono,
     '👤 Escribí tu *nombre completo*:\n\nEj: `Juan Pérez`\n\nEscribí *cancelar* para salir.');
@@ -269,7 +271,7 @@ async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
   const user = await obtenerUsuario(ctx.telefono);
   const ctxData = (user.context || {}) as any;
 
-  const esAdmin = ctxData.sectorIsAdmin || (config.superAdminPhone && ctx.telefono === config.superAdminPhone);
+  const esAdmin = (ctxData.sectorIsAdmin && ctxData.adminVerificado === true) || (config.superAdminPhone && ctx.telefono === config.superAdminPhone);
 
   await guardarUsuario(ctx.telefono, {
     nombreCompleto: ctxData.nombre,

@@ -42,14 +42,17 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
 
     invalidarCacheUsuario(ticket.userTelefono);
 
-    // Timeout: si no hay actividad del admin en 5 min, devolver al bot
+    // Timeout: si no hay actividad del admin en 5 min, devolver al bot.
+    // Se usa un intervalo que se re-evalúa (re-arma) mientras el chat siga activo.
     const CHAT_TIMEOUT = 5 * 60 * 1000;
-    setTimeout(async () => {
+    const check = setInterval(async () => {
       try {
         const u = await User.findByPk(ticket.userTelefono);
-        if (!u) return;
+        if (!u) { clearInterval(check); return; }
         const chat = (u.context as any)?.chatConAdmin;
-        if (chat && chat.adminId && Date.now() - chat.lastActivity > CHAT_TIMEOUT) {
+        if (!chat || !chat.adminId) { clearInterval(check); return; }
+        if (Date.now() - chat.lastActivity > CHAT_TIMEOUT) {
+          clearInterval(check);
           u.context = { ...(u.context || {}), chatConAdmin: null };
           u.changed('context', true);
           await u.save();
@@ -63,7 +66,7 @@ export async function iniciarChat(req: AuthRequest, res: Response) {
           if (io) io.emit('chat-estado', { ticketId: ticket.id, estado: 'inactivo', admin: null });
         }
       } catch {}
-    }, CHAT_TIMEOUT + 5000);
+    }, 30000);
 
     enviarPorWhatsApp(
       ticket.userTelefono,

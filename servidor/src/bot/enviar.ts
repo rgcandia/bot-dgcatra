@@ -156,7 +156,7 @@ export async function enviarLista(
     await rateLimitar(to);
     await client.sendMessage(chatId, msg);
 
-    registrarMensajeSaliente(to, body, ticketId);
+    registrarMensajeSaliente(to, msg, ticketId);
     return true;
   } catch (e) {
     logger.error({ err: e }, 'Error enviando lista');

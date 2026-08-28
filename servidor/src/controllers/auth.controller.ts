@@ -37,8 +37,12 @@ export async function solicitarCodigo(req: Request, res: Response) {
     codigos.set(`auth:${telefono}`, { codigo, expires: Date.now() + OTP_EXPIRY });
 
     const { enviarTexto } = await import('../bot/enviar.js');
-    await enviarTexto(telefono,
+    const enviado = await enviarTexto(telefono,
       `🔐 *Código de acceso*\n\nTu código es: *${codigo}*\n\nExpira en 5 minutos.\nSi no lo pediste vos, ignorá este mensaje.`);
+    if (!enviado) {
+      codigos.delete(`auth:${telefono}`);
+      return res.status(503).json({ error: 'No se pudo enviar el código por WhatsApp. Intentá de nuevo.' });
+    }
     logger.info({ telefono }, 'Código OTP generado');
 
     res.json({ message: 'Código enviado a tu WhatsApp' });

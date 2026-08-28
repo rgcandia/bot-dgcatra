@@ -77,7 +77,7 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   }
 
   // ── Comandos sin número → pedir número ──
-  if (texto === 'cerrar' || texto === 'cancelar') {
+  if (texto === 'cerrar') {
     await guardarUsuario(ctx.telefono, { context: { pendingCommand: 'cerrar' } });
     await enviarTexto(ctx.telefono, '🔒 ¿Qué ticket querés *cerrar*?\nEscribí el número. Para cancelar, escribí *cancelar*.');
     return true;
