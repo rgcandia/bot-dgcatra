@@ -312,3 +312,13 @@ cd cliente && npm run dev
 cd servidor
 docker compose up --build -d
 ```
+
+---
+
+## Últimos cambios (2026-08-28)
+
+- **Sesión del dashboard de 24h**: se eliminó el auto-logout por inactividad de 30 min (`INACTIVITY_TIMEOUT` = 24h, alineado con la expiración del JWT). Cualquier 401 redirige a `/login`.
+- **Socket.IO CORS**: incluye `FRONTEND_URL` (frontend de Vercel).
+- **Seguridad**: cierre de escalado de privilegios — `sectores.update` no pisa `codigoAdmin`; el registro solo otorga `esAdmin` si se verificó el código del sector.
+- **Auth**: `/api/auth/admins` con rate limit; `solicitar-codigo` devuelve 503 si falla el envío del OTP.
+- **Chat takeover**: el timeout re-arma cada 30s. Código de base case-insensitive. `enviarLista` guarda el mensaje completo en historial.

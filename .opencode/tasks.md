@@ -1,5 +1,29 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-28 — Hardening y correcciones (análisis completo + fixes)
+
+Análisis completo del bot (runtime + código) y correcciones aplicadas. Commit `9f5faa7`.
+
+- [x] **Socket CORS**: `socket/server.ts` incluye `FRONTEND_URL` (frontend de Vercel) además de los orígenes hardcodeados.
+- [x] **Escalado de admin** (2 vías):
+  - `sectores.controller.update` ya no pisa `codigoAdmin` con `null` al editar un sector admin sin reenviar el código.
+  - `registro.ts` otorga `esAdmin` solo si `sectorIsAdmin && adminVerificado` (`adminVerificado` se setea al validar el código en `paso3CodigoAdmin`).
+- [x] **`/api/auth/admins`**: rate limit (60 req / 5 min).
+- [x] **`solicitar-codigo`**: devuelve 503 (y borra el OTP) si `enviarTexto` falla.
+- [x] **Frontend `client.ts`**: cualquier 401 redirige a `/login` (token expirado o usuario eliminado).
+- [x] **`comandos.ts`**: rama muerta `texto === 'cancelar'` eliminada.
+- [x] **`enviar.ts`**: `enviarLista` guarda el mensaje completo (no solo `body`) en el historial.
+- [x] **`registro.ts`**: código de base case-insensitive (`Op.iLike`).
+- [x] **`chat.controller.ts`**: el timeout de chat takeover re-arma cada 30s (intervalo) en vez de un único `setTimeout`.
+
+### Pendiente (documentado, no implementado)
+
+- [ ] Migrar `tecnicoAsignado` de nombre → teléfono (diferido por decisión del usuario).
+- [ ] Frontend (fix 401) compilado localmente pero **no desplegado** en Vercel.
+- [ ] `sequelize.sync({ alter: true })` en arranque (evaluar migraciones controladas).
+
+---
+
 ## 2026-08-24 — Asunto en los mensajes del bot
 
 - [x] Mensajes con número de ticket ahora incluyen el asunto (`*Ticket #N*: "asunto"`): notificaciones de estado (`tickets.controller`), chat (`chat.controller`), `ticket #N creado` (`handlers/ticket.ts`) y `ticket #N cerrado` (`handlers/comandos.ts`).
