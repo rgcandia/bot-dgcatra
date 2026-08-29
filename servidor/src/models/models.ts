@@ -4,6 +4,7 @@ import { Sector } from './Sector.js';
 import { User } from './User.js';
 import { Ticket } from './Ticket.js';
 import { Conversacion } from './Conversacion.js';
+import { Setting } from './Setting.js';
 
 User.belongsTo(Base, { foreignKey: 'baseId', as: 'base' });
 Base.hasMany(User, { foreignKey: 'baseId', as: 'usuarios' });
@@ -30,4 +31,5 @@ export {
   User,
   Ticket,
   Conversacion,
+  Setting,
 };

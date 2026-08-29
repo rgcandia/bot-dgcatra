@@ -13,7 +13,7 @@ import statsRoutes from '../routes/stats.routes.js';
 import settingsRoutes from '../routes/settings.routes.js';
 import chatRoutes from '../routes/chat.routes.js';
 import { config } from '../config/index.js';
-import { initSettings } from '../config/settings.js';
+import { initSettings, loadSettingsFromDB } from '../config/settings.js';
 import '../bot/whatsapp.js';
 import { sequelize } from '../config/database.js';
 import { logger } from '../config/logger.js';
@@ -26,7 +26,7 @@ const server = http.createServer(app);
 initSocket(server);
 
 // --- Sync DB schema (agrega columnas nuevas sin borrar datos) ---
-sequelize.sync({ alter: true }).catch((e) => {
+sequelize.sync({ alter: true }).then(() => loadSettingsFromDB()).catch((e) => {
   logger.error({ err: e.message }, 'Error sincronizando DB');
 });
 

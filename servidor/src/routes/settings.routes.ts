@@ -1,14 +1,13 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import { adminMiddleware } from '../middleware/admin.js';
-import { getMasterCode, setMasterCode, setAdminCode, limpiarDB } from '../controllers/settings.controller.js';
+import { getMasterCode, setMasterCode, limpiarDB } from '../controllers/settings.controller.js';
 import { logger } from '../config/logger.js';
 
 const router = Router();
 
 router.get('/master-code', authMiddleware, adminMiddleware, getMasterCode);
 router.patch('/master-code', authMiddleware, adminMiddleware, setMasterCode);
-router.patch('/admin-code', authMiddleware, adminMiddleware, setAdminCode);
 router.post('/limpiar-db', authMiddleware, adminMiddleware, limpiarDB);
 router.post('/logout-whatsapp', authMiddleware, adminMiddleware, async (_req, res) => {
   try {

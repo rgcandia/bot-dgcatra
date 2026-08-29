@@ -4,7 +4,7 @@ import { sequelize } from '../config/database.js';
 import { logger } from '../config/logger.js';
 
 export function getMasterCode(_req: Request, res: Response) {
-  res.json({ masterCode: getSetting('masterCode'), adminCode: getSetting('adminCode') });
+  res.json({ masterCode: getSetting('masterCode') });
 }
 
 export function setMasterCode(req: Request, res: Response) {
@@ -14,16 +14,6 @@ export function setMasterCode(req: Request, res: Response) {
   }
   setSetting('masterCode', masterCode);
   logger.info('Código maestro actualizado');
-  res.json({ ok: true });
-}
-
-export function setAdminCode(req: Request, res: Response) {
-  const { adminCode } = req.body;
-  if (typeof adminCode !== 'string' || adminCode.length === 0) {
-    return res.status(400).json({ error: 'adminCode requerido' });
-  }
-  setSetting('adminCode', adminCode);
-  logger.info('Código de admin actualizado');
   res.json({ ok: true });
 }
 

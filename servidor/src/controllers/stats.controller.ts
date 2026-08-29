@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
-import { Ticket, User, Base, Conversacion } from '../models/models.js';
+import { Ticket, User, Base } from '../models/models.js';
 import { sequelize } from '../config/database.js';
 import { Op } from 'sequelize';
 import { logger } from '../config/logger.js';
@@ -94,26 +94,5 @@ export async function topUsuarios(_req: AuthRequest, res: Response) {
   } catch (e) {
     logger.error({ err: e }, 'Error en stats topUsuarios');
     res.status(500).json({ error: 'Error al obtener estadísticas' });
-  }
-}
-
-export async function eliminarTickets(_req: AuthRequest, res: Response) {
-  try {
-    await Conversacion.destroy({ where: {} });
-    await Ticket.destroy({ where: {} });
-    res.json({ ok: true, mensaje: 'Todos los tickets eliminados' });
-  } catch (e) {
-    logger.error({ err: e }, 'Error en eliminarTickets');
-    res.status(500).json({ error: 'Error al eliminar tickets' });
-  }
-}
-
-export async function eliminarUsuarios(_req: AuthRequest, res: Response) {
-  try {
-    await User.destroy({ where: { esAdmin: false } });
-    res.json({ ok: true, mensaje: 'Usuarios no-admin eliminados' });
-  } catch (e) {
-    logger.error({ err: e }, 'Error en eliminarUsuarios');
-    res.status(500).json({ error: 'Error al eliminar usuarios' });
   }
 }

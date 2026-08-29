@@ -39,12 +39,8 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 |-------|------|-------------|
 | id | PK auto int | |
 | nombre | string | Nombre del sector |
-
-### base_sector (muchos a muchos)
-| Campo | Tipo |
-|-------|------|
-| baseId | int FK |
-| sectorId | int FK |
+| isAdmin | boolean | Si el sector otorga permisos de admin |
+| codigoAdmin | string | Código de autorización para ese sector |
 
 ### tickets
 | Campo | Tipo | Descripción |
@@ -95,7 +91,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
 | **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes del flujo actual (desde `_ticketStart`) con `ticketId`. |
 | **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
-| **IA para títulos** | Groq (`llama-3.1-8b-instant`) genera títulos cortos al crear tickets. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. |
+| **IA para títulos** | Groq (`qwen/qwen3.6-27b`) genera títulos cortos al crear tickets. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. |
 
 ---
 
@@ -221,12 +217,9 @@ Dashboard React con autenticación JWT.
 | DELETE | /api/bases/:id | Eliminar base | ✅ Admin |
 | GET | /api/sectores | Listar sectores |
 | GET | /api/sectores/:id | Obtener sector |
-| GET | /api/sectores/base/:baseId | Sectores de una base |
 | POST | /api/sectores | Crear sector | ✅ Admin |
 | PATCH | /api/sectores/:id | Actualizar sector | ✅ Admin |
 | DELETE | /api/sectores/:id | Eliminar sector | ✅ Admin |
-| POST | /api/sectores/asignar | Asignar sector a base | ✅ Admin |
-| DELETE | /api/sectores/base/:baseId/sector/:sectorId | Remover sector de base | ✅ Admin |
 | GET | /api/usuarios | Listar usuarios (query: `search`, `page`, `limit`, `esAdmin`, `registroIncompleto`, `inactivo`) |
 | GET | /api/usuarios/:telefono | Obtener usuario por teléfono |
 | PATCH | /api/usuarios/:telefono | Actualizar usuario (solo admin puede cambiar `esAdmin`) |
@@ -315,6 +308,15 @@ docker compose up --build -d
 ```
 
 ---
+
+## Últimos cambios (2026-08-29 — hardening y limpieza)
+
+- **Código maestro persistente**: `MASTER_CODE` ya no vive solo en memoria. Se guarda en la tabla `settings` (nuevo modelo `Setting`) y se recarga al arrancar, con fallback al `.env`. Cambiarlo desde Configuración ahora sobrevive a reinicios y rebuilds.
+- **Eliminados endpoints destructivos**: `DELETE /api/stats/tickets` y `DELETE /api/stats/usuarios` (borraban todo). La limpieza masiva queda solo en `POST /api/settings/limpiar-db`.
+- **Login — refresh de admins**: la lista de admins del login se actualiza con polling cada 15s (antes usaba un socket sin token que nunca conectaba).
+- **Notificaciones de estado vinculadas al ticket**: los avisos de cambio de estado (en proceso / cerrado / reabierto) ahora quedan asociados al ticket en `conversaciones`, igual que los comentarios.
+- **Código muerto `ADMIN_CODE` eliminado**: ruta `PATCH /api/settings/admin-code` y la variable global `ADMIN_CODE` removidas (el registro usa `sector.codigoAdmin`).
+- **README**: corregidas rutas de sectores que ya no existen y la tabla `base_sector`; modelo Groq actualizado a `qwen/qwen3.6-27b`.
 
 ## Últimos cambios (2026-08-29)
 

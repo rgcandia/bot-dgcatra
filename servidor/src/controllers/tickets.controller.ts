@@ -203,7 +203,7 @@ export async function update(req: AuthRequest, res: Response) {
           `🔄 ${autor} reabrió el ticket.\n` +
           `Un técnico va a revisarlo nuevamente.`;
       }
-      if (msg) notificarAgente(ticket.userTelefono, msg);
+      if (msg) notificarAgente(ticket.userTelefono, msg, ticket.id);
     }
 
     const updated = await Ticket.findByPk(ticket.id, {

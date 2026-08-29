@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { MessageCircle, ShieldCheck, ArrowLeft } from 'lucide-react';
 
@@ -26,11 +25,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchAdmins().then(list => { setAdmins(list); setLoaded(true); });
-    const SOCKET_URL = import.meta.env.VITE_API_URL || '';
-    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
-    socket.on('usuario-registrado', () => fetchAdmins().then(setAdmins));
-    socket.on('datos-actualizados', () => fetchAdmins().then(setAdmins));
-    return () => { socket.disconnect(); };
+    const poll = setInterval(() => {
+      fetchAdmins().then(setAdmins).catch(() => {});
+    }, 15000);
+    return () => clearInterval(poll);
   }, [fetchAdmins]);
 
   useEffect(() => {

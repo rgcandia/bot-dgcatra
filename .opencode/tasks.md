@@ -1,5 +1,26 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-29 — Hardening y limpieza (análisis + fixes)
+
+Análisis completo de la app (backend, bot, frontend, config) y correcciones aplicadas. No se tocaron: Groq (punto 4) ni chat takeover (punto 5), y `tecnicoAsignado` sigue diferido (decisión del usuario).
+
+- [x] **Login — refresh de admins roto**: `LoginPage.tsx` abría un socket sin token, rechazado por la auth del servidor (`socket/server.ts`). Se reemplazó por polling cada 15s de `fetchAdmins()`. Se removió el import de `socket.io-client` en el login.
+- [x] **Código maestro persistente**: antes `MASTER_CODE` vivía solo en memoria (`config/settings.ts` Map) y se perdía al reiniciar. Nuevo modelo `Setting` (tabla `settings`, `clave`/`valor`), `setSetting` hace upsert a DB, y `loadSettingsFromDB()` se ejecuta tras `sequelize.sync()` al arrancar (fallback al `.env`).
+- [x] **Endpoints destructivos eliminados**: `DELETE /api/stats/tickets` y `DELETE /api/stats/usuarios` (borraban todo, no documentados). Removidos de `stats.controller.ts` y `stats.routes.ts`; `Conversacion` dejó de importarse.
+- [x] **Notificaciones de estado vinculadas al ticket**: `tickets.controller.ts` pasaba `notificarAgente(tel, msg)` sin `ticketId` al cambiar estado; ahora pasa `ticket.id`, para que aparezcan en la solapa Conversación como los comentarios.
+- [x] **Código muerto `ADMIN_CODE` eliminado**: ruta `PATCH /api/settings/admin-code`, `setAdminCode`, `adminCode` de `config/index.ts`/`settings.ts`/`getMasterCode` y de `.env.example` (el registro usa `sector.codigoAdmin`).
+- [x] **README corregido**: rutas de sectores inexistentes (`/asignar`, `/base/:baseId`), tabla `base_sector`, modelo Groq → `qwen/qwen3.6-27b`.
+
+**Pendiente (documentado, no implementado)**
+- [ ] `tecnicoAsignado` nombre → teléfono/FK (diferido por decisión del usuario).
+- [ ] `/api/auth/admins` público (necesario para el login; rate-limited 60/5min).
+- [ ] Groq: verificar que `qwen/qwen3.6-27b` sea un id válido (punto 4).
+- [ ] Chat takeover no sobrevive reinicios (punto 5).
+
+**Verificación**: `tsc --noEmit` OK, `vitest` 18 OK, build cliente OK, `docker compose up -d --build api` OK. El contenedor se recreó y WhatsApp pidió QR nuevo (esperado por el restart).
+
+---
+
 ## 2026-08-29 — Fix comentarios no llegan al agente + Establecimientos (base/playa/comuna)
 
 ### Bug: comentario no se notificaba al usuario
