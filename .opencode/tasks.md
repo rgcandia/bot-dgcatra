@@ -1,5 +1,28 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-29 — Soft-delete de usuarios + fix login (blacklist)
+
+### Bug: login por OTP "me cierra sesión" (Ale Candia)
+
+**Causa raíz:** al eliminar un usuario se lo agregaba a la blacklist en memoria (`usuariosBaneados`), y **nunca se quitaba al re-registrarse**. El login por OTP entregaba un JWT válido (`verificar-codigo` no chequeaba la blacklist), pero la primera llamada a la API devolvía `401 "Usuario eliminado"` → `client.ts` borraba la sesión y redirigía a `/login`. El código maestro no fallaba porque su JWT usa `telefono: "master"`, nunca baneado.
+
+### Cambios aplicados
+
+- [x] **Eliminada la blacklist en memoria** (`usuariosBaneados`/`banearUsuario`/`desbanearUsuario`). Reemplazada por chequeo contra DB en `authMiddleware` y `socket/server.ts`: `User.findByPk` + `activo === true`. Bypass para `superAdmin` (el código maestro no es un usuario real).
+- [x] **Soft-delete**: `usuarios.controller.remove` ya no hace `destroy()`; setea `activo=false, registroCompleto=false, pasoRegistro=0, context=null, esAdmin=false`. **Conserva tickets e historial** (no dispara el CASCADE de las FKs) y permite re-registrarse vía "hola".
+- [x] **Bloquear/Desbloquear (acceso al bot)**: `update` sigue aceptando `activo`. Desactivado → el bot lo ignora (`bot/index.ts`) y no puede entrar al dashboard (`auth.controller.ts` `solicitar-codigo`/`verificar-codigo` rechazan inactivos).
+- [x] **Lista de usuarios**: `getAll` filtra `activo=true` por defecto; los inactivos solo aparecen con el filtro "Inactivos".
+- [x] **Re-registro reactiva**: `registro.ts:paso6Confirmar` setea `activo: true`.
+- [x] **`listarAdmins`**: solo admins `activo: true`.
+- [x] **Cache invalidation**: `usuarios.controller` invalida la caché de sesión del bot al actualizar/eliminar.
+- [x] **Fix secundario (rate-limit)**: `app.set('trust proxy', 1)` en `api/index.ts`. Elimina el `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` (Cloudflare Tunnel setea `X-Forwarded-For`) y evita que todos los usuarios compartan el mismo bucket de rate-limit (IP `127.0.0.1`).
+
+**Frontend** (`UsuariosPage.tsx`): papelera → "¿Eliminar? Se conservan sus tickets", checkbox → "Acceso al bot".
+
+**Verificación**: `tsc` OK, 18 tests OK, prueba end-to-end en prod (bloquear→401, desbloquear→200, eliminar→401) sobre usuario de prueba restaurado al final.
+
+---
+
 ## 2026-08-28 — Hardening y correcciones (análisis completo + fixes)
 
 Análisis completo del bot (runtime + código) y correcciones aplicadas. Commit `9f5faa7`.

@@ -279,6 +279,7 @@ async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
     baseId: ctxData.baseId,
     sectorId: ctxData.sectorId,
     esAdmin: !!esAdmin,
+    activo: true,
     registroCompleto: true,
     pasoRegistro: 0,
     context: null,

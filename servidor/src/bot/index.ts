@@ -152,6 +152,11 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
 
 async function manejarFlujoRegistrado(ctx: { telefono: string; texto: string; buttonId?: string }) {
   const user = await obtenerUsuario(ctx.telefono);
+  if (user.activo === false) {
+    const { enviarTexto } = await import('./enviar.js');
+    await enviarTexto(ctx.telefono, '🚫 Tu usuario está desactivado. Contactá al administrador.');
+    return;
+  }
   const context = (user.context || {}) as any;
 
   if (context.ticketPaso !== undefined && context.ticketPaso !== null) {

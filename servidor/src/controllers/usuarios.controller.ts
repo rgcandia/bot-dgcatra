@@ -1,9 +1,16 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
-import { AuthRequest, banearUsuario } from '../middleware/auth.js';
+import { AuthRequest } from '../middleware/auth.js';
 import { User, Base, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 import { logger } from '../config/logger.js';
+
+async function invalidarCacheUsuario(telefono: string) {
+  try {
+    const { invalidarCache } = await import('../bot/session.js');
+    invalidarCache(telefono);
+  } catch {}
+}
 
 export async function getAll(req: AuthRequest, res: Response) {
   try {
@@ -14,7 +21,7 @@ export async function getAll(req: AuthRequest, res: Response) {
     const where: any = {};
     if (req.query.esAdmin === 'true') where.esAdmin = true;
     if (req.query.registroIncompleto === 'true') where.registroCompleto = false;
-    if (req.query.inactivo === 'true') where.activo = false;
+    where.activo = req.query.inactivo === 'true' ? false : true;
 
     if (search) {
       where[Op.or] = [
@@ -93,6 +100,7 @@ export async function update(req: AuthRequest, res: Response) {
     }
 
     await user.update(payload);
+    invalidarCacheUsuario(req.params.telefono);
 
     const io = getIO(); if (io) io.emit('datos-actualizados');
 
@@ -113,9 +121,15 @@ export async function remove(req: AuthRequest, res: Response) {
   try {
     const user = await User.findByPk(req.params.telefono);
     if (!user) return res.status(404).json({ error: 'No encontrado' });
-    const telefono = user.telefono;
-    await user.destroy();
-    banearUsuario(telefono);
+    // Soft-delete: conserva tickets/historial y permite re-registrarse.
+    await user.update({
+      activo: false,
+      registroCompleto: false,
+      pasoRegistro: 0,
+      context: null,
+      esAdmin: false,
+    });
+    invalidarCacheUsuario(req.params.telefono);
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.json({ message: 'Usuario eliminado' });
   } catch (e) {

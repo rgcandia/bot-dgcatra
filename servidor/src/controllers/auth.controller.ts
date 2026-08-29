@@ -32,6 +32,9 @@ export async function solicitarCodigo(req: Request, res: Response) {
     if (!user || !user.registroCompleto) {
       return res.status(404).json({ error: 'Usuario no registrado.' });
     }
+    if (!user.activo) {
+      return res.status(403).json({ error: 'Usuario desactivado. Contactá al administrador.' });
+    }
 
     const codigo = crypto.randomInt(100000, 999999).toString();
     codigos.set(`auth:${telefono}`, { codigo, expires: Date.now() + OTP_EXPIRY });
@@ -75,14 +78,20 @@ export async function verificarCodigo(req: Request, res: Response) {
     codigos.delete(`auth:${telefono}`);
 
     const user = await User.findByPk(telefono);
-    const esAdmin = user?.esAdmin || false;
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no registrado.' });
+    }
+    if (!user.activo) {
+      return res.status(403).json({ error: 'Usuario desactivado. Contactá al administrador.' });
+    }
+    const esAdmin = user.esAdmin || false;
     const token = jwt.sign(
-      { telefono, esAdmin, nombre: user?.nombreCompleto || telefono },
+      { telefono, esAdmin, nombre: user.nombreCompleto || telefono },
       config.jwt.secret,
       { expiresIn: '24h' },
     );
 
-    res.json({ token, esAdmin, superAdmin: false, nombre: user?.nombreCompleto || telefono });
+    res.json({ token, esAdmin, superAdmin: false, nombre: user.nombreCompleto || telefono });
   } catch (e) {
     logger.error({ err: e }, 'Error en verificarCodigo');
     res.status(500).json({ error: 'Error interno' });
@@ -91,7 +100,7 @@ export async function verificarCodigo(req: Request, res: Response) {
 
 export async function listarAdmins(_req: Request, res: Response) {
   const admins = await User.findAll({
-    where: { esAdmin: true, registroCompleto: true },
+    where: { esAdmin: true, registroCompleto: true, activo: true },
     attributes: ['telefono', 'nombreCompleto'],
     order: [['nombreCompleto', 'ASC']],
   });

@@ -229,7 +229,7 @@ Dashboard React con autenticación JWT.
 | GET | /api/usuarios | Listar usuarios (query: `search`, `page`, `limit`, `esAdmin`, `registroIncompleto`, `inactivo`) |
 | GET | /api/usuarios/:telefono | Obtener usuario por teléfono |
 | PATCH | /api/usuarios/:telefono | Actualizar usuario (solo admin puede cambiar `esAdmin`) |
-| DELETE | /api/usuarios/:telefono | Eliminar usuario | ✅ Admin |
+| DELETE | /api/usuarios/:telefono | Eliminar usuario (soft-delete: conserva tickets/historial) | ✅ Admin |
 | GET | /api/tickets | Listar tickets (query: `search`, `page`, `limit`, `estado`, `prioridad`, `baseId`, `sectorId`, `tecnicoAsignado`, `sinAsignar`) |
 | GET | /api/tickets/:id | Detalle del ticket (incluye historial) |
 | GET | /api/tickets/:id/conversacion | Conversación WhatsApp del ticket |
@@ -314,6 +314,14 @@ docker compose up --build -d
 ```
 
 ---
+
+## Últimos cambios (2026-08-29)
+
+- **Soft-delete de usuarios**: eliminar un usuario ya no borra sus tickets ni su historial (antes el `CASCADE` de las FKs los borraba). Ahora se hace un *soft-delete*: resetea el registro (`registroCompleto=false`, `activo=false`, `esAdmin=false`) y el usuario puede volver a registrarse con "hola".
+- **Bloquear acceso (activo)**: el campo `activo` controla el acceso. Desactivado → el bot lo ignora y no puede entrar al dashboard; se puede reactivar desde el panel.
+- **Se elimina la blacklist en memoria**: la validación de sesión ahora consulta la DB (`activo`), con bypass para el código maestro. Corrige el bug de login que cerraba la sesión de un usuario re-registrado.
+- **`trust proxy = 1`**: el rate-limit ahora usa la IP real del cliente (Cloudflare Tunnel), evitando buckets globales y el error `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`.
+- **Lista de usuarios**: por defecto muestra solo usuarios activos; los inactivos aparecen con el filtro "Inactivos".
 
 ## Últimos cambios (2026-08-28)
 

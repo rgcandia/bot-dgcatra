@@ -176,7 +176,7 @@ export default function UsuariosPage() {
                     <td>
                       <ConfirmButton
                         label=""
-                        message={`¿Eliminar a ${u.nombreCompleto || u.telefono}?`}
+                        message={`¿Eliminar a ${u.nombreCompleto || u.telefono}? Se conservan sus tickets e historial.`}
                         danger
                         onConfirm={() => handleDelete(u.telefono)}
                       >
@@ -241,7 +241,7 @@ export default function UsuariosPage() {
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '.4rem', cursor: 'pointer', fontWeight: 400 }}>
                 <input type="checkbox" checked={edit.activo} onChange={e => setEdit({ ...edit, activo: e.target.checked })} />
-                Activo
+                Acceso al bot
               </label>
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>
