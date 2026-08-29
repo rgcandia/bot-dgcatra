@@ -19,7 +19,7 @@ interface PaginatedResponse {
   totalPages: number;
 }
 
-interface Base { id: number; nombre: string; }
+interface Base { id: number; nombre: string; tipo: 'base' | 'playa' | 'comuna'; }
 interface Sector { id: number; nombre: string; }
 
 const PAGE_SIZE = 20;
@@ -151,7 +151,7 @@ export default function UsuariosPage() {
             <thead><tr>
               <SortHeader col="telefono" label="ID WhatsApp" />
               <SortHeader col="nombreCompleto" label="Nombre" />
-              <SortHeader col="base" label="Base" />
+              <SortHeader col="base" label="Establecimiento" />
               <SortHeader col="sector" label="Sector" />
               <SortHeader col="registroCompleto" label="Registro" />
               <SortHeader col="esAdmin" label="Admin" />
@@ -221,10 +221,18 @@ export default function UsuariosPage() {
               <input className="input" value={edit.email || ''} onChange={e => setEdit({ ...edit, email: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Base</label>
+              <label>Establecimiento</label>
               <select value={edit.base?.id || edit.baseId || ''} onChange={e => setEdit({ ...edit, baseId: Number(e.target.value) || null })}>
-                <option value="">Sin base</option>
-                {bases.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+                <option value="">Sin establecimiento</option>
+                {(['base', 'playa', 'comuna'] as const).map(tipo => {
+                  const grupo = bases.filter(b => b.tipo === tipo);
+                  if (grupo.length === 0) return null;
+                  return (
+                    <optgroup key={tipo} label={tipo === 'base' ? 'Bases' : tipo === 'playa' ? 'Playas' : 'Comunas'}>
+                      {grupo.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+                    </optgroup>
+                  );
+                })}
               </select>
             </div>
             <div className="form-group">

@@ -34,7 +34,7 @@ export default function DashboardLayout() {
               <div style={{ color: '#FFD700', fontSize: '.65rem', padding: '1.5rem 1rem .3rem', textTransform: 'uppercase', letterSpacing: 2 }}>
                 Administración
               </div>
-              <NavItem to="/admin/bases" icon={<Building2 size={18} />} label="Bases" />
+              <NavItem to="/admin/bases" icon={<Building2 size={18} />} label="Establecimientos" />
               <NavItem to="/admin/sectores" icon={<Settings2 size={18} />} label="Sectores" />
               <NavItem to="/admin/usuarios" icon={<Users size={18} />} label="Usuarios" />
               <NavItem to="/admin/settings" icon={<ShieldCheck size={18} />} label="Configuración" />

@@ -4,8 +4,8 @@ import { sequelize, Base, Sector } from './models/models.js';
 async function seed() {
   await sequelize.sync({ force: true });
 
-  await Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123', codigoAcceso: 'PIE2026' });
-  await Base.create({ nombre: 'Base Once', direccion: 'Av. Rivadavia 456', codigoAcceso: 'ONC2026' });
+  await Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123', codigoAcceso: 'PIE2026', tipo: 'base' });
+  await Base.create({ nombre: 'Base Once', direccion: 'Av. Rivadavia 456', codigoAcceso: 'ONC2026', tipo: 'base' });
 
   await Sector.create({ nombre: 'Operativo' });
   await Sector.create({ nombre: 'Administrativo' });

@@ -45,13 +45,14 @@ async function seed() {
   console.log('🧹 Limpiando DB...');
   await sequelize.sync({ force: true });
 
-  // --- Bases ---
+  // --- Establecimientos (bases / playas / comunas) ---
   const bases = await Promise.all([
-    Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123, CABA', codigoAcceso: 'PIE2026' }),
-    Base.create({ nombre: 'Playa Sarmiento', direccion: 'Av. Sarmiento 2500, CABA', codigoAcceso: 'PLA2026' }),
-    Base.create({ nombre: 'Base Tacuari', direccion: 'Av. Tacuarí 456, CABA', codigoAcceso: 'TAC2026' }),
+    Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123, CABA', codigoAcceso: 'PIE2026', tipo: 'base' }),
+    Base.create({ nombre: 'Playa Sarmiento', direccion: 'Av. Sarmiento 2500, CABA', codigoAcceso: 'PLA2026', tipo: 'playa' }),
+    Base.create({ nombre: 'Base Tacuari', direccion: 'Av. Tacuarí 456, CABA', codigoAcceso: 'TAC2026', tipo: 'base' }),
+    Base.create({ nombre: 'Comuna 4', direccion: 'Av. Boedo 500, CABA', codigoAcceso: 'COM2026', tipo: 'comuna' }),
   ]);
-  console.log(`  ✅ ${bases.length} bases`);
+  console.log(`  ✅ ${bases.length} establecimientos`);
 
   // --- Sectores ---
   const sectores = await Promise.all([
@@ -266,7 +267,7 @@ async function seed() {
   console.log('\n✅ Seed demo completado');
   console.log('   Usá el código maestro para loguearte al dashboard.');
   console.log('   Técnicos: Ale Candia (5491112345678), María López, Carlos Ruiz.');
-  console.log('   Registro por WhatsApp: código de base PIE2026 / PLA2026 / TAC2026');
+  console.log('   Registro por WhatsApp: código de establecimiento PIE2026 / PLA2026 / TAC2026 / COM2026');
 
   await sequelize.close();
 }

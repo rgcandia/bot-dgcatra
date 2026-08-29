@@ -29,9 +29,10 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | PK auto int | |
-| nombre | string | Nombre de la base |
+| nombre | string | Nombre del establecimiento |
 | direccion | string | Dirección |
-| codigoAcceso | string | Código para registrarse en esta base |
+| codigoAcceso | string | Código para registrarse en este establecimiento |
+| tipo | enum | `base` / `playa` / `comuna` (los tres son "establecimientos": edificios donde trabaja el personal) |
 
 ### sectores
 | Campo | Tipo | Descripción |
@@ -141,7 +142,7 @@ bot-dgcatra/
 
 1. Usuario envía "hola" al bot
 2. Bot muestra bienvenida: *"¡Bienvenido! Sistema de Gestión de Tickets DGCATRA"* → escribe **SI** para empezar o **NO** para cancelar (acepta variantes: `sí`, `dale`, `ok`, `cancelar`, `salir`, etc.)
-3. Bot pide **código de acceso de la base** (`PIE2026` / `ONC2026`)
+3. Bot pide **código de acceso del establecimiento** (`PIE2026` / `ONC2026`)
 4. Muestra los **sectores** con números (①②③). Puede elegir escribiendo el número o el nombre del sector (sin tildes, case-insensitive)
 5. Si elige **Soporte Técnico** → pide código de admin (`admin2024`) → será admin
 6. Si elige otro sector → usuario normal
@@ -317,6 +318,8 @@ docker compose up --build -d
 
 ## Últimos cambios (2026-08-29)
 
+- **Comentarios notifican al agente**: al agregar un comentario a un ticket desde el dashboard, el agente ahora recibe el mensaje por WhatsApp (`📋 Ticket #N: "asunto"` + `💬 Autor agregó un comentario`). Antes el comentario se guardaba en la DB pero no se notificaba (el envío solo se disparaba ante cambios de estado).
+- **Establecimientos (bases / playas / comunas)**: la tabla `bases` ahora tiene un campo `tipo` (`base` | `playa` | `comuna`). Son edificios con dirección, estructuralmente idénticos; se gestionan desde **una sola** página ("Establecimientos") con pestañas para verlas separadas. El registro por WhatsApp no cambia (cada establecimiento tiene su `codigoAcceso`).
 - **Soft-delete de usuarios**: eliminar un usuario ya no borra sus tickets ni su historial (antes el `CASCADE` de las FKs los borraba). Ahora se hace un *soft-delete*: resetea el registro (`registroCompleto=false`, `activo=false`, `esAdmin=false`) y el usuario puede volver a registrarse con "hola".
 - **Bloquear acceso (activo)**: el campo `activo` controla el acceso. Desactivado → el bot lo ignora y no puede entrar al dashboard; se puede reactivar desde el panel.
 - **Se elimina la blacklist en memoria**: la validación de sesión ahora consulta la DB (`activo`), con bypass para el código maestro. Corrige el bug de login que cerraba la sesión de un usuario re-registrado.

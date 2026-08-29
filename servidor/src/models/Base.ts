@@ -7,6 +7,7 @@ export class Base extends Model<InferAttributes<Base>, InferCreationAttributes<B
   declare nombre: string;
   declare direccion: string;
   declare codigoAcceso: string;
+  declare tipo: CreationOptional<'base' | 'playa' | 'comuna'>;
 }
 
 Base.init({
@@ -27,6 +28,11 @@ Base.init({
   codigoAcceso: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  tipo: {
+    type: DataTypes.ENUM('base', 'playa', 'comuna'),
+    allowNull: false,
+    defaultValue: 'base',
   },
 }, {
   sequelize,

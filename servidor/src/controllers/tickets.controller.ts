@@ -5,10 +5,10 @@ import { Ticket, User, Base, Sector, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 import { logger } from '../config/logger.js';
 
-async function notificarAgente(telefono: string, mensaje: string) {
+async function notificarAgente(telefono: string, mensaje: string, ticketId?: number) {
   try {
     const { enviarTexto } = await import('../bot/enviar.js');
-    await enviarTexto(telefono, mensaje);
+    await enviarTexto(telefono, mensaje, ticketId);
   } catch {}
 }
 
@@ -174,6 +174,14 @@ export async function update(req: AuthRequest, res: Response) {
       historial.push({ accion: `${autor} agregó un comentario`, autor, timestamp: new Date().toISOString() });
       ticket.comentarios = comentarios;
       ticket.changed('comentarios', true);
+
+      if (ticket.userTelefono) {
+        notificarAgente(
+          ticket.userTelefono,
+          `📋 *Ticket #${ticket.id}*: "${ticket.asunto}"\n💬 *${autor}* agregó un comentario:\n"${nuevaNota.trim()}"`,
+          ticket.id,
+        );
+      }
     }
 
     ticket.historial = historial;

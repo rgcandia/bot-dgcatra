@@ -44,7 +44,7 @@ export default function TicketsList() {
   const [showNew, setShowNew] = useState(false);
   const [newTicket, setNewTicket] = useState({ asunto: '', descripcion: '', ubicacion: '', baseId: '' });
   const [saving, setSaving] = useState(false);
-  const [bases, setBases] = useState<{ id: number; nombre: string }[]>([]);
+  const [bases, setBases] = useState<{ id: number; nombre: string; tipo: 'base' | 'playa' | 'comuna' }[]>([]);
 
   function toggleSort(col: string) {
     if (sortBy === col) setSortDir(d => d === 'ASC' ? 'DESC' : 'ASC');
@@ -53,7 +53,7 @@ export default function TicketsList() {
   }
 
   useEffect(() => {
-    api.get<{ id: number; nombre: string }[]>('/api/bases').then(setBases).catch(() => {});
+    api.get<{ id: number; nombre: string; tipo: 'base' | 'playa' | 'comuna' }[]>('/api/bases').then(setBases).catch(() => {});
   }, []);
 
   async function handleCreateManual(e: FormEvent) {
@@ -160,7 +160,7 @@ export default function TicketsList() {
               <tr>
                 <SortHeader col="id" label="#" />
                 <SortHeader col="asunto" label="Asunto" />
-                <SortHeader col="base" label="Base" />
+                <SortHeader col="base" label="Establecimiento" />
                 <SortHeader col="estado" label="Estado" />
                 <SortHeader col="prioridad" label="Prioridad" />
                 <SortHeader col="tecnicoAsignado" label="Técnico" />
@@ -218,10 +218,18 @@ export default function TicketsList() {
                 <input className="input" value={newTicket.ubicacion} onChange={e => setNewTicket({ ...newTicket, ubicacion: e.target.value })} required />
               </div>
               <div className="form-group">
-                <label>Base *</label>
+                <label>Establecimiento *</label>
                 <select className="input" value={newTicket.baseId} onChange={e => setNewTicket({ ...newTicket, baseId: e.target.value })} required>
-                  <option value="">-- Elegir base --</option>
-                  {bases.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+                  <option value="">-- Elegir establecimiento --</option>
+                  {(['base', 'playa', 'comuna'] as const).map(tipo => {
+                    const grupo = bases.filter(b => b.tipo === tipo);
+                    if (grupo.length === 0) return null;
+                    return (
+                      <optgroup key={tipo} label={tipo === 'base' ? 'Bases' : tipo === 'playa' ? 'Playas' : 'Comunas'}>
+                        {grupo.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+                      </optgroup>
+                    );
+                  })}
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'flex-end' }}>

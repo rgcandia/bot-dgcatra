@@ -270,7 +270,7 @@ export default function TicketDetail() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem', padding: '1rem', background: 'var(--bg)', borderRadius: 8, marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <Building2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-            <div><div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Base</div><div style={{ fontWeight: 600 }}>{ticket.base?.nombre || '—'}</div></div>
+            <div><div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Establecimiento</div><div style={{ fontWeight: 600 }}>{ticket.base?.nombre || '—'}</div></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <Settings2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />

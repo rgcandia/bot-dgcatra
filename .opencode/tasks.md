@@ -1,5 +1,27 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-29 — Fix comentarios no llegan al agente + Establecimientos (base/playa/comuna)
+
+### Bug: comentario no se notificaba al usuario
+
+- [x] **`tickets.controller.ts`**: `update` solo notificaba por WhatsApp cuando cambiaba `estado`. Al agregar un comentario (`nuevaNota`) se guardaba en `comentarios` + historial pero **no se enviaba nada al agente**. Fix: `notificarAgente` ahora acepta `ticketId` opcional y, dentro del bloque `nuevaNota`, se envía al agente: `📋 Ticket #N: "asunto"` + `💬 Autor agregó un comentario: "texto"`. El mensaje queda enlazado al ticket en `conversaciones` (trazabilidad).
+
+### Establecimientos: bases, playas y comunas (un solo tipo de dato)
+
+La supervisora pidió separar bases, playas y comunas (son edificios con dirección, estructuralmente idénticos). Decisión: **una sola tabla `bases` + campo `tipo`** (no 3 tablas, para no romper las FKs de `usuarios.baseId`/`tickets.baseId`).
+
+- [x] **Modelo `Base.ts`**: agregado `tipo` (`ENUM('base','playa','comuna')`, `defaultValue: 'base'`). Con `sequelize.sync({ alter: true })` la columna se crea y las filas existentes quedan como `base`.
+- [x] **`bases.controller.ts`**: `create`/`update` aceptan `tipo` (validado contra `TIPOS`, default `'base'`).
+- [x] **`seed.ts`**: las 2 bases con `tipo: 'base'`. **`seed-demo.ts`**: agregada "Comuna 4" (`tipo: 'comuna'`) para cubrir las 3 categorías; "Playa Sarmiento" con `tipo: 'playa'`.
+- [x] **`BasesPage.tsx`**: título "Establecimientos", pestañas *Todas / Bases / Playas / Comunas* (filtrado client-side), columna "Tipo" (badge `badge-base/playa/comuna`), select "Tipo" en el modal.
+- [x] **`DashboardLayout.tsx`**: ítem del sidebar "Bases" → "Establecimientos".
+- [x] **`TicketsList.tsx`** y **`UsuariosPage.tsx`**: el `<select>` de establecimiento ahora agrupa por tipo con `<optgroup>`; columna/label "Base" → "Establecimiento".
+- [x] **`TicketDetail.tsx`**: label "Base" → "Establecimiento".
+- [x] **`index.css`**: badges `.badge-base`, `.badge-playa`, `.badge-comuna`.
+- [x] **Verificación**: `tsc` OK, 18 tests OK, build frontend OK.
+
+---
+
 ## 2026-08-29 — Soft-delete de usuarios + fix login (blacklist)
 
 ### Bug: login por OTP "me cierra sesión" (Ale Candia)
