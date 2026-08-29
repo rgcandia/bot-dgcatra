@@ -546,6 +546,30 @@ Diagnóstico sobre la sesión real del usuario Ana (`56212716531856@lid`): no ha
 
 ---
 
+## Evaluación profesional — 2026-08-29
+
+**Puntuación: 8.6/10 (86/100)**
+
+| Dimensión | Nota |
+|-----------|------|
+| Arquitectura y diseño | 9/10 |
+| Experiencia de usuario (bot + dashboard) | 10/10 |
+| Anti-detección WhatsApp | 9/10 |
+| Seguridad | 8.5/10 |
+| DevOps / Deployment | 8/10 |
+| Documentación | 9.5/10 |
+| Manejo de errores / resiliencia | 7.5/10 |
+| Cobertura de tests | 2/10 |
+
+**Qué mejoró desde 2026-08-10:** soft-delete de usuarios (conserva tickets/historial), auth contra DB sin blacklist en memoria, `trust proxy = 1` (rate-limit correcto detrás de Cloudflare Tunnel).
+
+**Qué falta para llegar a 9.2+** (en orden de impacto):
+
+1. **Tests de integración** — al menos auth (OTP + soft-delete + bloqueo) y creación de tickets.
+2. **CI/CD** — GitHub Actions con `tsc` + `vitest` + build en cada push.
+3. **Migraciones controladas** — reemplazar `sequelize.sync({ alter: true })` en arranque.
+4. **`tecnicoAsignado`** — migrar de nombre-string a FK por teléfono (pendiente documentado).
+
 ## Evaluación profesional — 2026-08-10
 
 **Puntuación: 8.4/10 (84/100)**
