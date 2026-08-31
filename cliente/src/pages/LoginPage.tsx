@@ -24,7 +24,10 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAdmins().then(list => { setAdmins(list); setLoaded(true); });
+    fetchAdmins()
+      .then(setAdmins)
+      .catch(() => {})
+      .finally(() => setLoaded(true));
     const poll = setInterval(() => {
       fetchAdmins().then(setAdmins).catch(() => {});
     }, 15000);

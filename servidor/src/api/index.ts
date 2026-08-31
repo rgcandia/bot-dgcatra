@@ -14,6 +14,7 @@ import settingsRoutes from '../routes/settings.routes.js';
 import chatRoutes from '../routes/chat.routes.js';
 import { config } from '../config/index.js';
 import { initSettings, loadSettingsFromDB } from '../config/settings.js';
+import { corsOrigin } from '../config/cors.js';
 import '../bot/whatsapp.js';
 import { sequelize } from '../config/database.js';
 import { logger } from '../config/logger.js';
@@ -23,6 +24,12 @@ initSettings();
 const app = express();
 app.set('trust proxy', 1);
 const server = http.createServer(app);
+
+// Alinear keep-alive con el proxy (cloudflared mantiene conexiones al origen ~30s;
+// el default de Node es 5s y puede cortarlas con RST -> "connection reset by peer")
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
+
 initSocket(server);
 
 // --- Sync DB schema (agrega columnas nuevas sin borrar datos) ---
@@ -30,16 +37,26 @@ sequelize.sync({ alter: true }).then(() => loadSettingsFromDB()).catch((e) => {
   logger.error({ err: e.message }, 'Error sincronizando DB');
 });
 
-const allowedOrigins = [
-  'https://dgcatra.alejndrogcandia.online',
-  'http://localhost:5173',
-  'http://172.17.0.202:5173',
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-].filter(Boolean);
-
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(helmet());
 app.use(express.json());
+
+// --- Request logging (diagnóstico) ---
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    logger.info({
+      ip: req.ip,
+      xff: req.headers['x-forwarded-for'],
+      cf: req.headers['cf-connecting-ip'],
+      m: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      ms: Date.now() - start,
+    }, 'req');
+  });
+  next();
+});
 
 // --- Dashboard API ---
 app.use('/api/auth', authRoutes);

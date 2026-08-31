@@ -2,6 +2,7 @@ import { Server as SocketServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import { usuarioActivo } from '../middleware/auth.js';
+import { corsOrigin } from '../config/cors.js';
 import { logger } from '../config/logger.js';
 
 let io: SocketServer | null = null;
@@ -28,12 +29,7 @@ export function getBotStatus() {
 export function initSocket(httpServer: any) {
   io = new SocketServer(httpServer, {
     cors: {
-      origin: [
-        'https://dgcatra.alejndrogcandia.online',
-        'http://localhost:5173',
-        'http://172.17.0.202:5173',
-        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-      ],
+      origin: corsOrigin,
       methods: ['GET', 'POST'],
     },
   });

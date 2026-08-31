@@ -335,3 +335,22 @@ docker compose up --build -d
 - **Seguridad**: cierre de escalado de privilegios — `sectores.update` no pisa `codigoAdmin`; el registro solo otorga `esAdmin` si se verificó el código del sector.
 - **Auth**: `/api/auth/admins` con rate limit; `solicitar-codigo` devuelve 503 si falla el envío del OTP.
 - **Chat takeover**: el timeout re-arma cada 30s. Código de base case-insensitive. `enviarLista` guarda el mensaje completo en historial.
+
+---
+
+## Problema conocido (2026-08-29 — sin resolver)
+
+**Síntoma:** el dashboard falla en **Firefox** (solo Firefox; Chrome/Edge funcionan) al llamar a la API `https://dgcatra.alejndrogcandia.online`:
+- `NS_ERROR_NET_RESET` en la pestaña Red (conexión reseteada).
+- En consola: *"pedido de origen cruzado bloqueado … razón: el pedido CORS falló, código de estado: null"* y `Uncaught (in promise) TypeError: NetworkError when attempting to fetch resource`.
+
+**Descartado / verificado (no era):**
+- **Servidor y tunnel sanos**: las requests llegan cada 15s (polling del login) con `304`; cloudflared sin errores.
+- **No es CORS**: el header `Access-Control-Allow-Origin` se devuelve bien; "status null" es falla de red, no de política.
+- **No es HTTP/3** (`network.http.http3.enabled=false` no cambió nada).
+- **No es IPv6** (las requests llegan por IPv4; `network.dns.disableIPv6` no cambió nada).
+- **No se puede apagar IPv6 en Cloudflare** (plan Free): el toggle es Enterprise-only y el setting por registro `ipv4_only` devuelve error 9227.
+
+**Conclusión:** el reset ocurre entre el navegador (Firefox) y el edge de Cloudflare, específico de Firefox. Pendiente de diagnóstico (agregar `User-Agent` al request logging y reproducir).
+
+**Workaround temporal:** usar Chrome/Edge (cualquier navegador Chromium).

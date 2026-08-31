@@ -17,7 +17,7 @@ function playSound(src: string) {
 }
 
 export function useSocket() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const [notificacion, setNotificacion] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -35,6 +35,13 @@ export function useSocket() {
     if (!user?.token) return;
 
     const socket = io(SOCKET_URL, { auth: { token: user.token }, transports: ['websocket', 'polling'] });
+
+    socket.on('connect_error', (err) => {
+      const msg = err?.message || '';
+      if (/token/i.test(msg) || /desactivado/i.test(msg)) {
+        logout();
+      }
+    });
 
     socket.on('ticket-creado', (ticket: TicketEvent) => {
       playSound('/sounds/ticket-creado.mp3');
@@ -65,7 +72,7 @@ export function useSocket() {
 
     socketRef.current = socket;
     return () => { socket.disconnect(); };
-  }, [user?.token]);
+  }, [user?.token, logout]);
 
   const limpiarNotificacion = useCallback(() => setNotificacion(null), []);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
