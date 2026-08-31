@@ -159,8 +159,21 @@ export async function update(req: AuthRequest, res: Response) {
         if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reabrir un ticket' });
       }
       const estadoLabel = estado === 'cerrado' ? 'cerró' : estado === 'en_proceso' ? 'puso en proceso' : 'reabrió';
-      historial.push({ accion: `${autor} ${estadoLabel} el ticket`, autor, timestamp: new Date().toISOString() });
+      historial.push({
+        accion: `${autor} ${estadoLabel} el ticket`,
+        autor,
+        ...(estado === 'cerrado' ? { tipo: 'tecnico' } : {}),
+        timestamp: new Date().toISOString(),
+      });
       ticket.estado = estado;
+
+      if (estado === 'cerrado') {
+        ticket.cerradoPor = 'tecnico';
+        ticket.cerradoPorNombre = autor;
+      } else if (estado === 'abierto' && oldEstado === 'cerrado') {
+        ticket.cerradoPor = null;
+        ticket.cerradoPorNombre = null;
+      }
     }
 
     if (solucion !== undefined && solucion !== ticket.solucion) {

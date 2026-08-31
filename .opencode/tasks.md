@@ -1,5 +1,17 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-31 — Distinguir quién cerró el ticket (usuario vs técnico)
+
+- [x] **Modelo `Ticket.ts`**: columnas `cerradoPor` (`ENUM('usuario','tecnico')`, null) y `cerradoPorNombre` (string, null). Migran con `sequelize.sync({ alter: true })`.
+- [x] **`comandos.ts` (`cerrarConSolucion`)**: historial con `tipo: 'usuario'` + `cerradoPor='usuario'` / `cerradoPorNombre=autor`.
+- [x] **`tickets.controller.ts` (`update`)**: al cerrar `tipo: 'tecnico'` + `cerradoPor='tecnico'` / `cerradoPorNombre=autor`; al reabrir reset a null.
+- [x] **`seed-demo.ts`**: cierres de demo con `tipo: 'tecnico'` + `cerradoPor/cerradoPorNombre`.
+- [x] **`TicketDetail.tsx`**: `iconoHistorial`/`colorHistorial` reciben `tipo` (usuario=`User` azul, técnico=`CircleCheckBig` verde); card "Solución" muestra quién cerró.
+- [x] **`TicketsList.tsx`**: sub-texto "por usuario"/"por técnico" bajo el badge en tickets cerrados.
+- [x] **README**: modelo de datos + sección "Últimos cambios".
+
+---
+
 ## 2026-08-31 — Cerrar ticket con solución + permitir cerrar tickets abiertos
 
 - [x] **`cerrar N` funciona también en tickets `abierto`** (antes rechazaba si no lo había tomado un técnico). Se eliminó el bloque que devolvía "todavía no fue tomado".

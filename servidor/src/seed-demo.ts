@@ -192,6 +192,7 @@ async function seed() {
       historial.push({
         accion: `${tecnicoAsignado} cerró el ticket — Solución: ${pick(soluciones)}`,
         autor: tecnicoAsignado,
+        tipo: 'tecnico',
         timestamp: updatedAt.toISOString(),
       });
     }
@@ -209,6 +210,8 @@ async function seed() {
       userTelefono: agente.telefono,
       tecnicoAsignado,
       solucion: estado === 'cerrado' ? pick(soluciones) : null,
+      cerradoPor: estado === 'cerrado' ? 'tecnico' : null,
+      cerradoPorNombre: estado === 'cerrado' ? tecnicoAsignado : null,
       historial,
       createdAt,
       updatedAt,

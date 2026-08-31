@@ -53,7 +53,9 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | descripcion | string | Descripción |
 | estado | enum | abierto / en_proceso / cerrado |
 | prioridad | enum | baja / media / alta |
-| historial | JSON | Acciones y timestamps |
+| cerradoPor | enum null | `usuario` / `tecnico` — quién cerró el ticket |
+| cerradoPorNombre | string null | Nombre de quien lo cerró |
+| historial | JSON | Acciones y timestamps (el cierre incluye `tipo: 'usuario' | 'tecnico'`) |
 
 ### conversaciones (historial del bot)
 | Campo | Tipo | Descripción |
@@ -321,6 +323,14 @@ docker compose up --build -d
 ```
 
 ---
+
+## Últimos cambios (2026-08-31 — cierre: usuario vs técnico)
+
+- **Distinción de quién cierra un ticket**: se agregaron las columnas `cerradoPor` (`usuario` | `tecnico`) y `cerradoPorNombre` al modelo `Ticket`. El cierre desde WhatsApp (`cerrar N`) marca `usuario`; el cierre desde el dashboard marca `tecnico`. Al reabrir, ambos vuelven a `null`.
+- **Historial**: el entry "cerró el ticket" ahora lleva `tipo: 'usuario' | 'tecnico'` para diferenciarlo en el timeline.
+- **Frontend `TicketDetail`**: ícono y color distintos según quién cerró (usuario = `User` azul, técnico = `CircleCheckBig` verde) y la card "Solución" muestra "Cerrado por el usuario" / "Cerrado por el técnico {nombre}".
+- **Frontend `TicketsList`**: en tickets cerrados, el badge de estado muestra un sub-texto "por usuario" / "por técnico".
+- **Compatibilidad**: tickets ya cerrados (sin `cerradoPor`) no muestran quién cerró, sin romper.
 
 ## Últimos cambios (2026-08-29 — hardening y limpieza)
 

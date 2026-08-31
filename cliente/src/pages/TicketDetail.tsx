@@ -14,7 +14,8 @@ import ConfirmButton from '../components/ConfirmButton';
 interface Ticket {
   id: number; asunto: string; descripcion: string; ubicacion: string;
   estado: string; prioridad: string; tecnicoAsignado: string | null;
-  solucion: string | null; historial: any[]; comentarios: any[]; createdAt: string;
+  solucion: string | null; cerradoPor: 'usuario' | 'tecnico' | null; cerradoPorNombre: string | null;
+  historial: any[]; comentarios: any[]; createdAt: string;
   usuario: { nombreCompleto: string; telefono: string };
   base: { nombre: string }; sector: { nombre: string } | null;
 }
@@ -34,17 +35,25 @@ function hora(iso: string) {
   return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function iconoHistorial(accion: string) {
+function iconoHistorial(accion: string, tipo?: string) {
   if (accion.includes('creó el ticket')) return <Play size={12} />;
-  if (accion.includes('puso en proceso') || accion.includes('cerró') || accion.includes('reabrió')) return <ArrowRightCircle size={12} />;
+  if (accion.includes('cerró')) {
+    if (tipo === 'usuario') return <User size={12} />;
+    if (tipo === 'tecnico') return <CircleCheckBig size={12} />;
+  }
+  if (accion.includes('puso en proceso') || accion.includes('reabrió')) return <ArrowRightCircle size={12} />;
   if (accion.includes('asignó') || accion.includes('desvinculó')) return <UserCheck size={12} />;
   if (accion.includes('prioridad')) return <AlertCircle size={12} />;
   if (accion.includes('solución')) return <CircleCheckBig size={12} />;
   return <Clock size={12} />;
 }
 
-function colorHistorial(accion: string) {
-  if (accion.includes('cerró') || accion.includes('solución')) return 'var(--success)';
+function colorHistorial(accion: string, tipo?: string) {
+  if (accion.includes('cerró')) {
+    if (tipo === 'usuario') return '#3b82f6';
+    return 'var(--success)';
+  }
+  if (accion.includes('solución')) return 'var(--success)';
   if (accion.includes('reabrió') || accion.includes('puso en proceso') || accion.includes('asignó') || accion.includes('desvinculó')) return '#6366f1';
   return 'var(--text-secondary)';
 }
@@ -389,6 +398,13 @@ export default function TicketDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', color: 'var(--success)', marginBottom: '.5rem' }}>
             <CircleCheckBig size={18} /><h3 style={{ margin: 0, fontSize: '1rem' }}>Solución</h3>
           </div>
+          {ticket.cerradoPor && (
+            <div style={{ fontSize: '.85rem', color: 'var(--text-secondary)', marginBottom: '.5rem' }}>
+              {ticket.cerradoPor === 'usuario'
+                ? 'Cerrado por el usuario'
+                : `Cerrado por el técnico ${ticket.cerradoPorNombre || ''}`}
+            </div>
+          )}
           <p style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.7, fontSize: '.95rem' }}>{ticket.solucion}</p>
         </div>
       )}
@@ -440,11 +456,11 @@ export default function TicketDetail() {
               <div style={{ position: 'relative', paddingLeft: '1rem' }}>
                 <div style={{ position: 'absolute', left: 4, top: 4, bottom: 4, width: 2, background: 'var(--border)' }} />
                 {historial.map((h, i) => {
-                  const color = colorHistorial(h.accion);
+                  const color = colorHistorial(h.accion, h.tipo);
                   const fecha = h.timestamp ? formatFecha(h.timestamp) : '';
                   return (
                     <div key={i} style={{ position: 'relative', paddingLeft: '1.2rem', paddingBottom: i < historial.length - 1 ? '1rem' : 0 }}>
-                      <div style={{ position: 'absolute', left: -11, top: 3, width: 20, height: 20, borderRadius: '50%', background: 'var(--surface)', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{iconoHistorial(h.accion)}</div>
+                      <div style={{ position: 'absolute', left: -11, top: 3, width: 20, height: 20, borderRadius: '50%', background: 'var(--surface)', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{iconoHistorial(h.accion, h.tipo)}</div>
                       <div style={{ marginBottom: 2 }}><span style={{ fontWeight: 600, fontSize: '.9rem', color: 'var(--text)' }}>{h.accion}</span></div>
                       <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)' }}>
                         {fecha && <span>{fecha}</span>}

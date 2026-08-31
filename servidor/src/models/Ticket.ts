@@ -14,6 +14,8 @@ export class Ticket extends Model<InferAttributes<Ticket>, InferCreationAttribut
   declare userTelefono: string;
   declare tecnicoAsignado: CreationOptional<string | null>;
   declare solucion: CreationOptional<string | null>;
+  declare cerradoPor: CreationOptional<'usuario' | 'tecnico' | null>;
+  declare cerradoPorNombre: CreationOptional<string | null>;
   declare historial: CreationOptional<any[]>;
   declare comentarios: CreationOptional<any[]>;
   declare createdAt: CreationOptional<Date>;
@@ -32,6 +34,8 @@ Ticket.init({
   userTelefono: { type: DataTypes.STRING, allowNull: false },
   tecnicoAsignado: { type: DataTypes.STRING, allowNull: true },
   solucion: { type: DataTypes.TEXT, allowNull: true },
+  cerradoPor: { type: DataTypes.ENUM('usuario', 'tecnico'), allowNull: true },
+  cerradoPorNombre: { type: DataTypes.STRING, allowNull: true },
   historial: { type: DataTypes.JSON, defaultValue: [], allowNull: true },
   comentarios: { type: DataTypes.JSON, defaultValue: [], allowNull: true },
   createdAt: DataTypes.DATE,

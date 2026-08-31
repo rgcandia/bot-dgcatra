@@ -8,7 +8,7 @@ import { useSocket } from '../context/useSocket';
 interface Ticket {
   id: number; asunto: string; descripcion: string; ubicacion: string;
   estado: string; prioridad: string; createdAt: string;
-  tecnicoAsignado: string | null;
+  tecnicoAsignado: string | null; cerradoPor: 'usuario' | 'tecnico' | null;
   usuario: { nombreCompleto: string; telefono: string };
   base: { nombre: string }; sector: { nombre: string } | null;
 }
@@ -173,7 +173,13 @@ export default function TicketsList() {
                   <td style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>#{t.id}</td>
                   <td style={{ fontWeight: 500 }}>{t.asunto}</td>
                   <td>{t.base?.nombre}</td>
-                  <td><span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span></td>
+                  <td><span className={`badge badge-${t.estado}`}>{t.estado.replace('_', ' ')}</span>
+                    {t.estado === 'cerrado' && t.cerradoPor && (
+                      <div style={{ fontSize: '.72rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                        por {t.cerradoPor === 'usuario' ? 'usuario' : 'técnico'}
+                      </div>
+                    )}
+                  </td>
                   <td><span className={`badge badge-${t.prioridad}`}>{t.prioridad}</span></td>
                   <td style={{ fontSize: '.85rem' }}>{t.tecnicoAsignado || '—'}</td>
                   <td style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>

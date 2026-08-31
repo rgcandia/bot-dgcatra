@@ -6,7 +6,7 @@ import { api } from '../api/client';
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
 interface TicketEvent { id: number; asunto: string; estado: string; userTelefono: string; }
-interface TicketFull { id: number; asunto: string; estado: string; descripcion: string; ubicacion: string; prioridad: string; tecnicoAsignado: string | null; solucion: string | null; historial: any[]; comentarios: any[]; createdAt: string; usuario: { nombreCompleto: string; telefono: string }; base: { nombre: string }; sector: { nombre: string } | null; }
+interface TicketFull { id: number; asunto: string; estado: string; descripcion: string; ubicacion: string; prioridad: string; tecnicoAsignado: string | null; solucion: string | null; cerradoPor: 'usuario' | 'tecnico' | null; cerradoPorNombre: string | null; historial: any[]; comentarios: any[]; createdAt: string; usuario: { nombreCompleto: string; telefono: string }; base: { nombre: string }; sector: { nombre: string } | null; }
 
 function playSound(src: string) {
   try {

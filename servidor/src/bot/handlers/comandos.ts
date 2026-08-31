@@ -245,9 +245,11 @@ async function cerrarConSolucion(telefono: string, ticketId: number, solucion: s
   const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
   const user = await User.findByPk(telefono);
   const autor = user?.nombreCompleto || telefono;
-  historial.push({ accion: `${autor} cerró el ticket`, autor, timestamp: new Date().toISOString() });
+  historial.push({ accion: `${autor} cerró el ticket`, autor, tipo: 'usuario', timestamp: new Date().toISOString() });
   ticket.estado = 'cerrado';
   ticket.solucion = solucion;
+  ticket.cerradoPor = 'usuario';
+  ticket.cerradoPorNombre = autor;
 
   ticket.historial = historial;
   ticket.changed('historial', true);
