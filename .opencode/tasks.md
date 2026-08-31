@@ -1,5 +1,27 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-31 — Detalles de registro + typos de comandos
+
+- [x] **Registro completo sin ✅**: el mensaje "¡Registro completo!" ahora usa 🎉 en vez del check verde (`registro.ts`). El "Confirmá tus datos" previo mantiene su ✅.
+- [x] **Bug "ayusa" → creaba ticket**: los typos cercanos a comandos ya no caen en "creación de ticket". Agregado fuzzy matching (Levenshtein ≤1) en `helpers.ts` (`esCercano`) y aplicado en `comandos.ts` a **ayuda**, **tickets** y **cancelar**. `esCancelar` ahora también matchea "canelar" en todo el flujo (registro y ticket). Guarda `texto !== 'ticket'` para que el singular no caiga en "mis tickets".
+- [x] **Tests**: nuevo `__tests__/helpers.test.ts` (13 casos: `esCercano`, `esCancelar`, `normalizar`). Verificación: `tsc` OK, `vitest` 34 OK.
+
+---
+
+## 2026-08-29 — Firefox: NS_ERROR_NET_RESET (PENDIENTE, sin resolver)
+
+- [ ] **Bug**: dashboard falla SOLO en Firefox (`NS_ERROR_NET_RESET` / CORS "status null" / `NetworkError`). Chrome funciona. Reset entre navegador y edge de Cloudflare; server y tunnel sanos (requests llegan cada 15s con 304).
+- [x] Descartados: CORS (headers OK), HTTP/3, IPv6 (`ipv4_only` no disponible en Free → error 9227), proxy de Firefox.
+- [x] Hardening aplicado en código (server desplegado, cliente SIN deployar a Vercel):
+  - `servidor/src/config/cors.ts` (nuevo): CORS acepta `*.vercel.app`, `Origin: null`, localhost.
+  - `servidor/src/api/index.ts`: `keepAliveTimeout=65000` + request logging (ip/xff/cf/method/url/status/ms).
+  - `servidor/src/socket/server.ts`: usa `corsOrigin`.
+  - `cliente/src/context/useSocket.ts`: `connect_error` → logout.
+  - `cliente/src/pages/LoginPage.tsx`: `fetchAdmins().catch().finally()` (fix spinner infinito + uncaught promise).
+- [ ] Pendiente: agregar `User-Agent` al request logging y reproducir; comparar IP/protocolo en la pestaña Red de Firefox.
+- [ ] Pendiente: commit + push (5 archivos sin commitear; el cliente necesita redeploy de Vercel).
+- **Workaround:** usar Chrome/Edge.
+
 ## 2026-08-29 — Hardening y limpieza (análisis + fixes)
 
 Análisis completo de la app (backend, bot, frontend, config) y correcciones aplicadas. No se tocaron: Groq (punto 4) ni chat takeover (punto 5), y `tecnicoAsignado` sigue diferido (decisión del usuario).

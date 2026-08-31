@@ -2,7 +2,7 @@ import { Ticket, User } from '../../models/models.js';
 import { getIO } from '../../socket/server.js';
 import { enviarTexto, enviarBotones } from '../enviar.js';
 import { obtenerUsuario, guardarUsuario } from '../session.js';
-import { esCortesia } from '../helpers.js';
+import { esCercano, esCortesia } from '../helpers.js';
 
 interface Ctx {
   telefono: string;
@@ -20,7 +20,7 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   const pending = (user.context as any)?.pendingCommand as PendingCmd | undefined;
 
   if (pending) {
-    if (texto === 'cancelar') {
+    if (texto === 'cancelar' || esCercano(texto, 'cancelar')) {
       await guardarUsuario(ctx.telefono, { context: null });
       await enviarTexto(ctx.telefono, 'Cancelado. Escribí *ayuda* para ver los comandos.');
       return true;
@@ -49,18 +49,19 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   }
 
   // Ayuda
-  if (texto === 'ayuda' || texto === 'help' || texto === 'comandos' || ctx.buttonId === 'cmd_ayuda') {
+  if (texto === 'ayuda' || texto === 'help' || texto === 'comandos' || esCercano(texto, 'ayuda') || ctx.buttonId === 'cmd_ayuda') {
     return await mostrarAyuda(ctx.telefono);
   }
 
   // cancelar global (sin pendiente)
-  if (texto === 'cancelar') {
+  if (texto === 'cancelar' || esCercano(texto, 'cancelar')) {
     await enviarTexto(ctx.telefono, 'Ok. Escribí *ayuda* para ver los comandos.');
     return true;
   }
 
   // tickets / mis tickets (vista rápida)
-  if (texto === 'tickets' || texto === 'mis tickets' || texto === '/tickets' || texto === '/mis-tickets') {
+  if (texto === 'tickets' || texto === 'mis tickets' || texto === '/tickets' || texto === '/mis-tickets' ||
+      (esCercano(texto, 'tickets') && texto !== 'ticket') || esCercano(texto, 'mis tickets')) {
     return await mostrarTickets(ctx.telefono);
   }
 

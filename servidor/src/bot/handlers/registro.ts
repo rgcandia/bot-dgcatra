@@ -289,7 +289,7 @@ async function paso6Confirmar(ctx: Ctx): Promise<boolean> {
   if (io) io.emit('usuario-registrado');
 
   return await enviarTexto(ctx.telefono,
-    '✅ *¡Registro completo!*\n\n' +
+    '🎉 *¡Registro completo!*\n\n' +
     `Ya estás registrado en *${ctxData.baseNombre}* (${ctxData.sectorNombre}).\n\n` +
     'Escribí *ayuda* para ver los comandos disponibles.');
 }
