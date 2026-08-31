@@ -56,6 +56,11 @@ describe('PendingCommandSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('valida comando cerrar con ticketId', () => {
+    const result = PendingCommandSchema.safeParse({ pendingCommand: 'cerrar', ticketId: 5 });
+    expect(result.success).toBe(true);
+  });
+
   it('rechaza comando inválido', () => {
     const result = PendingCommandSchema.safeParse({ pendingCommand: 'invalidar' });
     expect(result.success).toBe(false);

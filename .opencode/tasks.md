@@ -1,5 +1,15 @@
 # Tareas - bot-dgcatra
 
+## 2026-08-31 — Cerrar ticket con solución + permitir cerrar tickets abiertos
+
+- [x] **`cerrar N` funciona también en tickets `abierto`** (antes rechazaba si no lo había tomado un técnico). Se eliminó el bloque que devolvía "todavía no fue tomado".
+- [x] **`cerrar N` ahora pide la solución**: flujo en dos pasos — el bot pregunta *"¿Se solucionó? Contame qué pasó y cómo lo resolviste"*, guarda la respuesta en `ticket.solucion` + historial, emite `ticket-actualizado` por socket y confirma por WhatsApp con la solución. (`pedirSolucion` + `cerrarConSolucion` en `comandos.ts`; `cambiarEstado` eliminado.)
+- [x] **Schema**: `PendingCommandSchema` acepta `ticketId` (para el paso de "esperando solución"). Test nuevo en `schemas.test.ts`.
+- [x] **CTAs**: `mostrarTicket` sugiere `cerrar N` también para `abierto`; `mostrarAyuda` aclara que cierra pidiendo la solución.
+- [ ] **Futuro fix — auto-deploy del servidor**: hoy el rebuild de `dgcatra-api` es manual (`docker compose up --build -d api`). Evaluar un **self-hosted runner de GitHub Actions** en el host (corre como `tic`, tiene docker) para que al pushear a `main` haga `git pull` + rebuild automático (el host está detrás de NAT/cloudflared, así que SSH entrante no aplica).
+
+---
+
 ## 2026-08-31 — Detalles de registro + typos de comandos
 
 - [x] **Registro completo sin ✅**: el mensaje "¡Registro completo!" ahora usa 🎉 en vez del check verde (`registro.ts`). El "Confirmá tus datos" previo mantiene su ✅.

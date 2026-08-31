@@ -156,6 +156,19 @@ bot-dgcatra/
 5. Confirmado → la IA (Groq) genera un título corto. Si no es un problema técnico, titula `"Consulta general"`. Si la IA falla, usa las primeras 60 letras.
 6. El ticket aparece en el dashboard para que un admin lo adopte
 
+## Comandos del bot (usuario registrado)
+
+| Comando | Acción |
+|---------|--------|
+| `ticket` / `crear` / `problema` | Crea un ticket nuevo |
+| `tickets` / `mis tickets` | Lista los últimos tickets |
+| `ticket N` | Consulta el detalle de un ticket |
+| `cerrar N` | Cierra un ticket (abierto o en proceso): pregunta cómo se resolvió y guarda la solución |
+| `ayuda` | Muestra la lista de comandos |
+
+- `cerrar N` funciona tanto en tickets `abierto` como `en_proceso` (antes rechazaba los que no había tomado un técnico). El bot pide la solución, la guarda en `ticket.solucion` y queda visible en el dashboard.
+- Los tipeos cercanos a `ayuda`, `tickets` y `cancelar` se reconocen con fuzzy matching (Levenshtein ≤ 1).
+
 ## Tipos de usuarios
 
 | Tipo | Qué puede hacer |

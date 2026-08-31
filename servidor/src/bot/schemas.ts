@@ -22,6 +22,7 @@ export const RegisterContextSchema = z.object({
 
 export const PendingCommandSchema = z.object({
   pendingCommand: z.enum(['cerrar', 'reabrir', 'cancelarTicket', 'verTicket']),
+  ticketId: z.number().int().positive().optional(),
   _lastActivity: z.number().optional(),
 });
 

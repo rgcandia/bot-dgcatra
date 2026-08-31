@@ -15,11 +15,29 @@ type PendingCmd = 'cerrar' | 'verTicket';
 export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   const texto = ctx.texto.toLowerCase().trim();
 
-  // Si hay un comando pendiente (pidió número)
+  // Si hay un comando pendiente
   const user = await obtenerUsuario(ctx.telefono);
-  const pending = (user.context as any)?.pendingCommand as PendingCmd | undefined;
+  const ctxData = (user.context || {}) as any;
+  const pending = ctxData.pendingCommand as PendingCmd | undefined;
 
   if (pending) {
+    // Esperando la solución (ya pidió cerrar con número)
+    if (pending === 'cerrar' && ctxData.ticketId != null) {
+      if (texto === 'cancelar' || texto === 'salir' || esCercano(texto, 'cancelar')) {
+        await guardarUsuario(ctx.telefono, { context: null });
+        await enviarTexto(ctx.telefono, 'Cancelado. El ticket sigue como estaba. Escribí *ayuda* para ver los comandos.');
+        return true;
+      }
+      const solucion = ctx.texto.trim();
+      if (solucion.length < 3) {
+        await enviarTexto(ctx.telefono, '❌ Contame un poco más cómo se resolvió (mínimo 3 caracteres):');
+        return true;
+      }
+      await guardarUsuario(ctx.telefono, { context: null });
+      return await cerrarConSolucion(ctx.telefono, ctxData.ticketId, solucion);
+    }
+
+    // Esperando un número
     if (texto === 'cancelar' || esCercano(texto, 'cancelar')) {
       await guardarUsuario(ctx.telefono, { context: null });
       await enviarTexto(ctx.telefono, 'Cancelado. Escribí *ayuda* para ver los comandos.');
@@ -27,6 +45,9 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
     }
     const num = parseInt(texto);
     if (!isNaN(num) && num > 0) {
+      if (pending === 'cerrar') {
+        return await pedirSolucion(ctx.telefono, num);
+      }
       await guardarUsuario(ctx.telefono, { context: null });
       return await ejecutarPendiente(ctx.telefono, pending, num);
     }
@@ -74,7 +95,7 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
   // cerrar N / cerrar ticket N / cancelar N / cancelar ticket N
   const cerrarConNum = texto.match(/^(?:\/cerrar|cerrar|cancelar)(?:\s+ticket)?\s+#?(\d+)$/i);
   if (cerrarConNum) {
-    return await cambiarEstado(ctx.telefono, parseInt(cerrarConNum[1]), 'cerrado');
+    return await pedirSolucion(ctx.telefono, parseInt(cerrarConNum[1]));
   }
 
   // ── Comandos sin número → pedir número ──
@@ -101,7 +122,7 @@ export async function manejarComandos(ctx: Ctx): Promise<boolean> {
 async function ejecutarPendiente(telefono: string, cmd: PendingCmd, id: number): Promise<boolean> {
   switch (cmd) {
     case 'cerrar':
-      return await cambiarEstado(telefono, id, 'cerrado');
+      return await pedirSolucion(telefono, id);
     case 'verTicket':
       return await mostrarTicket(telefono, id);
   }
@@ -126,7 +147,7 @@ async function mostrarAyuda(telefono: string): Promise<boolean> {
     '🎫 *Nuevo ticket* — crea un ticket\n' +
     '📋 *tickets* — ve tus últimos tickets\n' +
     '🔍 *ticket N* — consulta un ticket\n' +
-    '✅ *cerrar N* — cerrar un ticket resuelto\n\n' +
+    '✅ *cerrar N* — cerrar un ticket (te pide cómo se resolvió)\n\n' +
     'También podés escribir solo *cerrar* o *ticket*\n' +
     'y te pido el número.\n\n' +
     'Escribí *ayuda* para ver esto de nuevo.');
@@ -173,8 +194,8 @@ async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
     : '';
 
   let acciones = '';
-  if (ticket.estado === 'en_proceso') {
-    acciones = `\n\nSi ya se solucionó, escribí *cerrar ${ticket.id}*`;
+  if (ticket.estado === 'abierto' || ticket.estado === 'en_proceso') {
+    acciones = `\n\nPara cerrarlo, escribí *cerrar ${ticket.id}*`;
   }
 
   const msg = `${estadoIcon} *Ticket #${ticket.id}*\n\n` +
@@ -190,7 +211,7 @@ async function mostrarTicket(telefono: string, id: number): Promise<boolean> {
   return true;
 }
 
-async function cambiarEstado(telefono: string, ticketId: number, _estado: string): Promise<boolean> {
+async function pedirSolucion(telefono: string, ticketId: number): Promise<boolean> {
   const ticket = await Ticket.findOne({ where: { id: ticketId, userTelefono: telefono } });
   if (!ticket) {
     await enviarTexto(telefono, `❌ No encontré el ticket #${ticketId} o no es tuyo.`);
@@ -202,8 +223,22 @@ async function cambiarEstado(telefono: string, ticketId: number, _estado: string
     return true;
   }
 
-  if (ticket.estado === 'abierto') {
-    await enviarTexto(telefono, `⚠️ El ticket #${ticketId} todavía no fue tomado por un técnico.\nEsperá a que esté *en proceso* para cerrarlo.`);
+  await guardarUsuario(telefono, { context: { pendingCommand: 'cerrar', ticketId } });
+  await enviarTexto(telefono,
+    `🔧 ¿Se solucionó el *ticket #${ticketId}*? Contame qué pasó y cómo lo resolviste.\n\n` +
+    `Escribí *cancelar* para no cerrarlo.`);
+  return true;
+}
+
+async function cerrarConSolucion(telefono: string, ticketId: number, solucion: string): Promise<boolean> {
+  const ticket = await Ticket.findOne({ where: { id: ticketId, userTelefono: telefono } });
+  if (!ticket) {
+    await enviarTexto(telefono, `❌ No encontré el ticket #${ticketId} o no es tuyo.`);
+    return true;
+  }
+
+  if (ticket.estado === 'cerrado') {
+    await enviarTexto(telefono, `⚠️ El ticket #${ticketId} ya está cerrado.`);
     return true;
   }
 
@@ -212,6 +247,7 @@ async function cambiarEstado(telefono: string, ticketId: number, _estado: string
   const autor = user?.nombreCompleto || telefono;
   historial.push({ accion: `${autor} cerró el ticket`, autor, timestamp: new Date().toISOString() });
   ticket.estado = 'cerrado';
+  ticket.solucion = solucion;
 
   ticket.historial = historial;
   ticket.changed('historial', true);
@@ -222,6 +258,7 @@ async function cambiarEstado(telefono: string, ticketId: number, _estado: string
 
   await enviarTexto(telefono,
     `✅ *Ticket #${ticketId}*: "${ticket.asunto}" cerrado\n\n` +
+    `🔧 Solución: ${solucion}\n\n` +
     `Escribí *ayuda* para ver el menú.`,
     ticketId);
   return true;
