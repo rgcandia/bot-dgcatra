@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
 import {
   ClipboardCheck, CircleCheckBig, UserPlus, RotateCcw, User,
-  Building2, Settings2, MapPin, Calendar, Clock, UserCheck,
+  Building2, MapPin, Calendar, Clock, UserCheck,
   AlertCircle, Play, ArrowRightCircle, ArrowLeft, MessageCircle, MessageSquare,
   Send,
 } from 'lucide-react';
@@ -17,7 +17,7 @@ interface Ticket {
   solucion: string | null; cerradoPor: 'usuario' | 'tecnico' | null; cerradoPorNombre: string | null;
   historial: any[]; comentarios: any[]; createdAt: string;
   usuario: { nombreCompleto: string; telefono: string };
-  base: { nombre: string }; sector: { nombre: string } | null;
+  base: { nombre: string };
 }
 
 interface Tecnico { id: string; nombre: string; }
@@ -280,10 +280,6 @@ export default function TicketDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <Building2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
             <div><div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Establecimiento</div><div style={{ fontWeight: 600 }}>{ticket.base?.nombre || '—'}</div></div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
-            <Settings2 size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-            <div><div style={{ fontSize: '.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Sector</div><div style={{ fontWeight: 600 }}>{ticket.sector?.nombre || '—'}</div></div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
             <MapPin size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />

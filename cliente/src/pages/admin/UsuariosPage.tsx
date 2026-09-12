@@ -6,8 +6,8 @@ import ConfirmButton from '../../components/ConfirmButton';
 
 interface User {
   telefono: string; nombreCompleto: string | null; email: string | null;
-  base: { id: number; nombre: string } | null; sector: { id: number; nombre: string } | null;
-  baseId?: number | null; sectorId?: number | null;
+  base: { id: number; nombre: string } | null;
+  baseId?: number | null;
   registroCompleto: boolean; esAdmin: boolean; activo: boolean; confirmadoWhatsApp?: boolean;
 }
 
@@ -20,14 +20,12 @@ interface PaginatedResponse {
 }
 
 interface Base { id: number; nombre: string; tipo: 'base' | 'playa' | 'comuna'; }
-interface Sector { id: number; nombre: string; }
 
 const PAGE_SIZE = 20;
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [bases, setBases] = useState<Base[]>([]);
-  const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<User | null>(null);
   
@@ -80,15 +78,13 @@ export default function UsuariosPage() {
     Promise.all([
       api.get<PaginatedResponse>(`/api/usuarios?${params}`),
       api.get<Base[]>('/api/bases'),
-      api.get<Sector[]>('/api/sectores'),
     ])
-      .then(([users, bs, secs]) => {
+      .then(([users, bs]) => {
         setUsuarios(users.data);
         setTotal(users.total);
         setTotalPages(users.totalPages);
         if (users.totalPages > 0 && page > users.totalPages) setPage(users.totalPages);
         setBases(bs);
-        setSectores(secs);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -121,7 +117,7 @@ export default function UsuariosPage() {
       await api.patch(`/api/usuarios/${edit.telefono}`, {
         nombreCompleto: edit.nombreCompleto, email: edit.email,
         esAdmin: edit.esAdmin, activo: edit.activo,
-        baseId: edit.baseId, sectorId: edit.sectorId,
+        baseId: edit.baseId,
       });
       setEdit(null); await load();
     } catch (e: any) { setError(e.message); }
@@ -211,7 +207,6 @@ export default function UsuariosPage() {
               <SortHeader col="telefono" label="ID WhatsApp" />
               <SortHeader col="nombreCompleto" label="Nombre" />
               <SortHeader col="base" label="Establecimiento" />
-              <SortHeader col="sector" label="Sector" />
               <SortHeader col="registroCompleto" label="Registro" />
               <SortHeader col="esAdmin" label="Admin" />
               <th>Acceso</th>
@@ -223,7 +218,6 @@ export default function UsuariosPage() {
                   <td style={{ fontFamily: 'monospace', fontSize: '.85rem' }}>{u.telefono}</td>
                   <td>{u.nombreCompleto || '-'}</td>
                   <td>{u.base?.nombre || '-'}</td>
-                  <td>{u.sector?.nombre || '-'}</td>
                   <td>
                     {u.esAdmin && u.confirmadoWhatsApp === false ? (
                       <span className="badge badge-en_proceso">Falta confirmar</span>
@@ -353,13 +347,6 @@ export default function UsuariosPage() {
                     </optgroup>
                   );
                 })}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Sector</label>
-              <select value={edit.sector?.id || edit.sectorId || ''} onChange={e => setEdit({ ...edit, sectorId: Number(e.target.value) || null })}>
-                <option value="">Sin sector</option>
-                {sectores.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
               </select>
             </div>
             <div style={{ marginTop: '.5rem', marginBottom: '1rem' }}>

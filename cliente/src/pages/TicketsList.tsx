@@ -10,7 +10,7 @@ interface Ticket {
   estado: string; prioridad: string; createdAt: string;
   tecnicoAsignado: string | null; cerradoPor: 'usuario' | 'tecnico' | null;
   usuario: { nombreCompleto: string; telefono: string };
-  base: { nombre: string }; sector: { nombre: string } | null;
+  base: { nombre: string };
 }
 
 interface PaginatedResponse {

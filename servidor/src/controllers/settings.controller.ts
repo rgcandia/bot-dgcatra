@@ -20,7 +20,7 @@ export function setMasterCode(req: Request, res: Response) {
 export async function limpiarDB(_req: Request, res: Response) {
   try {
     await sequelize.query(
-      'TRUNCATE TABLE conversaciones, tickets, usuarios, bases, sectores RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE conversaciones, tickets, usuarios, bases RESTART IDENTITY CASCADE',
     );
     logger.warn('Base de datos limpiada completamente');
     res.json({ ok: true, mensaje: 'Base de datos limpiada. IDs reiniciados. Código maestro conservado.' });

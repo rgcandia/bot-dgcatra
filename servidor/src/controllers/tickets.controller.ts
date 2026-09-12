@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth.js';
-import { Ticket, User, Base, Sector, Conversacion } from '../models/models.js';
+import { Ticket, User, Base, Conversacion } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 import { logger } from '../config/logger.js';
 
@@ -22,7 +22,6 @@ export async function getAll(req: AuthRequest, res: Response) {
     if (req.query.estado) where.estado = req.query.estado;
     if (req.query.prioridad) where.prioridad = req.query.prioridad;
     if (req.query.baseId) where.baseId = req.query.baseId;
-    if (req.query.sectorId) where.sectorId = req.query.sectorId;
     if (req.query.tecnicoAsignado) where.tecnicoAsignado = req.query.tecnicoAsignado;
     if (req.query.sinAsignar === 'true') where.tecnicoAsignado = null;
 
@@ -54,7 +53,6 @@ export async function getAll(req: AuthRequest, res: Response) {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
         { model: Base, as: 'base', attributes: ['nombre'] },
-        { model: Sector, as: 'sector', attributes: ['nombre'] },
       ],
       order,
       limit,
@@ -80,7 +78,6 @@ export async function getById(req: AuthRequest, res: Response) {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
         { model: Base, as: 'base', attributes: ['nombre'] },
-        { model: Sector, as: 'sector', attributes: ['nombre'] },
       ],
     });
     if (!ticket) return res.status(404).json({ error: 'No encontrado' });
@@ -93,7 +90,7 @@ export async function getById(req: AuthRequest, res: Response) {
 
 export async function create(req: AuthRequest, res: Response) {
   try {
-    const { asunto, descripcion, ubicacion, baseId, sectorId } = req.body;
+    const { asunto, descripcion, ubicacion, baseId } = req.body;
     if (!asunto || !descripcion || !ubicacion || !baseId) {
       return res.status(400).json({ error: 'asunto, descripcion, ubicacion y baseId son requeridos' });
     }
@@ -102,7 +99,7 @@ export async function create(req: AuthRequest, res: Response) {
     if (!userTelefono) return res.status(401).json({ error: 'Usuario no autenticado' });
 
     const ticket = await Ticket.create({
-      asunto, descripcion, ubicacion, baseId, sectorId: sectorId || null, userTelefono,
+      asunto, descripcion, ubicacion, baseId, userTelefono,
       estado: 'abierto', prioridad: 'media', historial: [],
     });
 
@@ -110,7 +107,6 @@ export async function create(req: AuthRequest, res: Response) {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
         { model: Base, as: 'base', attributes: ['nombre'] },
-        { model: Sector, as: 'sector', attributes: ['nombre'] },
       ],
     });
 
@@ -223,7 +219,6 @@ export async function update(req: AuthRequest, res: Response) {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
         { model: Base, as: 'base', attributes: ['nombre'] },
-        { model: Sector, as: 'sector', attributes: ['nombre'] },
       ],
     });
 

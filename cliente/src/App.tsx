@@ -6,7 +6,6 @@ import DashboardHome from './pages/DashboardHome';
 import TicketsList from './pages/TicketsList';
 import TicketDetail from './pages/TicketDetail';
 import BasesPage from './pages/admin/BasesPage';
-import SectoresPage from './pages/admin/SectoresPage';
 import UsuariosPage from './pages/admin/UsuariosPage';
 import SettingsPage from './pages/admin/SettingsPage';
 
@@ -31,7 +30,6 @@ export default function App() {
         <Route path="tickets" element={<TicketsList />} />
         <Route path="tickets/:id" element={<TicketDetail />} />
         <Route path="admin/bases" element={<AdminOnly><BasesPage /></AdminOnly>} />
-        <Route path="admin/sectores" element={<AdminOnly><SectoresPage /></AdminOnly>} />
         <Route path="admin/usuarios" element={<AdminOnly><UsuariosPage /></AdminOnly>} />
         <Route path="admin/settings" element={<AdminOnly><SettingsPage /></AdminOnly>} />
       </Route>

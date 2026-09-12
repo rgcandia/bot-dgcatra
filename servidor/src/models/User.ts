@@ -8,7 +8,6 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   declare nombreCompleto: string | null;
   declare email: string | null;
   declare baseId: number | null;
-  declare sectorId: number | null;
   declare activo: CreationOptional<boolean>;
   declare esAdmin: CreationOptional<boolean>;
   declare confirmadoWhatsApp: CreationOptional<boolean>;
@@ -38,10 +37,6 @@ User.init({
     unique: true,
   },
   baseId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-  sectorId: {
     type: DataTypes.INTEGER,
     allowNull: true,
   },

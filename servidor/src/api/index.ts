@@ -6,7 +6,6 @@ import http from 'http';
 import { initSocket } from '../socket/server.js';
 import authRoutes from '../routes/auth.routes.js';
 import basesRoutes from '../routes/bases.routes.js';
-import sectoresRoutes from '../routes/sectores.routes.js';
 import usuariosRoutes from '../routes/usuarios.routes.js';
 import ticketsRoutes from '../routes/tickets.routes.js';
 import statsRoutes from '../routes/stats.routes.js';
@@ -61,7 +60,6 @@ app.use((req, res, next) => {
 // --- Dashboard API ---
 app.use('/api/auth', authRoutes);
 app.use('/api/bases', basesRoutes);
-app.use('/api/sectores', sectoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/tickets', chatRoutes);
 app.use('/api/tickets', ticketsRoutes);

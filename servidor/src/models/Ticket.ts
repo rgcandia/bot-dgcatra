@@ -10,7 +10,6 @@ export class Ticket extends Model<InferAttributes<Ticket>, InferCreationAttribut
   declare estado: CreationOptional<'abierto' | 'en_proceso' | 'cerrado'>;
   declare prioridad: CreationOptional<'baja' | 'media' | 'alta'>;
   declare baseId: number;
-  declare sectorId: CreationOptional<number | null>;
   declare userTelefono: string;
   declare tecnicoAsignado: CreationOptional<string | null>;
   declare solucion: CreationOptional<string | null>;
@@ -30,7 +29,6 @@ Ticket.init({
   estado: { type: DataTypes.ENUM('abierto', 'en_proceso', 'cerrado'), defaultValue: 'abierto' },
   prioridad: { type: DataTypes.ENUM('baja', 'media', 'alta'), defaultValue: 'media' },
   baseId: { type: DataTypes.INTEGER, allowNull: false },
-  sectorId: { type: DataTypes.INTEGER, allowNull: true },
   userTelefono: { type: DataTypes.STRING, allowNull: false },
   tecnicoAsignado: { type: DataTypes.STRING, allowNull: true },
   solucion: { type: DataTypes.TEXT, allowNull: true },

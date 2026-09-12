@@ -198,7 +198,7 @@ export default function SettingsPage() {
             Zona de peligro
           </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', marginBottom: '1rem' }}>
-            Esta acción es irreversible. Elimina todos los tickets, conversaciones, usuarios, bases y sectores. Reinicia los IDs. El código maestro se conserva.
+            Esta acción es irreversible. Elimina todos los tickets, conversaciones, usuarios y establecimientos. Reinicia los IDs. El código maestro se conserva.
           </p>
           <DangerButton label="Limpiar base de datos" endpoint="/api/settings/limpiar-db" id="limpiar-db" onDone={showToast} />
         </div>

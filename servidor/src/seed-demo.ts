@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { sequelize, Base, Sector, User, Ticket, Conversacion } from './models/models.js';
+import { sequelize, Base, User, Ticket, Conversacion } from './models/models.js';
 
 function rand(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -47,26 +47,18 @@ async function seed() {
 
   // --- Establecimientos (bases / playas / comunas) ---
   const bases = await Promise.all([
-    Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123, CABA', codigoAcceso: 'PIE2026', tipo: 'base' }),
-    Base.create({ nombre: 'Playa Sarmiento', direccion: 'Av. Sarmiento 2500, CABA', codigoAcceso: 'PLA2026', tipo: 'playa' }),
-    Base.create({ nombre: 'Base Tacuari', direccion: 'Av. Tacuarí 456, CABA', codigoAcceso: 'TAC2026', tipo: 'base' }),
-    Base.create({ nombre: 'Comuna 4', direccion: 'Av. Boedo 500, CABA', codigoAcceso: 'COM2026', tipo: 'comuna' }),
+    Base.create({ nombre: 'Base Piedras', direccion: 'Av. Piedras 123, CABA', tipo: 'base' }),
+    Base.create({ nombre: 'Playa Sarmiento', direccion: 'Av. Sarmiento 2500, CABA', tipo: 'playa' }),
+    Base.create({ nombre: 'Base Tacuari', direccion: 'Av. Tacuarí 456, CABA', tipo: 'base' }),
+    Base.create({ nombre: 'Comuna 4', direccion: 'Av. Boedo 500, CABA', tipo: 'comuna' }),
   ]);
   console.log(`  ✅ ${bases.length} establecimientos`);
 
-  // --- Sectores ---
-  const sectores = await Promise.all([
-    Sector.create({ nombre: 'Operativo' }),
-    Sector.create({ nombre: 'Administrativo' }),
-    Sector.create({ nombre: 'Soporte Técnico', isAdmin: true, codigoAdmin: 'admin2024' }),
-  ]);
-  console.log(`  ✅ ${sectores.length} sectores`);
-
-  // --- Técnicos (admins - Soporte Técnico) ---
+  // --- Técnicos (admins) ---
   const tecnicos = await Promise.all([
-    User.create({ telefono: '5491112345678', nombreCompleto: 'Ale Candia', baseId: bases[0].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
-    User.create({ telefono: '5491123456789', nombreCompleto: 'María López', baseId: bases[1].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
-    User.create({ telefono: '5491134567890', nombreCompleto: 'Carlos Ruiz', baseId: bases[2].id, sectorId: sectores[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
+    User.create({ telefono: '5491112345678', nombreCompleto: 'Ale Candia', baseId: bases[0].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
+    User.create({ telefono: '5491123456789', nombreCompleto: 'María López', baseId: bases[1].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
+    User.create({ telefono: '5491134567890', nombreCompleto: 'Carlos Ruiz', baseId: bases[2].id, esAdmin: true, registroCompleto: true, pasoRegistro: 6, activo: true }),
   ]);
   console.log(`  ✅ ${tecnicos.length} técnicos (admins)`);
 
@@ -87,7 +79,6 @@ async function seed() {
       telefono,
       nombreCompleto: nombre,
       baseId: pick(bases).id,
-      sectorId: pick([sectores[0], sectores[1]]).id,
       esAdmin: false,
       registroCompleto: true,
       pasoRegistro: 4,
@@ -206,7 +197,6 @@ async function seed() {
       estado,
       prioridad: pick(prioridades),
       baseId: pick(bases).id,
-      sectorId: pick([sectores[0], sectores[1]]).id,
       userTelefono: agente.telefono,
       tecnicoAsignado,
       solucion: estado === 'cerrado' ? pick(soluciones) : null,
@@ -270,7 +260,6 @@ async function seed() {
   console.log('\n✅ Seed demo completado');
   console.log('   Usá el código maestro para loguearte al dashboard.');
   console.log('   Técnicos: Ale Candia (5491112345678), María López, Carlos Ruiz.');
-  console.log('   Registro por WhatsApp: código de establecimiento PIE2026 / PLA2026 / TAC2026 / COM2026');
 
   await sequelize.close();
 }

@@ -6,7 +6,6 @@ export class Base extends Model<InferAttributes<Base>, InferCreationAttributes<B
   declare id: CreationOptional<number>;
   declare nombre: string;
   declare direccion: string;
-  declare codigoAcceso: string;
   declare tipo: CreationOptional<'base' | 'playa' | 'comuna'>;
 }
 
@@ -22,10 +21,6 @@ Base.init({
     unique: true,
   },
   direccion: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  codigoAcceso: {
     type: DataTypes.STRING,
     allowNull: false,
   },

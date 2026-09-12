@@ -147,49 +147,6 @@ tr[style*="cursor: pointer"]:hover { background: var(--bg); }
   animation: spin .6s linear infinite; display: inline-block;
 }
 
-/* ——— Sectores ——— */
-
-.sectores-error {
-  color: var(--danger); margin-bottom: .5rem; font-size: .85rem;
-  background: #fef2f2; padding: .5rem .75rem; border-radius: var(--radius);
-  border-left: 3px solid var(--danger);
-}
-
-.sectores-admin-toggle {
-  display: flex; align-items: center; gap: .5rem; cursor: pointer;
-  padding: .4rem .6rem; border: 1px solid var(--border);
-  border-radius: var(--radius); margin-bottom: 1rem;
-  transition: border-color .2s, background .2s;
-  background: var(--surface);
-}
-.sectores-admin-toggle input[type="checkbox"] {
-  display: none;
-}
-.sectores-admin-toggle.is-active {
-  border-color: var(--primary); background: #f0f4ff;
-}
-
-.sectores-admin-indicator {
-  flex-shrink: 0; width: 32px; height: 18px;
-  background: var(--silver); border-radius: 9px; position: relative;
-  transition: background .2s;
-}
-.sectores-admin-indicator::after {
-  content: ''; position: absolute; top: 1.5px; left: 1.5px;
-  width: 15px; height: 15px; background: #fff; border-radius: 50%;
-  transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.15);
-}
-.sectores-admin-toggle.is-active .sectores-admin-indicator {
-  background: var(--success);
-}
-.sectores-admin-toggle.is-active .sectores-admin-indicator::after {
-  transform: translateX(14px);
-}
-
-.sectores-admin-text {
-  font-size: .85rem; font-weight: 500; user-select: none;
-}
-
 .modal-actions {
   display: flex; justify-content: flex-end; gap: .5rem;
   padding-top: .5rem; border-top: 1px solid var(--border);

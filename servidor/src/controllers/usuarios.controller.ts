@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth.js';
-import { User, Base, Sector } from '../models/models.js';
+import { User, Base } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 import { logger } from '../config/logger.js';
 import { normalizarTelefonoAR } from '../utils/telefono.js';
@@ -122,7 +122,6 @@ export async function getAll(req: AuthRequest, res: Response) {
       telefono: ['telefono'],
       nombreCompleto: ['nombreCompleto'],
       base: [{ model: Base, as: 'base' }, 'nombre'],
-      sector: [{ model: Sector, as: 'sector' }, 'nombre'],
       registroCompleto: ['registroCompleto'],
       esAdmin: ['esAdmin'],
     };
@@ -131,10 +130,7 @@ export async function getAll(req: AuthRequest, res: Response) {
 
     const { count: total, rows: usuarios } = await User.findAndCountAll({
       where,
-      include: [
-        { model: Base, as: 'base' },
-        { model: Sector, as: 'sector' },
-      ],
+      include: [{ model: Base, as: 'base' }],
       order,
       limit,
       offset: (page - 1) * limit,
@@ -156,10 +152,7 @@ export async function getAll(req: AuthRequest, res: Response) {
 export async function getByTelefono(req: AuthRequest, res: Response) {
   try {
     const user = await User.findByPk(req.params.telefono, {
-      include: [
-        { model: Base, as: 'base' },
-        { model: Sector, as: 'sector' },
-      ],
+      include: [{ model: Base, as: 'base' }],
     });
     if (!user) return res.status(404).json({ error: 'No encontrado' });
     res.json(user);
@@ -174,8 +167,8 @@ export async function update(req: AuthRequest, res: Response) {
     const user = await User.findByPk(req.params.telefono);
     if (!user) return res.status(404).json({ error: 'No encontrado' });
 
-    const { nombreCompleto, email, baseId, sectorId, activo } = req.body;
-    const payload: Record<string, unknown> = { nombreCompleto, email, baseId, sectorId, activo };
+    const { nombreCompleto, email, baseId, activo } = req.body;
+    const payload: Record<string, unknown> = { nombreCompleto, email, baseId, activo };
 
     if (req.body.esAdmin !== undefined) {
       if (!req.user?.esAdmin) {
@@ -190,10 +183,7 @@ export async function update(req: AuthRequest, res: Response) {
     const io = getIO(); if (io) io.emit('datos-actualizados');
 
     const updated = await User.findByPk(req.params.telefono, {
-      include: [
-        { model: Base, as: 'base' },
-        { model: Sector, as: 'sector' },
-      ],
+      include: [{ model: Base, as: 'base' }],
     });
     res.json(updated);
   } catch (e) {

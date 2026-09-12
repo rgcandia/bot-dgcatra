@@ -34,11 +34,11 @@ export async function getById(req: AuthRequest, res: Response) {
 
 export async function create(req: AuthRequest, res: Response) {
   try {
-    const { nombre, direccion, codigoAcceso, tipo } = req.body;
-    if (!nombre || !direccion || !codigoAcceso) {
+    const { nombre, direccion, tipo } = req.body;
+    if (!nombre || !direccion) {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
-    const base = await Base.create({ nombre, direccion, codigoAcceso, tipo: validarTipo(tipo) });
+    const base = await Base.create({ nombre, direccion, tipo: validarTipo(tipo) });
     const io = getIO(); if (io) io.emit('datos-actualizados');
     res.status(201).json(base);
   } catch (e) {
@@ -51,11 +51,10 @@ export async function update(req: AuthRequest, res: Response) {
   try {
     const base = await Base.findByPk(req.params.id);
     if (!base) return res.status(404).json({ error: 'No encontrada' });
-    const { nombre, direccion, codigoAcceso, tipo } = req.body;
+    const { nombre, direccion, tipo } = req.body;
     await base.update({
       nombre,
       direccion,
-      codigoAcceso,
       tipo: tipo !== undefined ? validarTipo(tipo) : base.tipo,
     });
     const io = getIO(); if (io) io.emit('datos-actualizados');

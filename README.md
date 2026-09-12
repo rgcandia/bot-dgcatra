@@ -30,14 +30,7 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | id | PK auto int | |
 | nombre | string | Nombre del establecimiento |
 | direccion | string | Dirección |
-| codigoAcceso | string | Código de establecimiento |
 | tipo | enum | `base` / `playa` / `comuna` (edificios donde trabaja el personal) |
-
-### sectores
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | PK auto int | |
-| nombre | string | Nombre del sector |
 
 ### tickets
 | Campo | Tipo | Descripción |
@@ -45,7 +38,6 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | id | PK auto int | |
 | usuarioId | string FK | Quién lo creó |
 | baseId | int FK | Base del problema (se solicita siempre al crear un ticket) |
-| sectorId | int FK null | Sector destino |
 | asunto | string | Asunto del ticket |
 | descripcion | string | Descripción del problema |
 | estado | enum | abierto / en_proceso / cerrado |
@@ -148,11 +140,6 @@ Una vez guardado el nombre, el flujo es directo y guiado por estados:
 | POST | /api/bases | Crear base |
 | PATCH | /api/bases/:id | Actualizar base |
 | DELETE | /api/bases/:id | Eliminar base | ✅ Admin |
-| GET | /api/sectores | Listar sectores |
-| GET | /api/sectores/:id | Obtener sector |
-| POST | /api/sectores | Crear sector | ✅ Admin |
-| PATCH | /api/sectores/:id | Actualizar sector | ✅ Admin |
-| DELETE | /api/sectores/:id | Eliminar sector | ✅ Admin |
 | GET | /api/usuarios | Listar usuarios |
 | POST | /api/usuarios | Crear administrador manual | ✅ Super Admin |
 | GET | /api/usuarios/:telefono | Obtener usuario por teléfono |

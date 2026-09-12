@@ -12,7 +12,6 @@ export interface SessionUser {
   nombreCompleto: string | null;
   email: string | null;
   baseId: number | null;
-  sectorId: number | null;
   activo: boolean;
   esAdmin: boolean;
   confirmadoWhatsApp?: boolean; // Agregado para tipado TypeScript
@@ -142,7 +141,6 @@ function createDefault(telefono: string) {
     nombreCompleto: null,
     email: null,
     baseId: null,
-    sectorId: null,
     activo: true,
     esAdmin: false,
     confirmadoWhatsApp: true,

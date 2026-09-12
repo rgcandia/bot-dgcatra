@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Ticket, Building2, Settings2, Users, ShieldCheck, Menu } from 'lucide-react';
+import { LayoutDashboard, Ticket, Building2, Users, ShieldCheck, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/useSocket';
 import NavItem from '../components/NavItem';
@@ -35,7 +35,6 @@ export default function DashboardLayout() {
                 Administración
               </div>
               <NavItem to="/admin/bases" icon={<Building2 size={18} />} label="Establecimientos" />
-              <NavItem to="/admin/sectores" icon={<Settings2 size={18} />} label="Sectores" />
               <NavItem to="/admin/usuarios" icon={<Users size={18} />} label="Usuarios" />
               <NavItem to="/admin/settings" icon={<ShieldCheck size={18} />} label="Configuración" />
             </>
