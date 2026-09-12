@@ -30,3 +30,20 @@
   - Creado modal de "Nuevo Administrador" e integración con la API en el frontend (`cliente/src/pages/admin/UsuariosPage.tsx`).
 - [x] **Fase 3 — Verificación de Compilación**:
   - Verificada la correcta compilación de TypeScript y empaquetado tanto del servidor (`npm run build` en backend exitoso) como del dashboard de React (`npm run build` en frontend exitoso).
+
+### 2026-09-12 — #4: `tecnicoAsignado` migrado a FK por teléfono
+- [x] **Modelo** (`Ticket.ts`): nueva columna `tecnicoTelefono` (FK lógica a `usuarios.telefono`) + asociación `Ticket.belongsTo(User, as:'tecnico', constraints:false)`. `tecnicoAsignado` queda como nombre denormalizado para mostrar/ordenar/buscar.
+- [x] **Controller** (`tickets.controller.ts`): `getAll` acepta `?tecnicoTelefono=` y `?sinAsignar=true` (ahora filtra por teléfono); include del técnico. `update()` recibe `tecnicoTelefono`, valida que exista y sea admin, resuelve el nombre, y compara permisos por **teléfono** (`req.user.telefono`) en vez de por nombre. Se mantiene compat con `tecnicoAsignado` (legacy por nombre).
+- [x] **Front**: `TicketDetail` dropdowns con `value=t.id` (teléfono) y label con sufijo del teléfono cuando hay nombres repetidos; "Adoptar caso"/"Derivar"/"Dejar caso" por teléfono. `TicketsList` "solo míos" → `?tecnicoTelefono=`. `useSocket` notifica asignación comparando por teléfono.
+- [x] **seed-demo**: setea `tecnicoAsignado` + `tecnicoTelefono`.
+- [x] **Verificación**: `tsc` backend OK, `tsc` front OK, 46 tests OK, build front OK, rebuild Docker OK, `/health` 200, bot conectado (5491126259181).
+- [x] **E2E** (con 2 técnicos del MISMO nombre "Juan Perez" y distinto teléfono): PATCH asignar por teléfono → 200 con `tecnicoTelefono`/`tecnicoAsignado`/`tecnico` correctos; `?tecnicoTelefono=` → 1; `?sinAsignar=true` → 0; técnico inexistente → 400; usuario no-admin → 400; dejar caso + reabrir → 200. Datos de prueba eliminados.
+- [x] **Limpieza DB**: eliminados índices UNIQUE duplicados que acumula `sync({alter:true})` en `bases.nombre` (key1, key2) y `usuarios.email` (key1..key5).
+
+### Decisiones 2026-09-12 (alcance)
+- ⏸️ **#2 (CI/CD / GitHub Actions)** — pospuesto.
+- ⏸️ **#3 (migraciones controladas en vez de `sync({alter:true})`)** — pospuesto.
+- ▶️ **#1 (tests de integración)** — pendiente, se hará en pasada aparte.
+
+### Pendiente detectado (no implementado)
+- [ ] **`sync({alter:true})` recrea constraints UNIQUE duplicados en cada rebuild.** Evidencia: `usuarios.email` llegó a tener 6 (`key`, `key1`…`key5`) y `bases.nombre` 3. Inofensivo pero se acumula. Opciones: (a) declarar los índices con nombre fijo en los modelos, (b) migraciones controladas (#3).

@@ -11,6 +11,7 @@ export class Ticket extends Model<InferAttributes<Ticket>, InferCreationAttribut
   declare prioridad: CreationOptional<'baja' | 'media' | 'alta'>;
   declare baseId: number;
   declare userTelefono: string;
+  declare tecnicoTelefono: CreationOptional<string | null>;
   declare tecnicoAsignado: CreationOptional<string | null>;
   declare solucion: CreationOptional<string | null>;
   declare cerradoPor: CreationOptional<'usuario' | 'tecnico' | null>;
@@ -30,6 +31,9 @@ Ticket.init({
   prioridad: { type: DataTypes.ENUM('baja', 'media', 'alta'), defaultValue: 'media' },
   baseId: { type: DataTypes.INTEGER, allowNull: false },
   userTelefono: { type: DataTypes.STRING, allowNull: false },
+  // Identidad del técnico asignado: FK lógica a usuarios.telefono (el teléfono es el id).
+  tecnicoTelefono: { type: DataTypes.STRING, allowNull: true },
+  // Nombre del técnico, solo para mostrar/ordenar/buscar (denormalizado, se sincroniza al asignar).
   tecnicoAsignado: { type: DataTypes.STRING, allowNull: true },
   solucion: { type: DataTypes.TEXT, allowNull: true },
   cerradoPor: { type: DataTypes.ENUM('usuario', 'tecnico'), allowNull: true },

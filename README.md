@@ -42,6 +42,9 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | descripcion | string | Descripción del problema |
 | estado | enum | abierto / en_proceso / cerrado |
 | prioridad | enum | baja / media / alta |
+| ubicacion | string | Ubicación específica del problema |
+| tecnicoTelefono | string FK null | Técnico asignado — FK lógica a `usuarios.telefono` (el teléfono es el id; evita colisiones de nombres) |
+| tecnicoAsignado | string null | Nombre del técnico (denormalizado, solo para mostrar/ordenar/buscar) |
 | cerradoPor | enum null | `usuario` / `tecnico` — quién cerró el ticket |
 | cerradoPorNombre | string null | Nombre de quien lo cerró |
 | historial | JSON | Acciones y timestamps |

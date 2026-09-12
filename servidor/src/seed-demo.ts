@@ -148,7 +148,6 @@ async function seed() {
     'Limpieza de caché', 'Reinstalación del software',
   ];
 
-  const tecnicosNombres = tecnicos.map(t => t.nombreCompleto!);
   const estados: Array<'abierto' | 'en_proceso' | 'cerrado'> = ['abierto', 'en_proceso', 'cerrado'];
   const prioridades: Array<'baja' | 'media' | 'alta'> = ['baja', 'media', 'alta'];
 
@@ -156,7 +155,9 @@ async function seed() {
   for (let i = 0; i < 200; i++) {
     const createdAt = daysAgo(rand(1, 180)); // 6 meses atrás
     const estado = pick(estados);
-    const tecnicoAsignado = estado === 'abierto' ? null : pick(tecnicosNombres);
+    const tecnicoPick = estado === 'abierto' ? null : pick(tecnicos);
+    const tecnicoAsignado = tecnicoPick?.nombreCompleto ?? null;
+    const tecnicoTelefono = tecnicoPick?.telefono ?? null;
     const updatedAt = new Date(createdAt.getTime() + rand(60, 300) * 60 * 1000); // +1 a 5 horas después
 
     const agente = pick(todos);
@@ -198,6 +199,7 @@ async function seed() {
       prioridad: pick(prioridades),
       baseId: pick(bases).id,
       userTelefono: agente.telefono,
+      tecnicoTelefono,
       tecnicoAsignado,
       solucion: estado === 'cerrado' ? pick(soluciones) : null,
       cerradoPor: estado === 'cerrado' ? 'tecnico' : null,

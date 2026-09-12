@@ -10,6 +10,8 @@ Base.hasMany(User, { foreignKey: 'baseId', as: 'usuarios' });
 
 User.hasMany(Ticket, { foreignKey: 'userTelefono', as: 'misTickets' });
 Ticket.belongsTo(User, { foreignKey: 'userTelefono', as: 'usuario' });
+// Técnico asignado (FK lógica por teléfono). constraints:false para que sync({alter}) no toque DDL.
+Ticket.belongsTo(User, { foreignKey: 'tecnicoTelefono', as: 'tecnico', constraints: false });
 Ticket.belongsTo(Base, { foreignKey: 'baseId', as: 'base' });
 Base.hasMany(Ticket, { foreignKey: 'baseId', as: 'tickets' });
 

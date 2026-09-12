@@ -13,7 +13,9 @@ import ConfirmButton from '../components/ConfirmButton';
 
 interface Ticket {
   id: number; asunto: string; descripcion: string; ubicacion: string;
-  estado: string; prioridad: string; tecnicoAsignado: string | null;
+  estado: string; prioridad: string;
+  tecnicoTelefono: string | null; tecnicoAsignado: string | null;
+  tecnico?: { nombreCompleto: string; telefono: string } | null;
   solucion: string | null; cerradoPor: 'usuario' | 'tecnico' | null; cerradoPorNombre: string | null;
   historial: any[]; comentarios: any[]; createdAt: string;
   usuario: { nombreCompleto: string; telefono: string };
@@ -173,12 +175,12 @@ export default function TicketDetail() {
   }
 
   async function adoptar() {
-    patch({ estado: 'en_proceso', tecnicoAsignado: user?.nombre || user?.telefono || 'Admin' });
+    patch({ estado: 'en_proceso', tecnicoTelefono: user?.telefono });
   }
 
   async function derivar() {
     if (!techSel) return;
-    patch({ estado: 'en_proceso', tecnicoAsignado: techSel });
+    patch({ estado: 'en_proceso', tecnicoTelefono: techSel });
   }
 
   async function cerrar() {
@@ -239,11 +241,14 @@ export default function TicketDetail() {
   if (loading) return <div className="empty"><span className="spinner" /><br />Cargando ticket...</div>;
   if (!ticket) return <p className="empty">Ticket no encontrado</p>;
 
-  const puedeActuar = user?.esAdmin && (ticket.estado === 'abierto' || (!ticket.tecnicoAsignado && ticket.estado !== 'cerrado'));
-  const ticketSinTecnico = user?.esAdmin && !ticket.tecnicoAsignado && ticket.estado !== 'cerrado';
-  const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso' && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
+  const soyElTecnico = !!ticket.tecnicoTelefono && ticket.tecnicoTelefono === user?.telefono;
+  const puedeActuar = user?.esAdmin && (ticket.estado === 'abierto' || (!ticket.tecnicoTelefono && ticket.estado !== 'cerrado'));
+  const ticketSinTecnico = user?.esAdmin && !ticket.tecnicoTelefono && ticket.estado !== 'cerrado';
+  const puedeCerrar = user?.esAdmin && ticket.estado === 'en_proceso' && soyElTecnico;
   const puedeReabrir = user?.superAdmin && ticket.estado === 'cerrado';
-  const soyElTecnico = ticket.tecnicoAsignado && ticket.tecnicoAsignado === (user?.nombre || user?.telefono);
+  const nombreTecnico = ticket.tecnico?.nombreCompleto || ticket.tecnicoAsignado;
+  const nombresRepetidos = new Set(tecnicos.filter((t, i) => tecnicos.some((o, j) => j !== i && o.nombre === t.nombre)).map(t => t.nombre));
+  const labelTecnico = (t: Tecnico) => nombresRepetidos.has(t.nombre) ? `${t.nombre} (…${t.id.slice(-4)})` : t.nombre;
   const historial: any[] = Array.isArray(ticket.historial) ? [...ticket.historial].reverse() : [];
   const comentarios: any[] = Array.isArray(ticket.comentarios) ? [...ticket.comentarios].reverse() : [];
 
@@ -302,11 +307,11 @@ export default function TicketDetail() {
             <span>Reportado por:</span>
             <span style={{ fontWeight: 600, color: 'var(--text)' }}>{ticket.usuario?.nombreCompleto || ticket.usuario?.telefono}</span>
           </div>
-          {ticket.tecnicoAsignado && (
+          {nombreTecnico && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
               <UserCheck size={14} />
               <span>Técnico asignado:</span>
-              <span style={{ fontWeight: 600, color: 'var(--text)' }}>{ticket.tecnicoAsignado}</span>
+              <span style={{ fontWeight: 600, color: 'var(--text)' }}>{nombreTecnico}</span>
             </div>
           )}
         </div>
@@ -338,9 +343,9 @@ export default function TicketDetail() {
               {!puedeActuar && (
                 <div>
                   <label style={{ fontWeight: 600, fontSize: '.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '.2rem' }}>Técnico</label>
-                  <select value={ticket.tecnicoAsignado || ''} onChange={e => patch({ tecnicoAsignado: e.target.value || null })}>
+                  <select value={ticket.tecnicoTelefono || ''} onChange={e => patch({ tecnicoTelefono: e.target.value || null })}>
                     <option value="">— Sin asignar —</option>
-                    {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
+                    {tecnicos.map(t => <option key={t.id} value={t.id}>{labelTecnico(t)}</option>)}
                   </select>
                 </div>
               )}
@@ -354,7 +359,7 @@ export default function TicketDetail() {
                   <span style={{ color: 'var(--text-secondary)', fontSize: '.85rem' }}>o</span>
                   <select value={techSel} onChange={e => setTechSel(e.target.value)} style={{ width: 160 }}>
                     <option value="">Derivar a...</option>
-                    {tecnicos.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
+                    {tecnicos.map(t => <option key={t.id} value={t.id}>{labelTecnico(t)}</option>)}
                   </select>
                   <button className="btn btn-primary" onClick={derivar} disabled={!techSel}><UserPlus size={18} /></button>
                 </>
@@ -369,7 +374,7 @@ export default function TicketDetail() {
               </div>
               <div style={{ display: 'flex', gap: '.5rem' }}>
                 <button className="btn btn-primary" onClick={cerrar} disabled={!solucion.trim()}><CircleCheckBig size={18} /> Cerrar ticket</button>
-                <ConfirmButton label="Dejar caso" message="¿Desvincularte del ticket?" danger onConfirm={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} />
+                <ConfirmButton label="Dejar caso" message="¿Desvincularte del ticket?" danger onConfirm={() => patch({ tecnicoTelefono: null, estado: 'abierto' })} />
               </div>
             </div>
           )}
@@ -379,7 +384,7 @@ export default function TicketDetail() {
             </div>
           )}
           {soyElTecnico && ticket.estado === 'en_proceso' && !puedeCerrar && (
-            <ConfirmButton label="Dejar caso" message="¿Desvincularte del ticket?" danger onConfirm={() => patch({ tecnicoAsignado: null, estado: 'abierto' })} />
+            <ConfirmButton label="Dejar caso" message="¿Desvincularte del ticket?" danger onConfirm={() => patch({ tecnicoTelefono: null, estado: 'abierto' })} />
           )}
           {!puedeActuar && !puedeCerrar && !puedeReabrir && !soyElTecnico && !user?.superAdmin && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', textAlign: 'center', margin: 0 }}>

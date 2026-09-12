@@ -22,8 +22,9 @@ export async function getAll(req: AuthRequest, res: Response) {
     if (req.query.estado) where.estado = req.query.estado;
     if (req.query.prioridad) where.prioridad = req.query.prioridad;
     if (req.query.baseId) where.baseId = req.query.baseId;
+    if (req.query.tecnicoTelefono) where.tecnicoTelefono = req.query.tecnicoTelefono;
     if (req.query.tecnicoAsignado) where.tecnicoAsignado = req.query.tecnicoAsignado;
-    if (req.query.sinAsignar === 'true') where.tecnicoAsignado = null;
+    if (req.query.sinAsignar === 'true') where.tecnicoTelefono = null;
 
     if (search) {
       where[Op.or] = [
@@ -52,6 +53,7 @@ export async function getAll(req: AuthRequest, res: Response) {
       where,
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
+        { model: User, as: 'tecnico', attributes: ['nombreCompleto', 'telefono'], required: false },
         { model: Base, as: 'base', attributes: ['nombre'] },
       ],
       order,
@@ -77,6 +79,7 @@ export async function getById(req: AuthRequest, res: Response) {
     const ticket = await Ticket.findByPk(req.params.id, {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
+        { model: User, as: 'tecnico', attributes: ['nombreCompleto', 'telefono'], required: false },
         { model: Base, as: 'base', attributes: ['nombre'] },
       ],
     });
@@ -106,6 +109,7 @@ export async function create(req: AuthRequest, res: Response) {
     const created = await Ticket.findByPk(ticket.id, {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
+        { model: User, as: 'tecnico', attributes: ['nombreCompleto', 'telefono'], required: false },
         { model: Base, as: 'base', attributes: ['nombre'] },
       ],
     });
@@ -125,12 +129,36 @@ export async function update(req: AuthRequest, res: Response) {
     const ticket = await Ticket.findByPk(req.params.id);
     if (!ticket) return res.status(404).json({ error: 'No encontrado' });
 
-    const { estado, prioridad, tecnicoAsignado, solucion, nuevaNota } = req.body;
+    const { estado, prioridad, tecnicoTelefono, tecnicoAsignado, solucion, nuevaNota } = req.body;
     const autor = req.user?.nombre || req.user?.telefono || 'Sistema';
+    const actorTelefono = req.user?.telefono;
     const isSuperAdmin = req.user?.superAdmin || false;
     const historial: any[] = Array.isArray(ticket.historial) ? ticket.historial : [];
     const oldEstado = ticket.estado;
-    const oldTecnico = ticket.tecnicoAsignado;
+
+    // Resolver técnico: se acepta tecnicoTelefono (nuevo, por id) o tecnicoAsignado (legacy, por nombre).
+    let nuevoTecnicoTelefono: string | null | undefined;
+    let nuevoTecnicoNombre: string | null = null;
+    if (tecnicoTelefono !== undefined) {
+      if (tecnicoTelefono) {
+        const tec = await User.findByPk(String(tecnicoTelefono), { attributes: ['telefono', 'nombreCompleto', 'esAdmin'] });
+        if (!tec || !tec.esAdmin) return res.status(400).json({ error: 'Técnico inválido' });
+        nuevoTecnicoTelefono = tec.telefono;
+        nuevoTecnicoNombre = tec.nombreCompleto || 'Admin';
+      } else {
+        nuevoTecnicoTelefono = null;
+        nuevoTecnicoNombre = null;
+      }
+    } else if (tecnicoAsignado !== undefined) {
+      nuevoTecnicoNombre = tecnicoAsignado || null;
+      if (nuevoTecnicoNombre) {
+        const tec = await User.findOne({ where: { nombreCompleto: nuevoTecnicoNombre, esAdmin: true }, attributes: ['telefono'] });
+        nuevoTecnicoTelefono = tec ? tec.telefono : null;
+      } else {
+        nuevoTecnicoTelefono = null;
+      }
+    }
+    const cambioTecnico = nuevoTecnicoTelefono !== undefined && nuevoTecnicoTelefono !== ticket.tecnicoTelefono;
 
     // Solo superAdmin puede cambiar prioridad y reasignar
     if (prioridad && prioridad !== ticket.prioridad) {
@@ -138,19 +166,20 @@ export async function update(req: AuthRequest, res: Response) {
       historial.push({ accion: `${autor} cambió la prioridad a ${prioridad}`, autor, timestamp: new Date().toISOString() });
       ticket.prioridad = prioridad;
     }
-    if (tecnicoAsignado !== undefined && tecnicoAsignado !== ticket.tecnicoAsignado) {
-      const esAutoAsignacion = tecnicoAsignado === autor;
-      const esDesasignarse = !tecnicoAsignado && autor === ticket.tecnicoAsignado;
+    if (cambioTecnico) {
+      const esAutoAsignacion = !!nuevoTecnicoTelefono && nuevoTecnicoTelefono === actorTelefono;
+      const esDesasignarse = !nuevoTecnicoTelefono && actorTelefono === ticket.tecnicoTelefono;
       if (!isSuperAdmin && !esAutoAsignacion && !esDesasignarse) {
         return res.status(403).json({ error: 'Solo el administrador puede reasignar el técnico' });
       }
-      historial.push({ accion: tecnicoAsignado ? `${autor} se asignó como técnico` : `${autor} se desvinculó del ticket`, autor, timestamp: new Date().toISOString() });
-      ticket.tecnicoAsignado = tecnicoAsignado || null;
+      historial.push({ accion: nuevoTecnicoTelefono ? `${autor} se asignó como técnico` : `${autor} se desvinculó del ticket`, autor, timestamp: new Date().toISOString() });
+      ticket.tecnicoTelefono = nuevoTecnicoTelefono ?? null;
+      ticket.tecnicoAsignado = nuevoTecnicoNombre;
     }
 
     // Cambio de estado
     if (estado && estado !== ticket.estado) {
-      const esDesasignarYReabrir = estado === 'abierto' && tecnicoAsignado !== undefined && !tecnicoAsignado;
+      const esDesasignarYReabrir = estado === 'abierto' && nuevoTecnicoTelefono !== undefined && !nuevoTecnicoTelefono;
       if (estado === 'abierto' && ticket.estado !== 'abierto' && !esDesasignarYReabrir) {
         if (!isSuperAdmin) return res.status(403).json({ error: 'Solo el administrador puede reabrir un ticket' });
       }
@@ -218,6 +247,7 @@ export async function update(req: AuthRequest, res: Response) {
     const updated = await Ticket.findByPk(ticket.id, {
       include: [
         { model: User, as: 'usuario', attributes: ['nombreCompleto', 'telefono'] },
+        { model: User, as: 'tecnico', attributes: ['nombreCompleto', 'telefono'], required: false },
         { model: Base, as: 'base', attributes: ['nombre'] },
       ],
     });
@@ -225,8 +255,8 @@ export async function update(req: AuthRequest, res: Response) {
     const io = getIO();
     if (io) {
       io.emit('ticket-actualizado', updated);
-      if (tecnicoAsignado && tecnicoAsignado !== oldTecnico) {
-        io.emit('ticket-asignado', { ...updated!.toJSON(), tecnicoAsignado });
+      if (cambioTecnico && nuevoTecnicoTelefono) {
+        io.emit('ticket-asignado', updated);
       }
     }
 

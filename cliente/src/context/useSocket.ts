@@ -6,7 +6,7 @@ import { api } from '../api/client';
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
 interface TicketEvent { id: number; asunto: string; estado: string; userTelefono: string; }
-interface TicketFull { id: number; asunto: string; estado: string; descripcion: string; ubicacion: string; prioridad: string; tecnicoAsignado: string | null; solucion: string | null; cerradoPor: 'usuario' | 'tecnico' | null; cerradoPorNombre: string | null; historial: any[]; comentarios: any[]; createdAt: string; usuario: { nombreCompleto: string; telefono: string }; base: { nombre: string }; }
+interface TicketFull { id: number; asunto: string; estado: string; descripcion: string; ubicacion: string; prioridad: string; tecnicoTelefono: string | null; tecnicoAsignado: string | null; solucion: string | null; cerradoPor: 'usuario' | 'tecnico' | null; cerradoPorNombre: string | null; historial: any[]; comentarios: any[]; createdAt: string; usuario: { nombreCompleto: string; telefono: string }; base: { nombre: string }; }
 
 function playSound(src: string) {
   try {
@@ -51,7 +51,7 @@ export function useSocket() {
 
     socket.on('ticket-asignado', (ticket: any) => {
       setTick(t => t + 1);
-      if (user?.nombre && ticket.tecnicoAsignado === user.nombre) {
+      if (user?.telefono && ticket.tecnicoTelefono === user.telefono) {
         playSound('/sounds/ticket-asignado.mp3');
         setNotificacion(`Se te asignó el ticket #${ticket.id}: ${ticket.asunto?.substring(0, 40)}`);
       }

@@ -8,7 +8,7 @@ import { useSocket } from '../context/useSocket';
 interface Ticket {
   id: number; asunto: string; descripcion: string; ubicacion: string;
   estado: string; prioridad: string; createdAt: string;
-  tecnicoAsignado: string | null; cerradoPor: 'usuario' | 'tecnico' | null;
+  tecnicoTelefono: string | null; tecnicoAsignado: string | null; cerradoPor: 'usuario' | 'tecnico' | null;
   usuario: { nombreCompleto: string; telefono: string };
   base: { nombre: string };
 }
@@ -76,7 +76,7 @@ export default function TicketsList() {
     params.set('limit', String(PAGE_SIZE));
     if (filtroEstado) params.set('estado', filtroEstado);
     if (filtroPrioridad) params.set('prioridad', filtroPrioridad);
-    if (soloMios && user?.nombre) params.set('tecnicoAsignado', user.nombre);
+    if (soloMios && user?.telefono) params.set('tecnicoTelefono', user.telefono);
     if (sinAsignar) params.set('sinAsignar', 'true');
     if (search.trim()) params.set('search', search.trim());
     params.set('sortBy', sortBy);
@@ -90,7 +90,7 @@ export default function TicketsList() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filtroEstado, filtroPrioridad, soloMios, sinAsignar, search, page, user?.nombre, sortBy, sortDir]);
+  }, [filtroEstado, filtroPrioridad, soloMios, sinAsignar, search, page, user?.telefono, sortBy, sortDir]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets, tick]);
 
