@@ -34,7 +34,6 @@ User.init({
   email: {
     type: DataTypes.STRING,
     allowNull: true,
-    unique: true,
   },
   baseId: {
     type: DataTypes.INTEGER,
@@ -72,4 +71,6 @@ User.init({
   modelName: 'user',
   tableName: 'usuarios',
   timestamps: true,
+  // Nombre fijo: evita que sync({alter:true}) recree índices UNIQUE duplicados en cada arranque.
+  indexes: [{ name: 'usuarios_email_unique', unique: true, fields: ['email'] }],
 });

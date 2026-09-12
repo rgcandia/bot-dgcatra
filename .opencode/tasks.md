@@ -47,3 +47,8 @@
 
 ### Pendiente detectado (no implementado)
 - [ ] **`sync({alter:true})` recrea constraints UNIQUE duplicados en cada rebuild.** Evidencia: `usuarios.email` llegó a tener 6 (`key`, `key1`…`key5`) y `bases.nombre` 3. Inofensivo pero se acumula. Opciones: (a) declarar los índices con nombre fijo en los modelos, (b) migraciones controladas (#3).
+
+### 2026-09-12 — Fix: índices UNIQUE duplicados por `sync({alter:true})`
+- [x] `Base.nombre` y `User.email`: quitado `unique: true` del campo y declarado índice con **nombre fijo** (`bases_nombre_unique`, `usuarios_email_unique`) en las opciones del modelo.
+- [x] Verificado con 2 arranques consecutivos del contenedor: no se crean constraints UNIQUE nuevos (idempotente). Unicidad intacta.
+- [x] `tsc` OK + rebuild Docker + `/health` 200.

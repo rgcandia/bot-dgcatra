@@ -18,7 +18,6 @@ Base.init({
   nombre: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
   },
   direccion: {
     type: DataTypes.STRING,
@@ -34,4 +33,6 @@ Base.init({
   modelName: 'base',
   tableName: 'bases',
   timestamps: false,
+  // Nombre fijo: evita que sync({alter:true}) recree índices UNIQUE duplicados en cada arranque.
+  indexes: [{ name: 'bases_nombre_unique', unique: true, fields: ['nombre'] }],
 });
