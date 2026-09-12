@@ -43,8 +43,7 @@
 ### Decisiones 2026-09-12 (alcance)
 - ⏸️ **#2 (CI/CD / GitHub Actions)** — pospuesto.
 - ⏸️ **#3 (migraciones controladas en vez de `sync({alter:true})`)** — pospuesto.
-- ▶️ **#1 (tests de integración)** — pendiente, se hará en pasada aparte.
-
+- ✅ **#1 (tests de integración)** — implementado el 2026-09-12 (ver abajo).
 ### Pendiente detectado (no implementado)
 - [ ] **`sync({alter:true})` recrea constraints UNIQUE duplicados en cada rebuild.** Evidencia: `usuarios.email` llegó a tener 6 (`key`, `key1`…`key5`) y `bases.nombre` 3. Inofensivo pero se acumula. Opciones: (a) declarar los índices con nombre fijo en los modelos, (b) migraciones controladas (#3).
 
@@ -52,3 +51,17 @@
 - [x] `Base.nombre` y `User.email`: quitado `unique: true` del campo y declarado índice con **nombre fijo** (`bases_nombre_unique`, `usuarios_email_unique`) en las opciones del modelo.
 - [x] Verificado con 2 arranques consecutivos del contenedor: no se crean constraints UNIQUE nuevos (idempotente). Unicidad intacta.
 - [x] `tsc` OK + rebuild Docker + `/health` 200.
+
+### 2026-09-12 — #1: Tests de integración (API + Postgres de test)
+- [x] **App testeable** (`src/api/app.ts`): extraída `createApp()` con middlewares + rutas, **sin** efectos colaterales (no escucha el puerto, no sincroniza la DB, no inicializa WhatsApp). `src/api/index.ts` quedó como "bootstrap" (dotenv, socket.io, sync, listen, graceful shutdown). El request-logger se omite cuando `NODE_ENV=test`.
+- [x] **Infra de tests**: `vitest.config.ts` (unitarios) y `vitest.integration.config.ts` (integración, `fileParallelism: false`). Se agregó `supertest` + `@types/supertest` como devDependency. Scripts: `npm test` / `npm run test:unit` y `npm run test:integration`.
+- [x] **Fix colateral**: `vitest.config.ts` excluye `dist/`, así `npm test` ya no corre los tests duplicados compilados (antes 6 archivos / 46 tests, ahora 3 / 23 reales).
+- [x] **DB de test** (`src/__tests__/integration/setup.ts`): usa `TEST_DATABASE_URL` o `DATABASE_URL` con sufijo `_test`; crea la base si no existe, hace `sync({ force: true })` y **aborta si el nombre no termina en `_test`** (nunca puede tocar la base real). Sin publicar el puerto 5432 del host (ya lo usa otro proyecto): se corre desde el contenedor o con la IP de `dgcatra-db`.
+- [x] **Mocks**: se mockea solo `bot/enviar.js` (nada de puppeteer/WhatsApp en tests); el estado del bot se controla con `setBotConnected()` / `setBotDisconnected()`. Cada test usa su propia `X-Forwarded-For` para aislar los rate limiters.
+- [x] **Casos cubiertos (55 tests, 4 archivos)**:
+  - `auth.test.ts` (19): OTP enviado de 6 dígitos, un solo uso, código inválido/expirado, código maestro (superAdmin), sin teléfono, usuario inexistente, usuario desactivado (403), admin sin confirmar WhatsApp (403), fallo de envío (503 + código descartado), bot desconectado (503), soft-delete, token inválido y token de usuario dado de baja (401).
+  - `tickets.test.ts` (18): creación (201 con estado/prioridad/usuario/base), validación de campos, 401 sin token, 403 de no-admin, asignación por teléfono, **2 técnicos homónimos** (asignación y filtro por `tecnicoTelefono` no se pisan), técnico inválido (400), no-admin como técnico (400), reasignación por admin común (403), auto-asignación (200), dejar caso (desasigna + reabre), prioridad solo superAdmin, compat `tecnicoAsignado`, cierre con solución, filtro `sinAsignar`.
+  - `usuarios.test.ts` (15): soft-delete (activo/registroCompleto/esAdmin en false, nombre conservado), tickets e historial conservados, bloqueo de OTP y de token viejo, re-registro, 404, filtros activos/inactivos, alta de admin solo superAdmin (403/201 + confirmadoWhatsApp=false), login bloqueado hasta confirmar, 409 de usuario existente, `forzarPromocion`, teléfono inválido, PATCH de admin.
+  - `rate-limit.test.ts` (3): 10 intentos de verificación → 429 en el 11º, 5 solicitudes de código → 429 en la 6ª, y aislamiento por IP.
+- [x] **Verificación**: `npx tsc --noEmit` OK; `npm test` 3 archivos / 23 tests OK; `npm run test:integration` 4 archivos / 55 tests OK (contra `dgcatra_test`).
+- [x] **README**: nueva sección "Tests" con los comandos, la cobertura y las dos formas de apuntar al Postgres de test.

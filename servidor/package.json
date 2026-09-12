@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/api/index.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/api/index.js",
     "seed": "node dist/seed.js",
     "seed-demo": "node dist/seed-demo.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -34,7 +37,9 @@
     "@types/node": "^22.0.0",
     "@types/pino": "^7.0.4",
     "@types/qrcode-terminal": "^0.12.2",
+    "@types/supertest": "^7.2.1",
     "sharp": "^0.35.3",
+    "supertest": "^7.2.2",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.10"

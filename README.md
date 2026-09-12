@@ -168,6 +168,54 @@ Una vez guardado el nombre, el flujo es directo y guiado por estados:
 
 ---
 
+## Tests
+
+```bash
+cd servidor
+
+# Unitarios (rápidos, sin DB): helpers del bot, schemas y normalización de teléfonos
+npm test                # alias: npm run test:unit
+
+# Integración (API Express real vía supertest + Postgres de test)
+npm run test:integration
+```
+
+Los tests de integración corren contra **una base aparte** (`dgcatra_test`): la crean si no existe
+y le hacen `sync({ force: true })` (la vacían). Por seguridad el setup **aborta** si el nombre de la
+DB no termina en `_test`, así nunca pueden tocar la base de producción.
+
+| Archivo | Qué cubre |
+| --- | --- |
+| `src/__tests__/integration/auth.test.ts` | OTP por WhatsApp (envío, un solo uso, expirado/inválido), código maestro, usuario desactivado y soft-delete, token inválido, bloqueo de usuarios dados de baja |
+| `src/__tests__/integration/tickets.test.ts` | Creación de tickets, validaciones, asignación de técnico **por teléfono** (2 técnicos homónimos no se pisan), permisos (auto-asignación / reasignación / prioridad), filtros `?tecnicoTelefono=` y `?sinAsignar=true` |
+| `src/__tests__/integration/usuarios.test.ts` | Soft-delete (conserva tickets e historial), bloqueo de login y del token viejo, alta de admins por el super admin, confirmación por WhatsApp |
+| `src/__tests__/integration/rate-limit.test.ts` | Bloqueo por fuerza bruta (10 intentos de verificación / 5 pedidos de código por ventana) y aislamiento por IP |
+
+### ¿Contra qué Postgres corren?
+
+- **Desde el contenedor `api`** (recomendado: usa el `DATABASE_URL` del `.env`, host `db`):
+
+```bash
+cd servidor
+docker compose run --rm --no-deps \
+  -v "$PWD/src:/app/src" \
+  -v "$PWD/vitest.integration.config.ts:/app/vitest.integration.config.ts" \
+  api npx vitest run --config vitest.integration.config.ts
+```
+
+- **Desde el host**: apuntando a la IP del contenedor `dgcatra-db` (el puerto 5432 del host ya lo
+  usa otro proyecto, así que no se publica):
+
+```bash
+cd servidor
+set -a; . ./.env; set +a
+DBIP=$(docker inspect dgcatra-db --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+TEST_DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DBIP}:5432/dgcatra_test" \
+  npm run test:integration
+```
+
+---
+
 ## Inicio rápido (desarrollo local)
 
 ```bash
