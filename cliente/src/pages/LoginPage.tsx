@@ -17,10 +17,14 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [timer, setTimer] = useState(OTP_EXPIRY);
   const [codeSent, setCodeSent] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { fetchAdmins, login, verify, loading } = useAuth();
+  // Guards sincrónicos: evitan envíos/verificaciones duplicadas por doble click.
+  const sendingRef = useRef(false);
+  const verifyingRef = useRef(false);
+  const { fetchAdmins, login, verify } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,7 +49,8 @@ export default function LoginPage() {
   }, [codeSent, step]);
 
   async function handleSendCode() {
-    if (!selectedId) return;
+    if (!selectedId || sendingRef.current) return;
+    sendingRef.current = true;
     setError(''); setMessage('');
     setSending(true);
     try {
@@ -56,7 +61,7 @@ export default function LoginPage() {
       setCode(['', '', '', '', '', '']);
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } catch (err: any) { setError(err.message); }
-    finally { setSending(false); }
+    finally { sendingRef.current = false; setSending(false); }
   }
 
   function handleCodeInput(index: number, value: string) {
@@ -87,7 +92,10 @@ export default function LoginPage() {
 
   async function handleVerify(codigo: string) {
     if (codigo.length < 4) { setError('Código inválido'); return; }
+    if (verifyingRef.current) return;
+    verifyingRef.current = true;
     setError('');
+    setVerifying(true);
     try {
       if (step === 'master') {
         await verify('master', codigo);
@@ -96,6 +104,7 @@ export default function LoginPage() {
       }
       navigate('/', { replace: true });
     } catch (err: any) { setError(err.message); }
+    finally { verifyingRef.current = false; setVerifying(false); }
   }
 
   async function handleCodeSubmit(e: FormEvent) {
@@ -233,11 +242,11 @@ export default function LoginPage() {
 
             {error && <p style={{ color: 'var(--danger)', marginBottom: '.75rem', textAlign: 'center', fontSize: '.85rem' }}>{error}</p>}
 
-            <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading || code.join('').length < 6}>
-              {loading ? 'Verificando...' : 'Ingresar'}
+            <button className="btn btn-primary" style={{ width: '100%' }} disabled={verifying || code.join('').length < 6}>
+              {verifying ? <><span className="spinner spinner-sm" style={{ marginRight: 6 }} />Verificando...</> : 'Ingresar'}
             </button>
             <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
-              <button type="button" className="btn btn-ghost" style={{ flex: 1, fontSize: '.85rem' }} onClick={resetToSelect}>
+              <button type="button" className="btn btn-ghost" style={{ flex: 1, fontSize: '.85rem' }} onClick={resetToSelect} disabled={verifying}>
                 Volver
               </button>
               <button type="button" className="btn btn-ghost btn-sm" style={{ flex: 1, fontSize: '.85rem' }}
@@ -282,11 +291,11 @@ export default function LoginPage() {
               ))}
             </div>
             {error && <p style={{ color: 'var(--danger)', marginBottom: '.75rem', textAlign: 'center', fontSize: '.85rem' }}>{error}</p>}
-            <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-              {loading ? 'Verificando...' : 'Ingresar'}
+            <button className="btn btn-primary" style={{ width: '100%' }} disabled={verifying}>
+              {verifying ? <><span className="spinner spinner-sm" style={{ marginRight: 6 }} />Verificando...</> : 'Ingresar'}
             </button>
             <button type="button" className="btn btn-ghost" style={{ width: '100%', marginTop: '.5rem', fontSize: '.85rem' }}
-              onClick={resetToSelect}>
+              onClick={resetToSelect} disabled={verifying}>
               <ArrowLeft size={14} style={{ marginBottom: -2 }} /> Volver
             </button>
           </form>

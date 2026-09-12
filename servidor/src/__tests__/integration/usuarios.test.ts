@@ -197,6 +197,27 @@ describe('POST /api/usuarios (alta de administradores)', () => {
     const res = await request(app).post('/api/usuarios').set(authSuper()).send({ nombreCompleto: 'Malo', telefono: 'no-es-un-tel' });
     expect(res.status).toBe(400);
   });
+
+  it('no repite la invitación si se crea dos veces seguidas el mismo número', async () => {
+    const primero = await request(app).post('/api/usuarios').set(authSuper()).send({ nombreCompleto: 'Nuevo Admin', telefono: nuevoAdmin });
+    expect(primero.status).toBe(201);
+    expect(mock.enviados).toHaveLength(1);
+
+    // El segundo intento lo detecta como existente (409) y NO manda otro WhatsApp
+    const segundo = await request(app).post('/api/usuarios').set(authSuper()).send({ nombreCompleto: 'Nuevo Admin', telefono: nuevoAdmin });
+    expect(segundo.status).toBe(409);
+    expect(mock.enviados).toHaveLength(1);
+  });
+
+  it('no repite la invitación si se promueve dos veces seguidas (cooldown)', async () => {
+    const primero = await request(app).post('/api/usuarios').set(authSuper()).send({ nombreCompleto: 'Ale Candia', telefono: TELEFONOS.usuario, forzarPromocion: true });
+    expect(primero.status).toBe(201);
+    expect(mock.enviados).toHaveLength(1);
+
+    const segundo = await request(app).post('/api/usuarios').set(authSuper()).send({ nombreCompleto: 'Ale Candia', telefono: TELEFONOS.usuario, forzarPromocion: true });
+    expect(segundo.status).toBe(201);
+    expect(mock.enviados).toHaveLength(1);
+  });
 });
 
 describe('PATCH /api/usuarios/:telefono', () => {

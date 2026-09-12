@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, UserPlus } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
@@ -34,6 +34,9 @@ export default function UsuariosPage() {
   const [newAdminNombre, setNewAdminNombre] = useState('');
   const [newAdminTelefono, setNewAdminTelefono] = useState('');
   const [newAdminError, setNewAdminError] = useState('');
+  const [savingAdmin, setSavingAdmin] = useState(false);
+  // Guard sincrónico: evita que dos clicks muy rápidos disparen dos POST (y dos WhatsApp).
+  const savingAdminRef = useRef(false);
   
   // Modal de Advertencia de Promoción de Usuario Existente
   const [promoRequired, setPromoRequired] = useState(false);
@@ -125,13 +128,16 @@ export default function UsuariosPage() {
 
   // Guardar nuevo admin manual con detección de duplicados (Fase 2.6 ampliada)
   async function handleAddAdmin(forzar = false) {
+    if (savingAdminRef.current) return;
     setNewAdminError('');
     if (!newAdminNombre.trim() || !newAdminTelefono.trim()) {
       setNewAdminError('Ambos campos son requeridos');
       return;
     }
+    savingAdminRef.current = true;
+    setSavingAdmin(true);
     try {
-      const response = await api.post('/api/usuarios', {
+      await api.post('/api/usuarios', {
         nombreCompleto: newAdminNombre.trim(),
         telefono: newAdminTelefono.trim(),
         forzarPromocion: forzar
@@ -155,6 +161,9 @@ export default function UsuariosPage() {
       } else {
         setNewAdminError(e.message || 'Error al registrar administrador');
       }
+    } finally {
+      savingAdminRef.current = false;
+      setSavingAdmin(false);
     }
   }
 
@@ -271,7 +280,7 @@ export default function UsuariosPage() {
 
       {/* Modal Alta Administrador Manual (Fase 2.6) */}
       {showAddAdmin && (
-        <div className="modal-overlay" onClick={() => setShowAddAdmin(false)}>
+        <div className="modal-overlay" onClick={() => { if (!savingAdminRef.current) setShowAddAdmin(false); }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3>Nuevo administrador</h3>
             
@@ -281,8 +290,10 @@ export default function UsuariosPage() {
                   {promoMessage}
                 </p>
                 <div style={{ display: 'flex', gap: '.5rem' }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => handleAddAdmin(true)}>Sí, promover y verificar</button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setPromoRequired(false)}>No, cancelar</button>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleAddAdmin(true)} disabled={savingAdmin}>
+                    {savingAdmin ? <><span className="spinner spinner-sm" style={{ marginRight: 6 }} />Enviando...</> : 'Sí, promover y verificar'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPromoRequired(false)} disabled={savingAdmin}>No, cancelar</button>
                 </div>
               </div>
             ) : (
@@ -311,8 +322,10 @@ export default function UsuariosPage() {
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem' }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => handleAddAdmin(false)}>Enviar invitación</button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setShowAddAdmin(false)}>Cancelar</button>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleAddAdmin(false)} disabled={savingAdmin}>
+                    {savingAdmin ? <><span className="spinner spinner-sm" style={{ marginRight: 6 }} />Enviando...</> : 'Enviar invitación'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => { if (!savingAdminRef.current) setShowAddAdmin(false); }} disabled={savingAdmin}>Cancelar</button>
                 </div>
               </>
             )}

@@ -80,3 +80,31 @@
 - [x] **README**: nueva sección "0. Identidad de WhatsApp: LID vs. teléfono" con la tabla PN/LID, cómo se resuelve y la consolidación automática.
 - [ ] **Pendiente de confirmar en producción**: cuando el usuario escriba al bot después del deploy, verificar en logs (`Identidad LID resuelta a teléfono`) y en la DB que su fila pasó al teléfono real. Después ya se puede dar de alta como admin con ese teléfono.
 
+
+### 2026-09-12 — Fix UI: loader y anti doble-submit al crear admin / enviar código
+**Problema detectado**: al dar de alta un admin (modal "Nuevo administrador" de `UsuariosPage.tsx`), el botón "Enviar invitación" no tenía loader ni se deshabilitaba: si el usuario lo apretaba varias veces se enviaban varias invitaciones por WhatsApp (y, si el número ya existía, se repetía el mensaje/la promoción). En el login (`LoginPage.tsx`), el botón "Ingresar" sólo cambiaba el texto (sin spinner) y el doble click podía disparar envíos/verificaciones duplicadas de OTP.
+
+- [x] **`cliente/src/pages/admin/UsuariosPage.tsx`**: nuevo estado `savingAdmin` + guard sincrónico `savingAdminRef`. `handleAddAdmin` ignora llamadas concurrentes, hace `finally` para siempre liberar el guard, y muestra spinner + `disabled` en **"Enviar invitación"** y en **"Sí, promover y verificar"** (cubre tanto alta nueva como promoción de un número ya registrado). "Cancelar" y el click en el overlay del modal quedan bloqueados mientras se envía.
+- [x] **`cliente/src/pages/LoginPage.tsx`**: nuevos estados/refs `verifying`/`verifyingRef` (y `sendingRef`). "Enviar código"/"Reenviar" y el submit "Ingresar" (OTP y código maestro) usan guard sincrónico anti doble click; el botón "Ingresar" ahora muestra spinner (`Verificando...`) y "Volver" se deshabilita durante la verificación. Se dejó de depender del `loading` global del `AuthContext` para el botón de verificación.
+- [x] **Verificación**: `npx tsc --noEmit` OK y `npm run build` (frontend) OK.
+- [ ] **Pendiente** (opcional, no solicitado): idempotencia del lado del backend para POST `/api/usuarios` y `/api/auth/solicitar-codigo` (el front ya evita el doble click, el backend todavía no).
+
+### 2026-09-12 — Fix backend: idempotencia anti-duplicados (OTP e invitación de admin)
+**Problema**: el front ya bloqueaba el doble click, pero el backend no. Dos requests concurrentes (varias pestañas, reintentos, un cliente distinto del dashboard) podían generar **dos OTP** o **dos invitaciones por WhatsApp**. Además el POST de alta de admin no tenía ninguna protección de reenvío.
+
+- [x] **`servidor/src/utils/cooldown.ts`** (nuevo): cooldown en memoria por clave (teléfono) con `enCooldown(clave, ms)` → `{ activo, restanteSeg }`, `marcarEnviado(clave, ms)` y `limpiarCooldowns()` (para tests). Limpieza perezosa del `Map` para que no crezca sin límite.
+- [x] **`servidor/src/controllers/auth.controller.ts`**: `POST /api/auth/solicitar-codigo` con `OTP_REENVIO_COOLDOWN = 30s`. Si ya se envió un OTP a ese teléfono hace menos de 30 s, responde **429** (`"Ya te enviamos un código hace instantes. Esperá Ns..."`) y **no** manda otro WhatsApp. El cooldown se marca **solo si el envío fue exitoso** (si el envío falla se puede reintentar) y se evalúa después de las validaciones (404/403 no lo consumen).
+- [x] **`servidor/src/controllers/usuarios.controller.ts`**: `POST /api/usuarios` con `INVITACION_COOLDOWN = 30s`. Si ya se invitó a ese número hace poco, la respuesta sigue siendo **201** (el alta ya se hizo) pero **no se reenvía** la invitación; se loguea `Invitación de admin no reenviada (cooldown anti-duplicado)`. Cubre tanto el alta nueva como la promoción con `forzarPromocion`.
+- [x] **Tests**:
+  - `integration/auth.test.ts` (+3): segundo pedido inmediato → 429 y **un solo** WhatsApp enviado; el cooldown es por teléfono (otro número sí puede); el OTP del primer envío sigue siendo válido tras el intento bloqueado.
+  - `integration/usuarios.test.ts` (+2): crear dos veces seguidas el mismo número → 409 y **una sola** invitación; promover dos veces con `forzarPromocion` → segunda sin reenvío.
+  - `integration/rate-limit.test.ts`: los pedidos de código del test de limiter por IP ahora usan **un teléfono distinto por intento** (antes el mismo), para que el limiter por IP quede aislado del cooldown por teléfono.
+  - `integration/setup.ts`: `limpiarTablas()` ahora también ejecuta `limpiarCooldowns()`, porque el cooldown vive en memoria del proceso y no en la DB.
+- [x] **Documentación**: README — nota de "Anti duplicados" en *Alta Manual de Administradores*, cooldown documentado en la tabla de `/api/auth/solicitar-codigo` y en la tabla de cobertura de tests.
+- [x] **Verificación**: `npx tsc --noEmit` OK; `npm run build` (servidor) OK; unitarios **4 archivos / 32 tests**; integración **5 archivos / 66 tests** (antes 61).
+- [x] **Commit + push** y **rebuild del server** (Docker).
+
+### 2026-09-12 — Fix UI: loader y anti doble-submit (frontend)
+- [x] `cliente/src/pages/admin/UsuariosPage.tsx`: `savingAdmin` + `savingAdminRef`; spinner/`disabled` en "Enviar invitación" y "Sí, promover y verificar"; se bloquea Cancelar y el click en el overlay mientras se envía.
+- [x] `cliente/src/pages/LoginPage.tsx`: `sendingRef`/`verifyingRef` + estado `verifying`; spinner en "Ingresar" (OTP y código maestro); "Volver" deshabilitado al verificar. Se dejó de depender del `loading` global del `AuthContext`.
+- [x] Verificación: `npx tsc --noEmit` OK y `npm run build` (frontend) OK.

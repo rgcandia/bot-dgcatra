@@ -6,9 +6,12 @@ import { config } from '../config/index.js';
 import { getSetting } from '../config/settings.js';
 import { getBotStatus } from '../socket/server.js';
 import { logger } from '../config/logger.js';
+import { enCooldown, marcarEnviado } from '../utils/cooldown.js';
 
 const codigos = new Map<string, { codigo: string; expires: number }>();
 const OTP_EXPIRY = 5 * 60 * 1000; // 5 minutos
+// Anti doble click: si ya se envió un OTP a este teléfono hace menos de esto, no se reenvía.
+const OTP_REENVIO_COOLDOWN = 30 * 1000;
 
 function limpiarExpirados() {
   const now = Date.now();
@@ -42,6 +45,14 @@ export async function solicitarCodigo(req: Request, res: Response) {
       return res.status(403).json({ error: 'Confirmá tu número respondiendo "confirmar" en el bot de WhatsApp antes de loguearte.' });
     }
 
+    // Anti doble click: si ya mandamos un código hace instantes, no mandamos otro.
+    const cooldown = enCooldown(`otp:${telefono}`, OTP_REENVIO_COOLDOWN);
+    if (cooldown.activo) {
+      return res.status(429).json({
+        error: `Ya te enviamos un código hace instantes. Esperá ${cooldown.restanteSeg}s antes de pedir otro.`,
+      });
+    }
+
     const codigo = crypto.randomInt(100000, 999999).toString();
     codigos.set(`auth:${telefono}`, { codigo, expires: Date.now() + OTP_EXPIRY });
 
@@ -52,6 +63,7 @@ export async function solicitarCodigo(req: Request, res: Response) {
       codigos.delete(`auth:${telefono}`);
       return res.status(503).json({ error: 'No se pudo enviar el código por WhatsApp. Intentá de nuevo.' });
     }
+    marcarEnviado(`otp:${telefono}`, OTP_REENVIO_COOLDOWN);
     logger.info({ telefono }, 'Código OTP generado');
 
     res.json({ message: 'Código enviado a tu WhatsApp' });

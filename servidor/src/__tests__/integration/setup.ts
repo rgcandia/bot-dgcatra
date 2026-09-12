@@ -100,6 +100,11 @@ export async function limpiarTablas() {
   await sequelize.query('TRUNCATE TABLE tickets, usuarios, bases, conversaciones, settings RESTART IDENTITY CASCADE');
   const { initSettings } = await import('../../config/settings.js');
   initSettings();
+
+  // El cooldown anti duplicados (OTP / invitaciones) vive en memoria del proceso,
+  // no en la DB: hay que limpiarlo a mano para aislar cada test.
+  const { limpiarCooldowns } = await import('../../utils/cooldown.js');
+  limpiarCooldowns();
 }
 
 // --- 3. App + helpers de datos ------------------------------------------------

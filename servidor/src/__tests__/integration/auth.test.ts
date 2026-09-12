@@ -132,6 +132,44 @@ describe('POST /api/auth/solicitar-codigo', () => {
   });
 });
 
+describe('POST /api/auth/solicitar-codigo (anti duplicados)', () => {
+  it('no reenvía el OTP si se pide dos veces seguidas (429)', async () => {
+    await crearUsuario({ telefono: TELEFONOS.usuario });
+
+    const primero = await request(app).post('/api/auth/solicitar-codigo').set(ip(21)).send({ telefono: TELEFONOS.usuario });
+    expect(primero.status).toBe(200);
+    expect(mock.enviados).toHaveLength(1);
+
+    // Doble click: el segundo pedido NO genera un nuevo código ni otro WhatsApp
+    const segundo = await request(app).post('/api/auth/solicitar-codigo').set(ip(21)).send({ telefono: TELEFONOS.usuario });
+    expect(segundo.status).toBe(429);
+    expect(segundo.body.error).toMatch(/esperá/i);
+    expect(mock.enviados).toHaveLength(1);
+  });
+
+  it('el cooldown es por teléfono: otro número sí puede pedir su código', async () => {
+    await crearUsuario({ telefono: TELEFONOS.usuario });
+    await crearUsuario({ telefono: TELEFONOS.usuario2 });
+
+    await request(app).post('/api/auth/solicitar-codigo').set(ip(22)).send({ telefono: TELEFONOS.usuario });
+    const otro = await request(app).post('/api/auth/solicitar-codigo').set(ip(22)).send({ telefono: TELEFONOS.usuario2 });
+
+    expect(otro.status).toBe(200);
+    expect(mock.enviados).toHaveLength(2);
+  });
+
+  it('el OTP del primer envío sigue siendo válido tras el intento bloqueado', async () => {
+    await crearUsuario({ telefono: TELEFONOS.usuario });
+
+    await request(app).post('/api/auth/solicitar-codigo').set(ip(23)).send({ telefono: TELEFONOS.usuario });
+    const codigo = ultimoCodigo();
+    await request(app).post('/api/auth/solicitar-codigo').set(ip(23)).send({ telefono: TELEFONOS.usuario });
+
+    const res = await request(app).post('/api/auth/verificar-codigo').set(ip(23)).send({ telefono: TELEFONOS.usuario, codigo });
+    expect(res.status).toBe(200);
+  });
+});
+
 describe('POST /api/auth/verificar-codigo', () => {
   it('rechaza sin teléfono o sin código (400)', async () => {
     const res = await request(app).post('/api/auth/verificar-codigo').set(ip(9)).send({ telefono: TELEFONOS.usuario });

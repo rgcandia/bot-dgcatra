@@ -125,6 +125,7 @@ Una vez guardado el nombre, el flujo es directo y guiado por estados:
 * El backend normaliza el teléfono al formato internacional de Argentina (`54911XXXXXXXX`) utilizando un formateador de teléfono robusto.
 * El backend crea el registro con `esAdmin: true` y `confirmadoWhatsApp: false`, y envía un mensaje automatizado por WhatsApp al número del nuevo administrador:
   *"👋 Hola [Nombre]. Te registraron como administrador en el sistema de tickets. Respondé **confirmar** a este mensaje para activar tu cuenta..."*
+* **Anti duplicados:** la invitación no se reenvía si ya se mandó al mismo número hace menos de 30 s (`utils/cooldown.ts`). El dashboard además deshabilita el botón "Enviar invitación" mientras la request está en curso, así que apretarlo varias veces no genera altas ni WhatsApp repetidos (aplica también a la promoción de un número ya registrado).
 
 ### 2. Confirmación y Login
 * El administrador responde **"confirmar"** o escribe un mensaje afirmativo al bot de WhatsApp.
@@ -153,7 +154,7 @@ Una vez guardado el nombre, el flujo es directo y guiado por estados:
 ### Auth (público — rate limited: 5 intentos / 5 min)
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | /api/auth/solicitar-codigo | Envía código de 6 dígitos por WhatsApp al usuario |
+| POST | /api/auth/solicitar-codigo | Envía código de 6 dígitos por WhatsApp al usuario. **Cooldown de 30 s por teléfono**: un segundo pedido inmediato responde `429` y no reenvía el WhatsApp |
 | POST | /api/auth/verificar-codigo | Verifica código (o MASTER_CODE) y devuelve JWT |
 
 ### Dashboard (requiere JWT via `Authorization: Bearer <token>`)
@@ -206,9 +207,9 @@ DB no termina en `_test`, así nunca pueden tocar la base de producción.
 
 | Archivo | Qué cubre |
 | --- | --- |
-| `src/__tests__/integration/auth.test.ts` | OTP por WhatsApp (envío, un solo uso, expirado/inválido), código maestro, usuario desactivado y soft-delete, token inválido, bloqueo de usuarios dados de baja |
+| `src/__tests__/integration/auth.test.ts` | OTP por WhatsApp (envío, un solo uso, expirado/inválido), **anti duplicados del OTP** (cooldown por teléfono → 429 sin reenvío), código maestro, usuario desactivado y soft-delete, token inválido, bloqueo de usuarios dados de baja |
 | `src/__tests__/integration/tickets.test.ts` | Creación de tickets, validaciones, asignación de técnico **por teléfono** (2 técnicos homónimos no se pisan), permisos (auto-asignación / reasignación / prioridad), filtros `?tecnicoTelefono=` y `?sinAsignar=true` |
-| `src/__tests__/integration/usuarios.test.ts` | Soft-delete (conserva tickets e historial), bloqueo de login y del token viejo, alta de admins por el super admin, confirmación por WhatsApp |
+| `src/__tests__/integration/usuarios.test.ts` | Soft-delete (conserva tickets e historial), bloqueo de login y del token viejo, alta de admins por el super admin, confirmación por WhatsApp, **anti duplicados de la invitación** (no reenvía WhatsApp si se repite el alta/promoción) |
 | `src/__tests__/integration/rate-limit.test.ts` | Bloqueo por fuerza bruta (10 intentos de verificación / 5 pedidos de código por ventana) y aislamiento por IP |
 
 ### ¿Contra qué Postgres corren?

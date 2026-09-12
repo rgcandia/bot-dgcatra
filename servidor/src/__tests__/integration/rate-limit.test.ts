@@ -17,11 +17,20 @@ vi.mock('../../bot/enviar.js', () => ({
 
 let app: Express;
 
+/**
+ * Un teléfono distinto por pedido de código: así probamos el limiter POR IP
+ * sin chocar con el cooldown anti-duplicado POR TELÉFONO.
+ */
+const telefonosCodigo = Array.from({ length: 7 }, (_, i) => `549110003000${i + 1}`);
+
 beforeAll(async () => {
   await prepararDB();
   app = await crearAppDeTest();
   await limpiarTablas();
   await crearUsuario({ telefono: TELEFONOS.usuario, nombreCompleto: 'Ale Candia' });
+  for (const telefono of telefonosCodigo) {
+    await crearUsuario({ telefono, nombreCompleto: 'Usuario Test' });
+  }
   const { setBotConnected } = await import('../../socket/server.js');
   setBotConnected('5491126259181');
 });
@@ -56,7 +65,7 @@ describe('Bloqueo por intentos fallidos', () => {
     const respuestas: number[] = [];
 
     for (let i = 0; i < 6; i++) {
-      const res = await request(app).post('/api/auth/solicitar-codigo').set(ip).send({ telefono: TELEFONOS.usuario });
+      const res = await request(app).post('/api/auth/solicitar-codigo').set(ip).send({ telefono: telefonosCodigo[i] });
       respuestas.push(res.status);
     }
 
@@ -65,7 +74,7 @@ describe('Bloqueo por intentos fallidos', () => {
   });
 
   it('el bloqueo es por IP: otra IP sigue pudiendo operar', async () => {
-    const res = await request(app).post('/api/auth/solicitar-codigo').set(ipHeaders(92)).send({ telefono: TELEFONOS.usuario });
+    const res = await request(app).post('/api/auth/solicitar-codigo').set(ipHeaders(92)).send({ telefono: telefonosCodigo[6] });
     expect(res.status).toBe(200);
   });
 });

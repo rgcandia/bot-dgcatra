@@ -5,6 +5,10 @@ import { User, Base } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 import { logger } from '../config/logger.js';
 import { normalizarTelefonoAR } from '../utils/telefono.js';
+import { enCooldown, marcarEnviado } from '../utils/cooldown.js';
+
+// Anti doble click: no reenviamos la invitación de admin si ya se mandó hace poco.
+const INVITACION_COOLDOWN = 30 * 1000;
 
 async function invalidarCacheUsuario(telefono: string) {
   try {
@@ -67,17 +71,24 @@ export async function create(req: AuthRequest, res: Response) {
       });
     }
 
-    // Enviar WhatsApp de confirmación
-    try {
-      const { enviarTexto } = await import('../bot/enviar.js');
-      await enviarTexto(
-        telNormalizado,
-        `👋 Hola *${nombreCompleto}*. Te registraron como administrador en el sistema de tickets.\n\n` +
-        `Respondé *confirmar* a este mensaje para activar tu cuenta y poder ingresar al panel.`
-      );
-    } catch (wsErr: any) {
-      logger.error({ err: wsErr?.message }, 'Error al enviar WhatsApp de confirmación de admin');
-      return res.status(503).json({ error: 'Admin registrado pero no se pudo enviar el WhatsApp de confirmación. Asegurate de que el bot esté conectado.' });
+    // Enviar WhatsApp de confirmación. Si ya se envió una invitación a este número
+    // hace instantes, NO se reenvía (idempotente ante doble click: el alta ya se hizo).
+    const cooldown = enCooldown(`invitacion-admin:${telNormalizado}`, INVITACION_COOLDOWN);
+    if (cooldown.activo) {
+      logger.info({ telefono: telNormalizado }, 'Invitación de admin no reenviada (cooldown anti-duplicado)');
+    } else {
+      try {
+        const { enviarTexto } = await import('../bot/enviar.js');
+        await enviarTexto(
+          telNormalizado,
+          `👋 Hola *${nombreCompleto}*. Te registraron como administrador en el sistema de tickets.\n\n` +
+          `Respondé *confirmar* a este mensaje para activar tu cuenta y poder ingresar al panel.`
+        );
+        marcarEnviado(`invitacion-admin:${telNormalizado}`, INVITACION_COOLDOWN);
+      } catch (wsErr: any) {
+        logger.error({ err: wsErr?.message }, 'Error al enviar WhatsApp de confirmación de admin');
+        return res.status(503).json({ error: 'Admin registrado pero no se pudo enviar el WhatsApp de confirmación. Asegurate de que el bot esté conectado.' });
+      }
     }
 
     invalidarCacheUsuario(telNormalizado);
