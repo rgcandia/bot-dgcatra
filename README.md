@@ -80,6 +80,26 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 
 El bot está abierto al público. No requiere registros complejos.
 
+### 0. Identidad de WhatsApp: LID vs. teléfono
+
+WhatsApp maneja **dos identificadores** por cuenta y puede mandar cualquiera de los dos en los mensajes:
+
+| Id | Ejemplo | Qué es |
+| --- | --- | --- |
+| **PN** (Phone Number) | `5491166086509@c.us` | El teléfono de siempre. |
+| **LID** (Linked ID) | `30262373163147@lid` | Id interno nuevo de las cuentas migradas a LID (WhatsApp ya no expone el teléfono). |
+
+El bot **siempre guarda el teléfono como identidad** (`usuarios.telefono`) y usa el LID solo como `chatId`
+para poder responder. Si un mensaje llega con `@lid`, se traduce con
+`client.getContactLidAndPhone([lid]) → { lid, pn }` (`src/bot/identidad.ts`), se normaliza el resultado al
+formato canónico (`54911XXXXXXXX`) y se sigue el flujo normal. Si la resolución falla (pn vacío, error del
+cliente), se usa el LID tal como llegó: el flujo nunca se corta.
+
+Esto es lo que permite después **dar de alta al usuario como administrador con su teléfono real** (y que el
+"confirmar" que responde por WhatsApp impacte en su misma fila). Usuarios que hayan quedado guardados con el
+LID antes de esta corrección se consolidan solos al recibir el primer mensaje
+(`src/bot/migrar-lid.ts`: mueve tickets y conversaciones a la fila del teléfono real, sin perder historial).
+
 ### 1. Pre-registro de Nombre (Solo la primera vez)
 1. El usuario envía cualquier mensaje ("hola", etc.) al bot.
 2. Si el número no está en la base de datos con un nombre, el bot le da la bienvenida:

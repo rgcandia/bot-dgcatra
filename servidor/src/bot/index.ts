@@ -2,6 +2,8 @@ import { manejarCreacionTicket } from './handlers/ticket.js';
 import { manejarComandos } from './handlers/comandos.js';
 import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante } from './session.js';
 import { registrarChatId } from './enviar.js';
+import { resolverIdentidad, limpiarNumero } from './identidad.js';
+import { migrarUsuarioDeLid } from './migrar-lid.js';
 import { User } from '../models/models.js';
 import { logger } from '../config/logger.js';
 import { getIO } from '../socket/server.js';
@@ -20,10 +22,6 @@ function encolar(telefono: string, fn: () => Promise<void>): Promise<void> {
   });
   colas.set(telefono, tarea);
   return tarea;
-}
-
-function limpiarNumero(from: string): string {
-  return from.split('@')[0].replace(/[^\d]/g, '');
 }
 
 function extraerButtonId(msg: any): string | undefined {
@@ -57,8 +55,16 @@ export async function procesarMensaje(msg: any) {
   }
 
   const rawFrom = msg.from;
-  const from = limpiarNumero(rawFrom);
+  // WhatsApp puede mandar un LID (@lid) en vez del teléfono: se resuelve a la identidad real
+  // (teléfono) conservando el LID como chatId para poder responderle.
+  const identidad = await resolverIdentidad(rawFrom);
+  const from = identidad.telefono;
   registrarChatId(from, rawFrom);
+
+  // Consolida usuarios que habían quedado guardados con el LID (pre-fix), sin perder tickets ni historial.
+  if (identidad.resuelto) {
+    await migrarUsuarioDeLid(limpiarNumero(rawFrom), from);
+  }
 
   // Asegurar que el usuario exista antes de guardar historial (evita FK violation en conversaciones)
   await User.findOrCreate({

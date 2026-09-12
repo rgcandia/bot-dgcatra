@@ -19,6 +19,11 @@ export function registrarChatId(numeroLimpio: string, chatId: string) {
   chatIdCache.set(numeroLimpio, chatId);
 }
 
+/** Cliente de WhatsApp listo (o null si todavía no está inicializado). */
+export function obtenerCliente(): Client | null {
+  return _ready && _client ? _client : null;
+}
+
 async function resolverChatId(telefono: string): Promise<string> {
   if (chatIdCache.has(telefono)) return chatIdCache.get(telefono)!;
   const num = telefono.replace(/[^\d]/g, '');

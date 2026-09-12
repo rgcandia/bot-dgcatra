@@ -65,3 +65,18 @@
   - `rate-limit.test.ts` (3): 10 intentos de verificación → 429 en el 11º, 5 solicitudes de código → 429 en la 6ª, y aislamiento por IP.
 - [x] **Verificación**: `npx tsc --noEmit` OK; `npm test` 3 archivos / 23 tests OK; `npm run test:integration` 4 archivos / 55 tests OK (contra `dgcatra_test`).
 - [x] **README**: nueva sección "Tests" con los comandos, la cobertura y las dos formas de apuntar al Postgres de test.
+
+### 2026-09-12 — Fix: identidad de WhatsApp (LID vs. teléfono)
+**Problema detectado**: al registrarse, el bot guardó `30262373163147` (un **LID**, `30262373163147@lid`) como si fuera el teléfono. Verificado en vivo: `normalizarTelefonoAR('30262373163147') → null`, y `POST /api/usuarios` con ese id → **400 "Formato de teléfono inválido para Argentina"** (no se podía promocionar a admin al usuario que realmente escribe al bot). Si en cambio se cargaba el teléfono real, se creaba **una fila duplicada** y el bloque de confirmación (`bot/index.ts`) nunca se ejecutaba sobre el LID → el admin quedaba con `confirmadoWhatsApp=false` y **no podía loguearse nunca**.
+
+**Causa**: `procesarMensaje` hacía `msg.from.split('@')[0]` sin distinguir si el id era un teléfono (PN) o un LID.
+
+- [x] **`src/bot/identidad.ts`** (nuevo): `resolverIdentidad(rawFrom)` → si termina en `@lid`, traduce con `client.getContactLidAndPhone([lid])` (API de whatsapp-web.js v1.34) y devuelve `{ telefono, chatId, resuelto }`; normaliza al formato canónico. **Fallback** al LID si el pn viene vacío, si el cliente falla o si no hay cliente → el flujo nunca se rompe. Caché lid→teléfono (solo éxitos, los fallos se reintentan).
+- [x] **`src/bot/migrar-lid.ts`** (nuevo): `migrarUsuarioDeLid(lid, telefono)` consolida en transacción las filas viejas guardadas con LID: crea/reutiliza la fila del teléfono real, **conserva el `chatId`** (@lid, el único que sirve para responder), mueve `tickets.userTelefono`, `tickets.tecnicoTelefono` y `conversaciones.userTelefono`, y borra la fila vieja. Idempotente (set de LIDs ya revisados + re-chequeo por proceso).
+- [x] **`src/bot/index.ts`**: `procesarMensaje` usa `resolverIdentidad(rawFrom)` para la identidad (`telefono`) y sigue registrando `chatId` con el id crudo; si el LID se resolvió, intenta la consolidación antes de crear el ticket/registrar historial. Se eliminó el `limpiarNumero` local (ahora vive en `identidad.ts`).
+- [x] **`src/bot/enviar.ts`**: nuevo `obtenerCliente()` para que la resolución use el cliente ya inicializado.
+- [x] **Tests**: `src/__tests__/identidad.test.ts` (9 unitarios: @c.us no consulta, LID→teléfono, normalización, caché, pn vacío, excepción, sin cliente, fallo no cacheado) y `src/__tests__/integration/lid.test.ts` (6: consolidación con y sin fila destino, tickets donde el LID era técnico, sin fila propia, ids iguales, idempotencia).
+- [x] **Verificación**: `tsc` OK; unitarios **4 archivos / 32 tests**; integración **5 archivos / 61 tests**; rebuild Docker + `/health` 200 + bot conectado.
+- [x] **README**: nueva sección "0. Identidad de WhatsApp: LID vs. teléfono" con la tabla PN/LID, cómo se resuelve y la consolidación automática.
+- [ ] **Pendiente de confirmar en producción**: cuando el usuario escriba al bot después del deploy, verificar en logs (`Identidad LID resuelta a teléfono`) y en la DB que su fila pasó al teléfono real. Después ya se puede dar de alta como admin con ese teléfono.
+
