@@ -36,11 +36,18 @@ export default function UsuariosPage() {
   const [newAdminNombre, setNewAdminNombre] = useState('');
   const [newAdminTelefono, setNewAdminTelefono] = useState('');
   const [newAdminError, setNewAdminError] = useState('');
+  
+  // Modal de Advertencia de Promoción de Usuario Existente
+  const [promoRequired, setPromoRequired] = useState(false);
+  const [promoMessage, setPromoMessage] = useState('');
 
   const [search, setSearch] = useState('');
   const [soloAdmin, setSoloAdmin] = useState(false);
   const [soloIncompleto, setSoloIncompleto] = useState(false);
+  
+  // Modificado: Estado de tres vías o filtro condicional para incluir inactivos
   const [soloInactivo, setSoloInactivo] = useState(false);
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -63,7 +70,10 @@ export default function UsuariosPage() {
     if (search.trim()) params.set('search', search.trim());
     if (soloAdmin) params.set('esAdmin', 'true');
     if (soloIncompleto) params.set('registroIncompleto', 'true');
-    if (soloInactivo) params.set('inactivo', 'true');
+    
+    // Pasar condicionalmente inactivo para poder deshabilitar o ver inactivos (Spam/Bots)
+    params.set('inactivo', soloInactivo ? 'true' : 'false');
+    
     params.set('sortBy', sortBy);
     params.set('sortDir', sortDir);
 
@@ -117,24 +127,38 @@ export default function UsuariosPage() {
     } catch (e: any) { setError(e.message); }
   }
 
-  // Guardar nuevo admin manual (Fase 2.6)
-  async function handleAddAdmin() {
+  // Guardar nuevo admin manual con detección de duplicados (Fase 2.6 ampliada)
+  async function handleAddAdmin(forzar = false) {
     setNewAdminError('');
     if (!newAdminNombre.trim() || !newAdminTelefono.trim()) {
       setNewAdminError('Ambos campos son requeridos');
       return;
     }
     try {
-      await api.post('/api/usuarios', {
+      const response = await api.post('/api/usuarios', {
         nombreCompleto: newAdminNombre.trim(),
         telefono: newAdminTelefono.trim(),
+        forzarPromocion: forzar
       });
+      
       setNewAdminNombre('');
       setNewAdminTelefono('');
       setShowAddAdmin(false);
+      setPromoRequired(false);
       await load();
     } catch (e: any) {
-      setNewAdminError(e.message || 'Error al registrar administrador');
+      if (e.message && e.message.includes('usuario_existente')) {
+        // Parsear el mensaje amigable devuelto por el backend
+        try {
+          const parsed = JSON.parse(e.message);
+          setPromoMessage(parsed.message);
+        } catch {
+          setPromoMessage(`El número ya se encuentra registrado. ¿Deseás promoverlo a administrador y enviarle la verificación de confirmación?`);
+        }
+        setPromoRequired(true);
+      } else {
+        setNewAdminError(e.message || 'Error al registrar administrador');
+      }
     }
   }
 
@@ -148,7 +172,7 @@ export default function UsuariosPage() {
           <button 
             className="btn btn-primary btn-sm" 
             style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}
-            onClick={() => { setShowAddAdmin(true); setNewAdminError(''); }}
+            onClick={() => { setShowAddAdmin(true); setNewAdminError(''); setPromoRequired(false); }}
           >
             <UserPlus size={14} /> Nuevo administrador
           </button>
@@ -171,7 +195,7 @@ export default function UsuariosPage() {
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.85rem', cursor: 'pointer', padding: '.4rem .6rem', border: '1px solid var(--border)', borderRadius: 6, background: soloInactivo ? 'var(--bg)' : 'transparent' }}>
             <input type="checkbox" checked={soloInactivo} onChange={e => { setSoloInactivo(e.target.checked); setPage(1); }} />
-            Inactivos
+            Deshabilitados / Bots / Spam
           </label>
         </div>
       </div>
@@ -190,6 +214,7 @@ export default function UsuariosPage() {
               <SortHeader col="sector" label="Sector" />
               <SortHeader col="registroCompleto" label="Registro" />
               <SortHeader col="esAdmin" label="Admin" />
+              <th>Acceso</th>
               <th></th><th></th>
             </tr></thead>
             <tbody>
@@ -209,6 +234,11 @@ export default function UsuariosPage() {
                     )}
                   </td>
                   <td>{u.esAdmin ? 'true' : 'false'}</td>
+                  <td>
+                    <span className={`badge ${u.activo ? 'badge-cerrado' : 'badge-abierto'}`} style={{ background: u.activo ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)', color: u.activo ? '#2ecc71' : '#e74c3c' }}>
+                      {u.activo ? 'Habilitado' : 'Deshabilitado'}
+                    </span>
+                  </td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(u); setError(''); }}>Editar</button>
                     </td>
@@ -250,33 +280,48 @@ export default function UsuariosPage() {
         <div className="modal-overlay" onClick={() => setShowAddAdmin(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3>Nuevo administrador</h3>
-            {newAdminError && <p style={{ color: 'var(--danger)', marginBottom: '.5rem', fontSize: '.9rem' }}>{newAdminError}</p>}
             
-            <div className="form-group">
-              <label>Nombre y apellido completo</label>
-              <input 
-                className="input" 
-                placeholder="Ej: Marcelo Castro" 
-                value={newAdminNombre} 
-                onChange={e => setNewAdminNombre(e.target.value)} 
-              />
-            </div>
-            <div className="form-group">
-              <label>Número de WhatsApp (con código de área)</label>
-              <input 
-                className="input" 
-                placeholder="Ej: 11 6608 6509" 
-                value={newAdminTelefono} 
-                onChange={e => setNewAdminTelefono(e.target.value)} 
-              />
-              <p style={{ fontSize: '.75rem', color: 'var(--text-secondary)', marginTop: '.2rem' }}>
-                Se le enviará automáticamente un WhatsApp con una invitación para activar su cuenta.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem' }}>
-              <button className="btn btn-primary btn-sm" onClick={handleAddAdmin}>Enviar invitación</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddAdmin(false)}>Cancelar</button>
-            </div>
+            {promoRequired ? (
+              <div style={{ marginTop: '.5rem' }}>
+                <p style={{ fontSize: '.9rem', color: 'var(--text)', marginBottom: '1.2rem', lineHeight: '1.4' }}>
+                  {promoMessage}
+                </p>
+                <div style={{ display: 'flex', gap: '.5rem' }}>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleAddAdmin(true)}>Sí, promover y verificar</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPromoRequired(false)}>No, cancelar</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {newAdminError && <p style={{ color: 'var(--danger)', marginBottom: '.5rem', fontSize: '.9rem' }}>{newAdminError}</p>}
+                
+                <div className="form-group">
+                  <label>Nombre y apellido completo</label>
+                  <input 
+                    className="input" 
+                    placeholder="Ej: Marcelo Castro" 
+                    value={newAdminNombre} 
+                    onChange={e => setNewAdminNombre(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Número de WhatsApp (con código de área)</label>
+                  <input 
+                    className="input" 
+                    placeholder="Ej: 11 6608 6509" 
+                    value={newAdminTelefono} 
+                    onChange={e => setNewAdminTelefono(e.target.value)} 
+                  />
+                  <p style={{ fontSize: '.75rem', color: 'var(--text-secondary)', marginTop: '.2rem' }}>
+                    Se le enviará automáticamente un WhatsApp con una invitación para activar su cuenta.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem' }}>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleAddAdmin(false)}>Enviar invitación</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowAddAdmin(false)}>Cancelar</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -324,7 +369,7 @@ export default function UsuariosPage() {
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '.4rem', cursor: 'pointer', fontWeight: 400 }}>
                 <input type="checkbox" checked={edit.activo} onChange={e => setEdit({ ...edit, activo: e.target.checked })} />
-                Acceso al bot
+                Habilitado (desmarcar para bloquear Bots / Spam)
               </label>
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>

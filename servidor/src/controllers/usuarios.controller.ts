@@ -20,7 +20,7 @@ export async function create(req: AuthRequest, res: Response) {
       return res.status(403).json({ error: 'Solo el Super Administrador puede crear nuevos administradores' });
     }
 
-    const { nombreCompleto, telefono } = req.body;
+    const { nombreCompleto, telefono, forzarPromocion } = req.body;
     if (!nombreCompleto || !telefono) {
       return res.status(400).json({ error: 'Nombre completo y teléfono son requeridos' });
     }
@@ -30,14 +30,25 @@ export async function create(req: AuthRequest, res: Response) {
       return res.status(400).json({ error: 'Formato de teléfono inválido para Argentina' });
     }
 
-    // Upsert o buscar y actualizar: registrado manualmente
+    // Buscar si ya existe
+    const usuarioExistente = await User.findByPk(telNormalizado);
+    
+    // Si existe y NO se mandó el flag de confirmación de promoción
+    if (usuarioExistente && !forzarPromocion) {
+      return res.status(409).json({
+        error: 'usuario_existente',
+        message: `El número ${telNormalizado} ya se encuentra registrado en el sistema como "${usuarioExistente.nombreCompleto || 'Usuario anónimo'}" (con estado ${usuarioExistente.esAdmin ? 'Administrador' : 'Usuario regular'}). ¿Deseás promoverlo a administrador y enviarle la verificación de confirmación?`
+      });
+    }
+
+    // Upsert o crear: registrado manualmente
     const [user, creada] = await User.findOrCreate({
       where: { telefono: telNormalizado },
       defaults: {
         telefono: telNormalizado,
         nombreCompleto,
         esAdmin: true,
-        confirmadoWhatsApp: false, // Fase 2.2: false hasta que responda
+        confirmadoWhatsApp: false,
         registroCompleto: true,
         activo: true,
         pasoRegistro: 0,
@@ -45,7 +56,7 @@ export async function create(req: AuthRequest, res: Response) {
     });
 
     if (!creada) {
-      // Si ya existía, lo promovemos a administrador pendiente de confirmar
+      // Si ya existía y el super admin forzó la promoción, lo actualizamos
       await user.update({
         nombreCompleto,
         esAdmin: true,
@@ -89,7 +100,13 @@ export async function getAll(req: AuthRequest, res: Response) {
     const where: any = {};
     if (req.query.esAdmin === 'true') where.esAdmin = true;
     if (req.query.registroIncompleto === 'true') where.registroCompleto = false;
-    where.activo = req.query.inactivo === 'true' ? false : true;
+    
+    // Filtrar por activos o inactivos según el query string
+    if (req.query.inactivo === 'true') {
+      where.activo = false;
+    } else if (req.query.inactivo === 'false') {
+      where.activo = true;
+    }
 
     if (search) {
       where[Op.or] = [
