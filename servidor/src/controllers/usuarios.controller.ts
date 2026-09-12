@@ -4,12 +4,80 @@ import { AuthRequest } from '../middleware/auth.js';
 import { User, Base, Sector } from '../models/models.js';
 import { getIO } from '../socket/server.js';
 import { logger } from '../config/logger.js';
+import { normalizarTelefonoAR } from '../utils/telefono.js';
 
 async function invalidarCacheUsuario(telefono: string) {
   try {
     const { invalidarCache } = await import('../bot/session.js');
     invalidarCache(telefono);
   } catch {}
+}
+
+export async function create(req: AuthRequest, res: Response) {
+  try {
+    // A2: Restringido a Super Admin
+    if (!req.user?.superAdmin && req.user?.telefono !== process.env.SUPER_ADMIN_PHONE) {
+      return res.status(403).json({ error: 'Solo el Super Administrador puede crear nuevos administradores' });
+    }
+
+    const { nombreCompleto, telefono } = req.body;
+    if (!nombreCompleto || !telefono) {
+      return res.status(400).json({ error: 'Nombre completo y teléfono son requeridos' });
+    }
+
+    const telNormalizado = normalizarTelefonoAR(telefono);
+    if (!telNormalizado) {
+      return res.status(400).json({ error: 'Formato de teléfono inválido para Argentina' });
+    }
+
+    // Upsert o buscar y actualizar: registrado manualmente
+    const [user, creada] = await User.findOrCreate({
+      where: { telefono: telNormalizado },
+      defaults: {
+        telefono: telNormalizado,
+        nombreCompleto,
+        esAdmin: true,
+        confirmadoWhatsApp: false, // Fase 2.2: false hasta que responda
+        registroCompleto: true,
+        activo: true,
+        pasoRegistro: 0,
+      }
+    });
+
+    if (!creada) {
+      // Si ya existía, lo promovemos a administrador pendiente de confirmar
+      await user.update({
+        nombreCompleto,
+        esAdmin: true,
+        confirmadoWhatsApp: false,
+        registroCompleto: true,
+        activo: true,
+        pasoRegistro: 0,
+      });
+    }
+
+    // Enviar WhatsApp de confirmación
+    try {
+      const { enviarTexto } = await import('../bot/enviar.js');
+      await enviarTexto(
+        telNormalizado,
+        `👋 Hola *${nombreCompleto}*. Te registraron como administrador en el sistema de tickets.\n\n` +
+        `Respondé *confirmar* a este mensaje para activar tu cuenta y poder ingresar al panel.`
+      );
+    } catch (wsErr: any) {
+      logger.error({ err: wsErr?.message }, 'Error al enviar WhatsApp de confirmación de admin');
+      return res.status(503).json({ error: 'Admin registrado pero no se pudo enviar el WhatsApp de confirmación. Asegurate de que el bot esté conectado.' });
+    }
+
+    invalidarCacheUsuario(telNormalizado);
+    const io = getIO();
+    if (io) io.emit('datos-actualizados');
+
+    res.status(201).json(user);
+  } catch (e: any) {
+    logger.error({ err: e?.message }, 'Error en create admin');
+    res.status(500).json({ error: 'Error al registrar administrador' });
+  }
 }
 
 export async function getAll(req: AuthRequest, res: Response) {

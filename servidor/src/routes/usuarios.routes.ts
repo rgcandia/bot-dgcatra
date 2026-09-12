@@ -7,6 +7,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/', usuarios.getAll);
+router.post('/', adminMiddleware, usuarios.create); // Ruta para crear administradores (valida super admin internamente)
 router.get('/:telefono', usuarios.getByTelefono);
 router.patch('/:telefono', adminMiddleware, usuarios.update);
 router.delete('/:telefono', adminMiddleware, usuarios.remove);

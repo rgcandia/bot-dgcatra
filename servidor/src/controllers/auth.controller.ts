@@ -36,6 +36,12 @@ export async function solicitarCodigo(req: Request, res: Response) {
       return res.status(403).json({ error: 'Usuario desactivado. Contactá al administrador.' });
     }
 
+    // Fase 2.5: No permitir OTP si el admin no confirmó su número respondiendo al WhatsApp
+    const esSuperAdmin = config.superAdminPhone && telefono === config.superAdminPhone;
+    if (user.esAdmin && !user.confirmadoWhatsApp && !esSuperAdmin) {
+      return res.status(403).json({ error: 'Confirmá tu número respondiendo "confirmar" en el bot de WhatsApp antes de loguearte.' });
+    }
+
     const codigo = crypto.randomInt(100000, 999999).toString();
     codigos.set(`auth:${telefono}`, { codigo, expires: Date.now() + OTP_EXPIRY });
 
@@ -99,8 +105,9 @@ export async function verificarCodigo(req: Request, res: Response) {
 }
 
 export async function listarAdmins(_req: Request, res: Response) {
+  // Fase 2.5: Filtrar por confirmadoWhatsApp = true
   const admins = await User.findAll({
-    where: { esAdmin: true, registroCompleto: true, activo: true },
+    where: { esAdmin: true, registroCompleto: true, activo: true, confirmadoWhatsApp: true },
     attributes: ['telefono', 'nombreCompleto'],
     order: [['nombreCompleto', 'ASC']],
   });
@@ -110,7 +117,7 @@ export async function listarAdmins(_req: Request, res: Response) {
     nombre: u.nombreCompleto || 'Admin',
   }));
 
-  // Incluir al super admin si no está en la lista
+  // Incluir al super admin si no está en la lista (forzar confirmadoWhatsApp: true para super admin)
   if (config.superAdminPhone && !lista.find(a => a.id === config.superAdminPhone)) {
     const sa = await User.findByPk(config.superAdminPhone, { attributes: ['telefono', 'nombreCompleto'] });
     lista.unshift({

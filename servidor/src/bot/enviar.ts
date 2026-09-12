@@ -105,8 +105,7 @@ export async function enviarTexto(to: string, texto: string, ticketId?: number |
 
 export async function enviarBotones(to: string, body: string, buttons: BtnDef[], ticketId?: number | null): Promise<boolean> {
   try {
-    const emojis = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
-    const opts = buttons.map((b, i) => `${emojis[i] || `${i + 1}.`} *${b.title}*`).join('\n');
+    const opts = buttons.map((b, i) => `${i + 1}. *${b.title}*`).join('\n');
     const msg = `${body}\n\n${opts}`;
 
     guardarUltimosBotones(to, buttons);
@@ -134,7 +133,6 @@ export async function enviarLista(
 ): Promise<boolean> {
   try {
     const chatId = await resolverChatId(to);
-    const emojis = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
     let msg = `${body}\n\n`;
     let idx = 0;
@@ -142,7 +140,7 @@ export async function enviarLista(
     for (const sec of sections) {
       msg += `*${sec.title}*\n`;
       for (const row of sec.rows) {
-        msg += `${emojis[idx] || `${idx + 1}.`} ${row.title}\n`;
+        msg += `${idx + 1}. ${row.title}\n`;
         if (row.description) msg += `   ${row.description}\n`;
         allRows.push({ id: row.id, title: row.title });
         idx++;

@@ -6,7 +6,7 @@ Bot de WhatsApp para la gestión de tickets del sector Sistemas del Cuerpo de Ag
 
 ## Descripción del negocio
 
-Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agentes de Tránsito de CABA. Los agentes reportan incidencias informáticas vía WhatsApp y el equipo de Sistemas las gestiona desde un dashboard web.
+Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agentes de Tránsito de CABA. Cualquier agente puede reportar incidencias informáticas vía WhatsApp sin necesidad de registrarse previamente, y el equipo de Sistemas las gestiona desde un dashboard web administrativo.
 
 ---
 
@@ -16,14 +16,13 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | telefono | PK string | Teléfono del usuario |
-| nombreCompleto | string | Nombre |
+| nombreCompleto | string | Nombre y apellido |
 | email | string | Email (opcional) |
-| baseId | int FK | Base a la que pertenece |
-| sectorId | int FK | Sector al que pertenece |
-| esAdmin | boolean | Si puede ver el dashboard |
-| registroCompleto | boolean | Si terminó el registro |
-| pasoRegistro | int | Paso actual del registro |
-| context | JSON | Datos temporales del registro |
+| esAdmin | boolean | Si puede ver el dashboard (requiere invitación y confirmación) |
+| confirmadoWhatsApp | boolean | Si ya confirmó su cuenta de admin vía WhatsApp |
+| registroCompleto | boolean | Si cargó su nombre inicialmente |
+| pasoRegistro | int | Paso actual del registro temporal |
+| context | JSON | Datos temporales del flujo de ticket |
 
 ### bases
 | Campo | Tipo | Descripción |
@@ -31,31 +30,29 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | id | PK auto int | |
 | nombre | string | Nombre del establecimiento |
 | direccion | string | Dirección |
-| codigoAcceso | string | Código para registrarse en este establecimiento |
-| tipo | enum | `base` / `playa` / `comuna` (los tres son "establecimientos": edificios donde trabaja el personal) |
+| codigoAcceso | string | Código de establecimiento |
+| tipo | enum | `base` / `playa` / `comuna` (edificios donde trabaja el personal) |
 
 ### sectores
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | PK auto int | |
 | nombre | string | Nombre del sector |
-| isAdmin | boolean | Si el sector otorga permisos de admin |
-| codigoAdmin | string | Código de autorización para ese sector |
 
 ### tickets
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | PK auto int | |
 | usuarioId | string FK | Quién lo creó |
-| baseId | int FK | Base del problema |
-| sectorId | int FK | Sector destino |
+| baseId | int FK | Base del problema (se solicita siempre al crear un ticket) |
+| sectorId | int FK null | Sector destino |
 | asunto | string | Asunto del ticket |
-| descripcion | string | Descripción |
+| descripcion | string | Descripción del problema |
 | estado | enum | abierto / en_proceso / cerrado |
 | prioridad | enum | baja / media / alta |
 | cerradoPor | enum null | `usuario` / `tecnico` — quién cerró el ticket |
 | cerradoPorNombre | string null | Nombre de quien lo cerró |
-| historial | JSON | Acciones y timestamps (el cierre incluye `tipo: 'usuario' | 'tecnico'`) |
+| historial | JSON | Acciones y timestamps |
 
 ### conversaciones (historial del bot)
 | Campo | Tipo | Descripción |
@@ -82,81 +79,45 @@ Sistema de tickets técnicos interno para el sector Sistemas del Cuerpo de Agent
 | Exposición segura | Cloudflare Tunnel (cloudflared) |
 | Contenedores | Docker & Docker Compose |
 
-### Simulación de comportamiento humano (anti-detección)
+---
 
-| Mecanismo | Implementación |
-|---|---|
-| **Typing indicator** | Inyección directa vía `client.pupPage.evaluate()` con `WAWebChatStateBridge.sendChatStateComposing()` (no usa `sendStateTyping()` que falla con error CDP). Delay proporcional: `1500 + texto.length * 15 + random(0-2000)` ms |
-| **Rate limit** | Máximo 1 mensaje saliente cada 2 segundos por usuario (`enviar.ts`) |
-| **Cola FIFO** | Mensajes inbound procesados secuencialmente por usuario (`Map<tel, Promise>`) |
-| **Botones** | Texto con emojis numerados + `parsearBotonNumerico()` + `_lastButtons`. Los `Buttons`/`List` nativos de whatsapp-web.js están deprecados por WhatsApp y no funcionan. |
-| **Read receipts** | `chat.sendSeen()` antes de procesar cada mensaje |
-| **Historial trazable** | Mensajes inbound/outbound persisten en `conversaciones`. Al crear un ticket, se asocian automáticamente los mensajes del flujo actual (desde `_ticketStart`) con `ticketId`. |
-| **Formato chatId** | Soporte para `@c.us` y `@lid` (Linked Devices), caché en memoria |
-| **IA para títulos** | Groq (`qwen/qwen3.6-27b`) genera títulos cortos al crear tickets. El prompt instruye a la IA a NO inventar detalles. Si el mensaje no es un problema técnico, titula `"Consulta general"`. Si la IA falla o no está configurada (`GROQ_API_KEY`), usa las primeras 60 letras de la descripción. |
+## Flujo del Bot (Usuarios Generales)
+
+El bot está abierto al público. No requiere registros complejos.
+
+### 1. Pre-registro de Nombre (Solo la primera vez)
+1. El usuario envía cualquier mensaje ("hola", etc.) al bot.
+2. Si el número no está en la base de datos con un nombre, el bot le da la bienvenida:
+   *"👋 ¡Hola! Bienvenido al Bot de Gestión de Tickets de Sistemas. Para poder ayudarte mejor, por favor ingresá tu nombre y apellido completo para continuar:"*
+3. El usuario responde con su nombre. El bot lo guarda en el modelo `User` y muestra el menú inicial con opciones numeradas ordinarias.
+
+### 2. Creación de Ticket (bot)
+Una vez guardado el nombre, el flujo es directo y guiado por estados:
+1. El usuario inicia escribiendo "crear", "ticket", "problema", o seleccionando la opción `1` en el menú.
+2. Bot pide **descripción del problema** (mínimo 5 caracteres).
+3. Bot pide **Base / Establecimiento**: Presenta una lista numerada de todas las bases registradas (1. Base Piedras, 2. Base Once, etc.). El usuario selecciona respondiendo con el número de la opción.
+4. Bot pide **Ubicación específica**: *"¿En qué oficina, sector o puesto específico de la base ocurre el problema?"*
+5. Muestra un resumen con Nombre, Base, Ubicación y Descripción del problema, y pide confirmación respondiendo **SI** o **NO**.
+6. Una vez confirmado, la IA (Groq) genera un título corto, se guarda el ticket, se asocia el historial de conversación, y se notifica en tiempo real a los técnicos a través del panel administrativo.
 
 ---
 
-## Estructura del proyecto
+## Flujo de Administradores
 
-```
-bot-dgcatra/
-├── .opencode/
-│   └── tasks.md               # Seguimiento de tareas
-├── cliente/                   # Frontend React (Vite + TypeScript)
-│   ├── src/
-│   │   ├── api/client.ts      # Fetch wrapper con JWT
-│   │   ├── context/AuthContext.tsx  # Login (teléfono → código → token)
-│   │   ├── context/useSocket.ts     # Socket.IO hook para real-time
-│   │   ├── layouts/DashboardLayout.tsx  # Sidebar + header
-│   │   └── pages/                   # Dashboard, login, tickets, admin CRUD
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── .env
-├── servidor/
-│   ├── src/
-│   │   ├── api/index.ts       # Express entry point + Socket.IO
-│   │   ├── bot/               # Lógica del bot WhatsApp (whatsapp-web.js)
-│   │   │   ├── groq.ts         # IA: genera títulos de tickets (Groq API)
-│   │   │   ├── handlers/       # Flujos: registro, ticket, comandos
-│   │   ├── config/            # Config centralizado + DB connection
-│   │   ├── controllers/       # CRUD auth, bases, sectores, usuarios, tickets, stats
-│   │   ├── middleware/         # JWT + admin middleware
-│   │   ├── models/            # Modelos Sequelize (Base, Sector, BaseSector, User, Ticket, Conversacion)
-│   │   ├── routes/            # Rutas Express
-│   │   └── socket/server.ts   # Socket.IO server
-│   ├── Dockerfile
-│   ├── docker-compose.yml     # api + db
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── .env.example
-│   └── .gitignore
-└── README.md
-```
+### 1. Alta Manual de Administradores
+* Los administradores no se registran desde el bot. Son dados de alta manualmente desde el Dashboard administrativo en la sección de **Usuarios** (restringido a Super Administrador).
+* El Super Admin ingresa el nombre y teléfono del nuevo admin.
+* El backend normaliza el teléfono al formato internacional de Argentina (`54911XXXXXXXX`) utilizando un formateador de teléfono robusto.
+* El backend crea el registro con `esAdmin: true` y `confirmadoWhatsApp: false`, y envía un mensaje automatizado por WhatsApp al número del nuevo administrador:
+  *"👋 Hola [Nombre]. Te registraron como administrador en el sistema de tickets. Respondé **confirmar** a este mensaje para activar tu cuenta..."*
+
+### 2. Confirmación y Login
+* El administrador responde **"confirmar"** o escribe un mensaje afirmativo al bot de WhatsApp.
+* El bot detecta que es un admin pendiente, activa la cuenta (`confirmadoWhatsApp: true`) y le confirma la habilitación.
+* A partir de este momento, el administrador puede seleccionar su número en la pantalla de login del panel, solicitar el código OTP de 6 dígitos (el cual le llega por WhatsApp) e ingresar.
+* **Seguridad:** Los administradores que no estén confirmados no podrán recibir códigos OTP ni loguearse.
 
 ---
-
-## Flujo de registro (bot)
-
-1. Usuario envía "hola" al bot
-2. Bot muestra bienvenida: *"¡Bienvenido! Sistema de Gestión de Tickets DGCATRA"* → escribe **SI** para empezar o **NO** para cancelar (acepta variantes: `sí`, `dale`, `ok`, `cancelar`, `salir`, etc.)
-3. Bot pide **código de acceso del establecimiento** (`PIE2026` / `ONC2026`)
-4. Muestra los **sectores** con números (①②③). Puede elegir escribiendo el número o el nombre del sector (sin tildes, case-insensitive)
-5. Si elige **Soporte Técnico** → pide código de admin (`admin2024`) → será admin
-6. Si elige otro sector → usuario normal
-7. Nombre completo → confirmación: escribe **SI** o **NO** (sin botones, texto libre)
-8. ✅ Registro completo
-
-**Un solo código para todos. Los de Soporte Técnico ponen uno extra.**
-
-## Flujo de creación de ticket (bot)
-
-1. Usuario escribe "ticket", "crear", "problema", "reportar" o elige `1` en el menú
-2. Bot: *"¡Dale, creemos un ticket!"* → pide **descripción del problema**
-3. Bot pide **ubicación** (dónde ocurre)
-4. Bot muestra resumen y pide confirmación (**SI** / **NO** en texto)
-5. Confirmado → la IA (Groq) genera un título corto. Si no es un problema técnico, titula `"Consulta general"`. Si la IA falla, usa las primeras 60 letras.
-6. El ticket aparece en el dashboard para que un admin lo adopte
 
 ## Comandos del bot (usuario registrado)
 
@@ -168,50 +129,7 @@ bot-dgcatra/
 | `cerrar N` | Cierra un ticket (abierto o en proceso): pregunta cómo se resolvió y guarda la solución |
 | `ayuda` | Muestra la lista de comandos |
 
-- `cerrar N` funciona tanto en tickets `abierto` como `en_proceso` (antes rechazaba los que no había tomado un técnico). El bot pide la solución, la guarda en `ticket.solucion` y queda visible en el dashboard.
 - Los tipeos cercanos a `ayuda`, `tickets` y `cancelar` se reconocen con fuzzy matching (Levenshtein ≤ 1).
-
-## Tipos de usuarios
-
-| Tipo | Qué puede hacer |
-|------|----------------|
-| **Usuario** | Crear tickets por WhatsApp, ver sus tickets con `/mis-tickets` |
-| **Admin** | Todo lo anterior + dashboard, adoptar/cerrar tickets, gestionar bases/sectores/usuarios |
-| **Super Admin** | Mismo que admin + se asigna automáticamente al registrarse si coincide con `SUPER_ADMIN_PHONE` |
-
-## Frontend (cliente/)
-
-Dashboard React con autenticación JWT.
-
-| Ruta | Componente | Descripción |
-|------|-----------|------------|
-| `/login` | `LoginPage` | Login: teléfono → OTP por WhatsApp (backup: código maestro) |
-| `/` | `DashboardHome` | Panel principal |
-| `/tickets` | `TicketsList` | Lista de tickets con filtros (estado, prioridad) y columna Prioridad ordenable |
-| `/tickets/:id` | `TicketDetail` | Detalle del ticket + adoptar/cerrar + historial |
-
----
-
-## Variables de entorno (servidor/.env)
-
-| Variable | Descripción |
-|---|---|
-| `PORT` | Puerto del servidor (4002) |
-| `DATABASE_URL` | Conexión a PostgreSQL |
-| `JWT_SECRET` | Secreto para firmar JWT (24h expiración) |
-| `SUPER_ADMIN_PHONE` | Teléfono del super admin (se registra automáticamente como admin) |
-| `MASTER_CODE` | Código maestro de acceso al dashboard (backup si no llega el OTP) |
-| `GROQ_API_KEY` | API key de Groq para generar títulos de tickets con IA (opcional, sin ella usa fallback) |
-
----
-
-## Login al dashboard
-
-1. Usuario ingresa teléfono (sin 15, sin 0: `1166086509`)
-2. Backend normaliza (`5491166086509`), busca en DB, genera código de 6 dígitos
-3. **Envía el código por WhatsApp** al usuario vía el bot
-4. Código expira en 5 minutos. Como backup, se puede usar `MASTER_CODE`
-5. JWT expira en 24h. Auto-logout si 30 min de inactividad
 
 ---
 
@@ -235,11 +153,12 @@ Dashboard React con autenticación JWT.
 | POST | /api/sectores | Crear sector | ✅ Admin |
 | PATCH | /api/sectores/:id | Actualizar sector | ✅ Admin |
 | DELETE | /api/sectores/:id | Eliminar sector | ✅ Admin |
-| GET | /api/usuarios | Listar usuarios (query: `search`, `page`, `limit`, `esAdmin`, `registroIncompleto`, `inactivo`) |
+| GET | /api/usuarios | Listar usuarios |
+| POST | /api/usuarios | Crear administrador manual | ✅ Super Admin |
 | GET | /api/usuarios/:telefono | Obtener usuario por teléfono |
 | PATCH | /api/usuarios/:telefono | Actualizar usuario (solo admin puede cambiar `esAdmin`) |
 | DELETE | /api/usuarios/:telefono | Eliminar usuario (soft-delete: conserva tickets/historial) | ✅ Admin |
-| GET | /api/tickets | Listar tickets (query: `search`, `page`, `limit`, `estado`, `prioridad`, `baseId`, `sectorId`, `tecnicoAsignado`, `sinAsignar`) |
+| GET | /api/tickets | Listar tickets |
 | GET | /api/tickets/:id | Detalle del ticket (incluye historial) |
 | GET | /api/tickets/:id/conversacion | Conversación WhatsApp del ticket |
 | POST | /api/tickets | Crear ticket (asunto, descripcion, ubicacion, baseId) |
@@ -256,36 +175,6 @@ Dashboard React con autenticación JWT.
 | PATCH | /api/settings/master-code | Actualizar código maestro | ✅ Admin |
 | POST | /api/settings/logout-whatsapp | Desvincular WhatsApp | ✅ Admin |
 | POST | /api/settings/limpiar-db | Limpiar toda la DB (TRUNCATE, IDs reiniciados) | ✅ Admin |
-
----
-
-## Tunnel (Cloudflare)
-
-El tunnel corre como servicio del **host** (`systemctl status cloudflared`), no dentro de Docker. Usa **config remota** manejada desde el dashboard de Cloudflare Zero Trust.
-
-Reglas ingress actuales:
-
-| Hostname | Servicio local |
-|---|---|
-| `dgcatra.alejndrogcandia.online` | `http://localhost:4002` |
-
----
-
-## Deploy Frontend (Vercel)
-
-El frontend se deploya desde el directorio `cliente/`. El `vercel.json` ya está incluido en el repo.
-
-**Variables de entorno en Vercel:**
-
-| Variable | Valor |
-|---|---|
-| `VITE_API_URL` | `https://dgcatra.alejndrogcandia.online` |
-
-**En el servidor**, agregar el dominio de Vercel a la variable `FRONTEND_URL` (CORS):
-
-```env
-FRONTEND_URL=https://bot-dgcatra.vercel.app
-```
 
 ---
 
@@ -321,59 +210,3 @@ cd cliente && npm run dev
 cd servidor
 docker compose up --build -d
 ```
-
----
-
-## Últimos cambios (2026-08-31 — cierre: usuario vs técnico)
-
-- **Distinción de quién cierra un ticket**: se agregaron las columnas `cerradoPor` (`usuario` | `tecnico`) y `cerradoPorNombre` al modelo `Ticket`. El cierre desde WhatsApp (`cerrar N`) marca `usuario`; el cierre desde el dashboard marca `tecnico`. Al reabrir, ambos vuelven a `null`.
-- **Historial**: el entry "cerró el ticket" ahora lleva `tipo: 'usuario' | 'tecnico'` para diferenciarlo en el timeline.
-- **Frontend `TicketDetail`**: ícono y color distintos según quién cerró (usuario = `User` azul, técnico = `CircleCheckBig` verde) y la card "Solución" muestra "Cerrado por el usuario" / "Cerrado por el técnico {nombre}".
-- **Frontend `TicketsList`**: en tickets cerrados, el badge de estado muestra un sub-texto "por usuario" / "por técnico".
-- **Compatibilidad**: tickets ya cerrados (sin `cerradoPor`) no muestran quién cerró, sin romper.
-
-## Últimos cambios (2026-08-29 — hardening y limpieza)
-
-- **Código maestro persistente**: `MASTER_CODE` ya no vive solo en memoria. Se guarda en la tabla `settings` (nuevo modelo `Setting`) y se recarga al arrancar, con fallback al `.env`. Cambiarlo desde Configuración ahora sobrevive a reinicios y rebuilds.
-- **Eliminados endpoints destructivos**: `DELETE /api/stats/tickets` y `DELETE /api/stats/usuarios` (borraban todo). La limpieza masiva queda solo en `POST /api/settings/limpiar-db`.
-- **Login — refresh de admins**: la lista de admins del login se actualiza con polling cada 15s (antes usaba un socket sin token que nunca conectaba).
-- **Notificaciones de estado vinculadas al ticket**: los avisos de cambio de estado (en proceso / cerrado / reabierto) ahora quedan asociados al ticket en `conversaciones`, igual que los comentarios.
-- **Código muerto `ADMIN_CODE` eliminado**: ruta `PATCH /api/settings/admin-code` y la variable global `ADMIN_CODE` removidas (el registro usa `sector.codigoAdmin`).
-- **README**: corregidas rutas de sectores que ya no existen y la tabla `base_sector`; modelo Groq actualizado a `qwen/qwen3.6-27b`.
-
-## Últimos cambios (2026-08-29)
-
-- **Comentarios notifican al agente**: al agregar un comentario a un ticket desde el dashboard, el agente ahora recibe el mensaje por WhatsApp (`📋 Ticket #N: "asunto"` + `💬 Autor agregó un comentario`). Antes el comentario se guardaba en la DB pero no se notificaba (el envío solo se disparaba ante cambios de estado).
-- **Establecimientos (bases / playas / comunas)**: la tabla `bases` ahora tiene un campo `tipo` (`base` | `playa` | `comuna`). Son edificios con dirección, estructuralmente idénticos; se gestionan desde **una sola** página ("Establecimientos") con pestañas para verlas separadas. El registro por WhatsApp no cambia (cada establecimiento tiene su `codigoAcceso`).
-- **Soft-delete de usuarios**: eliminar un usuario ya no borra sus tickets ni su historial (antes el `CASCADE` de las FKs los borraba). Ahora se hace un *soft-delete*: resetea el registro (`registroCompleto=false`, `activo=false`, `esAdmin=false`) y el usuario puede volver a registrarse con "hola".
-- **Bloquear acceso (activo)**: el campo `activo` controla el acceso. Desactivado → el bot lo ignora y no puede entrar al dashboard; se puede reactivar desde el panel.
-- **Se elimina la blacklist en memoria**: la validación de sesión ahora consulta la DB (`activo`), con bypass para el código maestro. Corrige el bug de login que cerraba la sesión de un usuario re-registrado.
-- **`trust proxy = 1`**: el rate-limit ahora usa la IP real del cliente (Cloudflare Tunnel), evitando buckets globales y el error `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`.
-- **Lista de usuarios**: por defecto muestra solo usuarios activos; los inactivos aparecen con el filtro "Inactivos".
-
-## Últimos cambios (2026-08-28)
-
-- **Sesión del dashboard de 24h**: se eliminó el auto-logout por inactividad de 30 min (`INACTIVITY_TIMEOUT` = 24h, alineado con la expiración del JWT). Cualquier 401 redirige a `/login`.
-- **Socket.IO CORS**: incluye `FRONTEND_URL` (frontend de Vercel).
-- **Seguridad**: cierre de escalado de privilegios — `sectores.update` no pisa `codigoAdmin`; el registro solo otorga `esAdmin` si se verificó el código del sector.
-- **Auth**: `/api/auth/admins` con rate limit; `solicitar-codigo` devuelve 503 si falla el envío del OTP.
-- **Chat takeover**: el timeout re-arma cada 30s. Código de base case-insensitive. `enviarLista` guarda el mensaje completo en historial.
-
----
-
-## Problema conocido (2026-08-29 — sin resolver)
-
-**Síntoma:** el dashboard falla en **Firefox** (solo Firefox; Chrome/Edge funcionan) al llamar a la API `https://dgcatra.alejndrogcandia.online`:
-- `NS_ERROR_NET_RESET` en la pestaña Red (conexión reseteada).
-- En consola: *"pedido de origen cruzado bloqueado … razón: el pedido CORS falló, código de estado: null"* y `Uncaught (in promise) TypeError: NetworkError when attempting to fetch resource`.
-
-**Descartado / verificado (no era):**
-- **Servidor y tunnel sanos**: las requests llegan cada 15s (polling del login) con `304`; cloudflared sin errores.
-- **No es CORS**: el header `Access-Control-Allow-Origin` se devuelve bien; "status null" es falla de red, no de política.
-- **No es HTTP/3** (`network.http.http3.enabled=false` no cambió nada).
-- **No es IPv6** (las requests llegan por IPv4; `network.dns.disableIPv6` no cambió nada).
-- **No se puede apagar IPv6 en Cloudflare** (plan Free): el toggle es Enterprise-only y el setting por registro `ipv4_only` devuelve error 9227.
-
-**Conclusión:** el reset ocurre entre el navegador (Firefox) y el edge de Cloudflare, específico de Firefox. Pendiente de diagnóstico (agregar `User-Agent` al request logging y reproducir).
-
-**Workaround temporal:** usar Chrome/Edge (cualquier navegador Chromium).

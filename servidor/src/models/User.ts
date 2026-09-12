@@ -11,6 +11,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   declare sectorId: number | null;
   declare activo: CreationOptional<boolean>;
   declare esAdmin: CreationOptional<boolean>;
+  declare confirmadoWhatsApp: CreationOptional<boolean>;
   declare registroCompleto: CreationOptional<boolean>;
   declare pasoRegistro: CreationOptional<number>;
   declare context: any | null;
@@ -51,6 +52,11 @@ User.init({
   esAdmin: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
+  },
+  confirmadoWhatsApp: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false,
   },
   registroCompleto: {
     type: DataTypes.BOOLEAN,

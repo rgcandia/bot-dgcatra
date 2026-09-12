@@ -1,11 +1,11 @@
-import { manejarRegistro } from './handlers/registro.js';
 import { manejarCreacionTicket } from './handlers/ticket.js';
 import { manejarComandos } from './handlers/comandos.js';
-import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante, invalidarCache } from './session.js';
+import { obtenerUsuario, guardarUsuario, registrarMensajeEntrante } from './session.js';
 import { registrarChatId } from './enviar.js';
 import { User } from '../models/models.js';
 import { logger } from '../config/logger.js';
 import { getIO } from '../socket/server.js';
+import { esAfirmativo } from './helpers.js';
 
 const colas = new Map<string, Promise<void>>();
 const mensajesProcesados = new Set<string>();
@@ -63,7 +63,7 @@ export async function procesarMensaje(msg: any) {
   // Asegurar que el usuario exista antes de guardar historial (evita FK violation en conversaciones)
   await User.findOrCreate({
     where: { telefono: from },
-    defaults: { telefono: from, chatId: rawFrom },
+    defaults: { telefono: from, chatId: rawFrom, registroCompleto: false },
   }).catch(e => logger.error({ err: e?.message }, 'findOrCreate user'));
 
   // Guardar formato real de WhatsApp (@c.us o @lid) en la DB
@@ -107,7 +107,6 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
   // Chat con admin activo → forward mensajes al dashboard
   const chatAdmin = (user.context as any)?.chatConAdmin;
   if (chatAdmin?.adminId) {
-    // El mensaje ya fue registrado en procesarMensaje; acá solo se reenvía al dashboard.
     const io = getIO();
     if (io) {
       io.emit('chat-mensaje-entrante', {
@@ -123,31 +122,64 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
   const numericoId = parsearBotonNumerico(text, (user.context || {})?._lastButtons);
   const finalButtonId = buttonId || numericoId;
 
-  if (user.registroCompleto) {
-    await manejarFlujoRegistrado({ telefono: from, texto: text, buttonId: finalButtonId });
+  // 🛡️ REGLA: Confirmación de administradores manuales (Fase 2.4)
+  if (user.esAdmin && !user.confirmadoWhatsApp) {
+    const { enviarTexto } = await import('./enviar.js');
+    const esConfirmar = esAfirmativo(text) || text.toLowerCase().trim() === 'confirmar';
+    if (esConfirmar) {
+      await guardarUsuario(from, { confirmadoWhatsApp: true });
+      await enviarTexto(from, '✨ ¡Listo! Tu cuenta como administrador ha sido activada con éxito.\n\nYa podés ingresar al panel de control de Tickets.');
+    } else {
+      await enviarTexto(from, '⚠️ Tu cuenta requiere activación. Por favor respondé *confirmar* para activar tu acceso al panel administrativo.');
+    }
     return;
   }
 
-  const textoLower = text.toLowerCase().trim();
-  if (textoLower === 'hola' || textoLower === 'menu' || textoLower === 'ayuda' || textoLower === 'start') {
-    await guardarUsuario(from, { pasoRegistro: 0, context: null, registroCompleto: false });
-  }
+  // 🛡️ REGLA: Pre-registro de Nombre Completo.
+  // Si no tenemos el nombre completo del usuario, se lo pedimos primero.
+  if (!user.nombreCompleto) {
+    const { enviarTexto, enviarBotones } = await import('./enviar.js');
+    const context = (user.context || {}) as any;
 
-  const procesado = await manejarRegistro({ telefono: from, texto: text, buttonId: finalButtonId });
-
-  if (!procesado) {
-    const paso = (await obtenerUsuario(from)).pasoRegistro ?? 0;
-    if (paso === 0) {
-      const { enviarTexto } = await import('./enviar.js');
-      if (text.length > 10) {
-        await enviarTexto(from,
-          '👋 ¡Hola! Parece que tenés un problema y todavía no estás registrado.\n\n' +
-          'Escribí *hola* para registrarte en 1 minuto y crear tu ticket.');
-      } else {
-        await enviarTexto(from, '👋 Escribí *hola* para comenzar el registro.');
+    if (!context.esperandoNombre) {
+      // Guardar estado de que le pedimos el nombre
+      context.esperandoNombre = true;
+      await guardarUsuario(from, { context });
+      await enviarTexto(from,
+        '👋 *¡Hola! Bienvenido al Bot de Gestión de Tickets de Sistemas.*\n\n' +
+        'Para poder ayudarte mejor, por favor ingresá tu *nombre y apellido completo* para continuar:');
+      return;
+    } else {
+      // El usuario nos está respondiendo su nombre
+      const nombreIngresado = text.trim();
+      if (nombreIngresado.length < 4 || !nombreIngresado.includes(' ')) {
+        await enviarTexto(from, '❌ Por favor ingresá tu nombre y apellido completos (mínimo 4 letras):');
+        return;
       }
+
+      // Guardar nombre, completar registro básico y borrar flag del context
+      await guardarUsuario(from, {
+        nombreCompleto: nombreIngresado,
+        registroCompleto: true,
+        context: null
+      });
+
+      // Confirmar y mostrar menú inicial
+      await enviarBotones(from,
+        `¡Perfecto, *${nombreIngresado}*! Ya quedaste registrado.\n\n` +
+        `¿Qué querés hacer? Escribí el número de la opción:`,
+        [
+          { id: 'cmd_ticket', title: 'Generar reclamo' },
+          { id: 'cmd_ayuda', title: 'Ayuda' },
+          { id: 'cancelar', title: 'Cancelar' },
+        ]
+      );
+      return;
     }
   }
+
+  // Si ya tenemos el nombre, procesamos de manera normal
+  await manejarFlujoRegistrado({ telefono: from, texto: text, buttonId: finalButtonId });
 }
 
 async function manejarFlujoRegistrado(ctx: { telefono: string; texto: string; buttonId?: string }) {

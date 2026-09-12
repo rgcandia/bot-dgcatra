@@ -15,6 +15,7 @@ export interface SessionUser {
   sectorId: number | null;
   activo: boolean;
   esAdmin: boolean;
+  confirmadoWhatsApp?: boolean; // Agregado para tipado TypeScript
   registroCompleto: boolean;
   pasoRegistro: number;
   context: any;
@@ -144,6 +145,7 @@ function createDefault(telefono: string) {
     sectorId: null,
     activo: true,
     esAdmin: false,
+    confirmadoWhatsApp: true,
     registroCompleto: false,
     pasoRegistro: 0,
     context: null,

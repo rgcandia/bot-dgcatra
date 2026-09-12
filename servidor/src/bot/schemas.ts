@@ -1,21 +1,17 @@
 import { z } from 'zod';
 
 export const TicketContextSchema = z.object({
-  ticketPaso: z.number().int().min(0).max(3),
+  ticketPaso: z.number().int().min(0).max(5),
   descripcion: z.string().optional(),
+  baseId: z.number().int().positive().optional(),
+  baseNombre: z.string().optional(),
   ubicacion: z.string().optional(),
   _ticketStart: z.number().optional(),
   _lastActivity: z.number().optional(),
 });
 
 export const RegisterContextSchema = z.object({
-  baseId: z.number().int().positive(),
-  baseNombre: z.string(),
-  sectorId: z.number().int().positive().optional(),
-  sectorNombre: z.string().optional(),
-  esAdmin: z.boolean().optional(),
   nombre: z.string().optional(),
-  email: z.string().email().optional(),
   _lastButtons: z.array(z.object({ id: z.string(), title: z.string() })).optional(),
   _lastActivity: z.number().optional(),
 });

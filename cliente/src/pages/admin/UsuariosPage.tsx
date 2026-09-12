@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, UserPlus } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSocket } from '../../context/useSocket';
 import ConfirmButton from '../../components/ConfirmButton';
@@ -8,7 +8,7 @@ interface User {
   telefono: string; nombreCompleto: string | null; email: string | null;
   base: { id: number; nombre: string } | null; sector: { id: number; nombre: string } | null;
   baseId?: number | null; sectorId?: number | null;
-  registroCompleto: boolean; esAdmin: boolean; activo: boolean;
+  registroCompleto: boolean; esAdmin: boolean; activo: boolean; confirmadoWhatsApp?: boolean;
 }
 
 interface PaginatedResponse {
@@ -30,6 +30,13 @@ export default function UsuariosPage() {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<User | null>(null);
+  
+  // Modal de Alta Manual de Administrador (Fase 2.6)
+  const [showAddAdmin, setShowAddAdmin] = useState(false);
+  const [newAdminNombre, setNewAdminNombre] = useState('');
+  const [newAdminTelefono, setNewAdminTelefono] = useState('');
+  const [newAdminError, setNewAdminError] = useState('');
+
   const [search, setSearch] = useState('');
   const [soloAdmin, setSoloAdmin] = useState(false);
   const [soloIncompleto, setSoloIncompleto] = useState(false);
@@ -110,6 +117,27 @@ export default function UsuariosPage() {
     } catch (e: any) { setError(e.message); }
   }
 
+  // Guardar nuevo admin manual (Fase 2.6)
+  async function handleAddAdmin() {
+    setNewAdminError('');
+    if (!newAdminNombre.trim() || !newAdminTelefono.trim()) {
+      setNewAdminError('Ambos campos son requeridos');
+      return;
+    }
+    try {
+      await api.post('/api/usuarios', {
+        nombreCompleto: newAdminNombre.trim(),
+        telefono: newAdminTelefono.trim(),
+      });
+      setNewAdminNombre('');
+      setNewAdminTelefono('');
+      setShowAddAdmin(false);
+      await load();
+    } catch (e: any) {
+      setNewAdminError(e.message || 'Error al registrar administrador');
+    }
+  }
+
   if (loading) return <p className="empty">Cargando...</p>;
 
   return (
@@ -117,6 +145,13 @@ export default function UsuariosPage() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '.5rem' }}>
         <h2>Usuarios</h2>
         <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button 
+            className="btn btn-primary btn-sm" 
+            style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}
+            onClick={() => { setShowAddAdmin(true); setNewAdminError(''); }}
+          >
+            <UserPlus size={14} /> Nuevo administrador
+          </button>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input
@@ -165,9 +200,13 @@ export default function UsuariosPage() {
                   <td>{u.base?.nombre || '-'}</td>
                   <td>{u.sector?.nombre || '-'}</td>
                   <td>
-                    <span className={`badge ${u.registroCompleto ? 'badge-cerrado' : 'badge-en_proceso'}`}>
-                      {u.registroCompleto ? 'Completo' : 'Pendiente'}
-                    </span>
+                    {u.esAdmin && u.confirmadoWhatsApp === false ? (
+                      <span className="badge badge-en_proceso">Falta confirmar</span>
+                    ) : (
+                      <span className={`badge ${u.registroCompleto ? 'badge-cerrado' : 'badge-en_proceso'}`}>
+                        {u.registroCompleto ? 'Completo' : 'Pendiente'}
+                      </span>
+                    )}
                   </td>
                   <td>{u.esAdmin ? 'true' : 'false'}</td>
                     <td>
@@ -204,6 +243,42 @@ export default function UsuariosPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Modal Alta Administrador Manual (Fase 2.6) */}
+      {showAddAdmin && (
+        <div className="modal-overlay" onClick={() => setShowAddAdmin(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Nuevo administrador</h3>
+            {newAdminError && <p style={{ color: 'var(--danger)', marginBottom: '.5rem', fontSize: '.9rem' }}>{newAdminError}</p>}
+            
+            <div className="form-group">
+              <label>Nombre y apellido completo</label>
+              <input 
+                className="input" 
+                placeholder="Ej: Marcelo Castro" 
+                value={newAdminNombre} 
+                onChange={e => setNewAdminNombre(e.target.value)} 
+              />
+            </div>
+            <div className="form-group">
+              <label>Número de WhatsApp (con código de área)</label>
+              <input 
+                className="input" 
+                placeholder="Ej: 11 6608 6509" 
+                value={newAdminTelefono} 
+                onChange={e => setNewAdminTelefono(e.target.value)} 
+              />
+              <p style={{ fontSize: '.75rem', color: 'var(--text-secondary)', marginTop: '.2rem' }}>
+                Se le enviará automáticamente un WhatsApp con una invitación para activar su cuenta.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem' }}>
+              <button className="btn btn-primary btn-sm" onClick={handleAddAdmin}>Enviar invitación</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddAdmin(false)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {edit && (
