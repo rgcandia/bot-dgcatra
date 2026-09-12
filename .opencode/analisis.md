@@ -10,7 +10,7 @@ Sistema de **tickets vía WhatsApp** para el área de Sistemas del Cuerpo de Age
 
 **Flujo principal:**
 1. Agentes de campo reportan problemas de IT por WhatsApp
-2. El bot los guía por un flujo de registro (código de base → sector → código admin opcional → nombre)
+2. El bot los guía por un flujo de registro (establecimiento → ubicación → descripción → nombre)
 3. Luego crean tickets (describir problema → ubicación → confirmar)
 4. Los admins de IT gestionan tickets desde un dashboard web React
 5. Notificaciones en tiempo real vía Socket.IO
@@ -86,7 +86,6 @@ bot-dgcatra/
 │   │       ├── TicketDetail.tsx   # Vista completa + chat takeover
 │   │       └── admin/
 │   │           ├── BasesPage.tsx
-│   │           ├── SectoresPage.tsx
 │   │           ├── UsuariosPage.tsx
 │   │           └── SettingsPage.tsx
 │   └── public/
@@ -102,7 +101,7 @@ bot-dgcatra/
     ├── .wwebjs_auth/             # Sesión de WhatsApp (bind-mounted)
     └── src/
         ├── api/index.ts          # Entry point Express, CORS, graceful shutdown
-        ├── seed.ts               # Seeder (2 bases + 3 sectores)
+        ├── seed.ts               # Seeder (2 bases)
         ├── reset-db.ts           # Force-reset de tablas
         ├── __tests__/
         │   └── schemas.test.ts   # 9 tests de schemas Zod
@@ -113,7 +112,6 @@ bot-dgcatra/
         │   └── settings.ts       # Settings mutables en runtime (masterCode, adminCode)
         ├── models/
         │   ├── Base.ts
-        │   ├── Sector.ts
         │   ├── User.ts
         │   ├── Ticket.ts
         │   ├── Conversacion.ts
@@ -124,7 +122,6 @@ bot-dgcatra/
         ├── routes/
         │   ├── auth.routes.ts
         │   ├── bases.routes.ts
-        │   ├── sectores.routes.ts
         │   ├── usuarios.routes.ts
         │   ├── tickets.routes.ts
         │   ├── chat.routes.ts
@@ -133,7 +130,6 @@ bot-dgcatra/
         ├── controllers/
         │   ├── auth.controller.ts
         │   ├── bases.controller.ts
-        │   ├── sectores.controller.ts
         │   ├── usuarios.controller.ts
         │   ├── tickets.controller.ts
         │   ├── chat.controller.ts
@@ -164,7 +160,7 @@ bot-dgcatra/
 | **Frontend** | `cliente/src/main.tsx` | React DOM con BrowserRouter + AuthProvider. |
 | **App React** | `cliente/src/App.tsx` | Rutas: `/login`, `/`, `/tickets`, `/tickets/:id`, `/admin/*`. |
 | **Bot WhatsApp** | `servidor/src/bot/whatsapp.ts` | Client de whatsapp-web.js con LocalAuth + Puppeteer. Eventos: qr, ready, auth_failure, disconnected, message. |
-| **Seeder** | `servidor/src/seed.ts` | `npm run seed` — crea 2 bases y 3 sectores. |
+| **Seeder** | `servidor/src/seed.ts` | `npm run seed` — crea 2 bases. |
 | **Docker** | `servidor/docker-compose.yml` | 2 servicios: api + db. |
 | **Vercel** | `cliente/vercel.json` | Build de Vite, SPA rewrites. |
 
@@ -192,7 +188,6 @@ bot-dgcatra/
 | `PORT` | `4002` | Sí | Puerto del servidor |
 | `JWT_SECRET` | `dgcatra-secret-prod-...` | **Sí** | Secreto para firmar JWT |
 | `DATABASE_URL` | `postgresql://dgcatra:dgcatra@db:5432/dgcatra` | **Sí** | Conexión PostgreSQL |
-| `SUPER_ADMIN_PHONE` | (vacío) | No | Teléfono del super admin |
 | `MASTER_CODE` | `202428` | No | Código backup para login dashboard |
 | `FRONTEND_URL` | `https://bot-dgcatra.vercel.app` | No | CORS adicional |
 | `ADMIN_CODE` | `admin2024` | No | Código para registro de admins |
@@ -331,13 +326,10 @@ bot-dgcatra/
     │
     └──▶ [Handler Dispatcher]
            │
-           ├── !registroCompleto → handlers/registro.ts (6 pasos)
-           │     Paso 0: Bienvenida + botón iniciar
-           │     Paso 1: Código de base (PIE2026/ONC2026)
-           │     Paso 2: Sector (botones/lista)
-           │     Paso 3: Código admin (si isAdmin)
-           │     Paso 4: Nombre completo
-           │     Paso 6: Confirmación → User guardado
+           ├── !registroCompleto → pre-registro de nombre (sin códigos)
+           │     El bot pregunta el nombre → se guarda el User
+           │     Los administradores se dan de alta manualmente
+           │     desde el panel (Usuarios) y confirman por WhatsApp
            │
            └── registroCompleto:
                  ├── handlers/comandos.ts
@@ -356,9 +348,9 @@ bot-dgcatra/
   └── JWT-authenticated real-time events
 
 [PostgreSQL] (Sequelize ORM)
-  Tablas: bases, sectores, usuarios, tickets, conversaciones
-  Relaciones: User→Base, User→Sector, Ticket→User, Ticket→Base,
-              Ticket→Sector, Conversacion→User, Conversacion→Ticket
+  Tablas: bases, usuarios, tickets, conversaciones
+  Relaciones: User→Base, Ticket→User, Ticket→Base,
+              Conversacion→User, Conversacion→Ticket
 
 [Frontend React]
   ├── AuthContext → JWT en localStorage + 30min inactivity auto-logout
