@@ -5,7 +5,7 @@ import ConfirmButton from '../../components/ConfirmButton';
 
 type Tipo = 'base' | 'playa' | 'comuna';
 
-interface Base { id: number; nombre: string; direccion: string; codigoAcceso: string; tipo: Tipo; }
+interface Base { id: number; nombre: string; direccion: string; tipo: Tipo; }
 
 const TIPOS: { value: Tipo; label: string }[] = [
   { value: 'base', label: 'Base' },
@@ -35,7 +35,7 @@ export default function BasesPage() {
     if (!edit) return;
     setError('');
     try {
-      const payload = { nombre: edit.nombre, direccion: edit.direccion, codigoAcceso: edit.codigoAcceso, tipo: edit.tipo };
+      const payload = { nombre: edit.nombre, direccion: edit.direccion, tipo: edit.tipo };
       if (edit.id) await api.patch(`/api/bases/${edit.id}`, payload);
       else await api.post('/api/bases', payload);
       setEdit(null); setShowNew(false);
@@ -56,7 +56,7 @@ export default function BasesPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Establecimientos</h2>
-        <button className="btn btn-primary btn-sm" onClick={() => { setEdit({ nombre: '', direccion: '', codigoAcceso: '', tipo: 'base' }); setShowNew(true); setError(''); }}>
+        <button className="btn btn-primary btn-sm" onClick={() => { setEdit({ nombre: '', direccion: '', tipo: 'base' }); setShowNew(true); setError(''); }}>
           Nuevo establecimiento
         </button>
       </div>
@@ -79,14 +79,13 @@ export default function BasesPage() {
       </div>
 
       <table>
-        <thead><tr><th>Nombre</th><th>Tipo</th><th>Dirección</th><th>Código</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Tipo</th><th>Dirección</th><th></th></tr></thead>
         <tbody>
           {visibles.map(b => (
             <tr key={b.id}>
               <td>{b.nombre}</td>
               <td><span className={`badge badge-${b.tipo}`}>{TIPO_LABEL[b.tipo]}</span></td>
               <td>{b.direccion}</td>
-              <td><code>{b.codigoAcceso}</code></td>
               <td>
                 <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(b); setError(''); }}>Editar</button>
                 <ConfirmButton label="Borrar" danger message="¿Eliminar?" onConfirm={() => handleDelete(b.id)} />
@@ -115,11 +114,7 @@ export default function BasesPage() {
               <label>Dirección</label>
               <input className="input" value={edit?.direccion || ''} onChange={e => setEdit({ ...edit, direccion: e.target.value })} />
             </div>
-            <div className="form-group">
-              <label>Código de acceso</label>
-              <input className="input" value={edit?.codigoAcceso || ''} onChange={e => setEdit({ ...edit, codigoAcceso: e.target.value })} />
-            </div>
-            <div style={{ display: 'flex', gap: '.5rem' }}>
+            <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem' }}>
               <button className="btn btn-primary btn-sm" onClick={handleSave}>Guardar</button>
               <button className="btn btn-ghost btn-sm" onClick={() => { setEdit(null); setShowNew(false); }}>Cancelar</button>
             </div>
