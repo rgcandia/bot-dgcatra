@@ -144,3 +144,15 @@ Se revisó el flujo y aparecieron 4 huecos reales (los 4 casos que se listaron p
 - [x] Commit `fix(bot): casos borde del paso tipo de establecimiento` → `2f2432c`.
 - [x] **`push` OK** (`c3d6ae8..2f2432c`) y **rebuild de `dgcatra-api` OK**: `/health` 200 y `WhatsApp conectado (5491126259181)`.
 - [ ] **Pendiente**: prueba manual E2E por WhatsApp del flujo completo (elegir tipo → establecimiento filtrado → ubicación → confirmar).
+
+### 2026-09-14 — Fix: mensajes desincronizados en opción inválida (bug detectado en producción)
+**Síntoma reportado**: probando el caso borde "opción inválida" en el bot real, la secuencia quedó así:
+`9` → "❌ Opción inválida..." → `1` → **menú de tipos re-mostrado** → lista de establecimientos. El menú llegaba *después* de que el usuario ya había contestado: parecía que el bot volvía a preguntar lo mismo. (Funcionalmente el `1` se tomó bien como *Base*; era un problema de percepción/timing.)
+
+**Causa**: `enviar.ts` simula escritura en **cada** `enviarTexto` (`1500 + len*15 + random*2000` ms) y además aplica un rate limit de 2 s. Al mandar el aviso y el menú como **dos mensajes separados**, el segundo salía ~5 s después. Era una **regresión introducida por el fix de casos borde** (antes el aviso era un mensaje seco y único).
+
+**Decisión**: se arregla **solo el Nivel 1** (unificar en un mensaje). El **Nivel 2** (acortar el delay) se **descarta a propósito**: la lentitud es deliberada para no parecer bot (librería no oficial), así que reducirla aumentaría la detectabilidad. Unificar no cambia el tiempo de tipeo simulado → cero impacto en la anti-detección.
+
+- [x] `bot/handlers/ticket.ts`: `mostrarTipos()` y `mostrarBases()` aceptan un `prefijo` opcional para anteponer el aviso **en el mismo mensaje**. Unificados los 4 casos: opción inválida en el paso de tipo, opción inválida en el paso de establecimiento, tipo que se quedó sin establecimientos (en ambos pasos).
+- [x] Tests: `integration/bot-ticket.test.ts` +1 test dedicado ("emite UN solo mensaje por opción inválida", con `expect(mensajes).toHaveLength(1)`) y aserción de un solo mensaje en el test del tipo vacío. **78 integración** (era 77), 35 unitarios, `tsc` OK.
+- [x] README: fila nueva en "Casos borde del flujo".

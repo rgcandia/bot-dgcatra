@@ -267,8 +267,32 @@ describe('flujo de ticket con tipo de establecimiento', () => {
     expect(respuesta).toContain('Elegí el tipo de nuevo');
     expect(respuesta).toContain('1. Base');       // menú de tipos re-calculado
     expect(respuesta).not.toContain('Playa');     // ya no se ofrece el tipo vacío
+    expect(mensajes).toHaveLength(1);             // aviso + menú en un solo mensaje
 
     // Y puede seguir el flujo normalmente
     expect(await paso('1')).toContain('Base Piedras');
+  });
+
+  it('emite UN solo mensaje por opción inválida (aviso + menú juntos)', async () => {
+    // Regresión detectada en producción: al mandar el aviso y el menú como dos mensajes
+    // separados, el segundo llegaba ~5s después (simulación de escritura + rate limit) y
+    // el usuario ya había respondido: parecía que el bot volvía a preguntar lo mismo.
+    await crearBase('Base Piedras', 'base');
+    await crearBase('Playa Costanera', 'playa');
+    await crearUsuario({ telefono: TEL, nombreCompleto: 'Juan Perez' });
+
+    await paso('crear');
+    await paso('Se rompió la impresora');
+
+    const enTipo = await paso('9');
+    expect(mensajes).toHaveLength(1);
+    expect(enTipo).toContain('Opción inválida');
+    expect(enTipo).toContain('1. Base');          // el menú va dentro del mismo mensaje
+
+    await paso('2'); // playa
+    const enBase = await paso('9');
+    expect(mensajes).toHaveLength(1);
+    expect(enBase).toContain('Opción inválida');
+    expect(enBase).toContain('Playa Costanera');  // la lista va dentro del mismo mensaje
   });
 });

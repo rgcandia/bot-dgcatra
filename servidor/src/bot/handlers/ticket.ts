@@ -75,23 +75,32 @@ function resolverTipo(elegidos: TipoOpcion[], texto: string, buttonId?: string):
   ) || null;
 }
 
-/** Muestra (o vuelve a mostrar) el menú de tipos, guardando los botones para el parseo numérico. */
-async function mostrarTipos(telefono: string, tipos: TipoOpcion[]): Promise<boolean> {
+/**
+ * Muestra (o vuelve a mostrar) el menú de tipos, guardando los botones para el parseo numérico.
+ * `prefijo` sirve para anteponer un aviso (ej. "Opción inválida") **en el mismo mensaje**: mandar
+ * dos mensajes seguidos hace que el segundo llegue ~5s después (por la simulación de escritura
+ * + el rate limit) y el usuario ya respondió, dando la sensación de que el bot se desincronizó.
+ */
+async function mostrarTipos(telefono: string, tipos: TipoOpcion[], prefijo?: string): Promise<boolean> {
   const { guardarUltimosBotones } = await import('../session.js');
   await guardarUltimosBotones(telefono, tipos.map(t => ({ id: `tipo_${t.tipo}`, title: t.label })));
 
-  let msg = '🏢 *¿En qué tipo de establecimiento ocurre el problema?*\n\n';
+  let msg = '';
+  if (prefijo) msg += `${prefijo}\n\n`;
+  msg += '🏢 *¿En qué tipo de establecimiento ocurre el problema?*\n\n';
   tipos.forEach((t, index) => { msg += `${index + 1}. ${t.label}\n`; });
   msg += '\nEscribí el número de la opción o *cancelar* para salir.';
   return await enviarTexto(telefono, msg);
 }
 
-/** Muestra (o vuelve a mostrar) los establecimientos de un tipo. */
-async function mostrarBases(telefono: string, tipo: TipoOpcion, bases: Base[]): Promise<boolean> {
+/** Muestra (o vuelve a re-mostrar) los establecimientos de un tipo. Mismo criterio de `prefijo`. */
+async function mostrarBases(telefono: string, tipo: TipoOpcion, bases: Base[], prefijo?: string): Promise<boolean> {
   const { guardarUltimosBotones } = await import('../session.js');
   await guardarUltimosBotones(telefono, bases.map(b => ({ id: `base_${b.id}`, title: b.nombre })));
 
-  let msg = `📍 *Establecimientos de tipo ${tipo.label}:*\n\n`;
+  let msg = '';
+  if (prefijo) msg += `${prefijo}\n\n`;
+  msg += `📍 *Establecimientos de tipo ${tipo.label}:*\n\n`;
   bases.forEach((b, index) => {
     msg += `${index + 1}. ${b.nombre}${b.direccion ? ` — ${b.direccion}` : ''}\n`;
   });
@@ -153,10 +162,9 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
 
       const elegido = resolverTipo(tipos, ctx.texto, ctx.buttonId);
       if (!elegido) {
-        // Opción inválida: se re-muestra el menú completo para no dejar al usuario a ciegas.
-        await enviarTexto(ctx.telefono,
+        // Opción inválida: aviso + menú en UN solo mensaje (ver comentario de mostrarTipos).
+        return await mostrarTipos(ctx.telefono, tipos,
           `❌ Opción inválida. Elegí un número del 1 al ${tipos.length} o el nombre del tipo:`);
-        return await mostrarTipos(ctx.telefono, tipos);
       }
 
       const bases = await Base.findAll({ where: { tipo: elegido.tipo }, order: [['nombre', 'ASC']] });
@@ -164,9 +172,8 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         // El tipo se quedó sin establecimientos (los borraron desde el dashboard): volver a elegir.
         const restantes = tipos.filter(t => t.tipo !== elegido.tipo);
         if (restantes.length === 0) return await abortarSinEstablecimientos(ctx.telefono, restantes);
-        await enviarTexto(ctx.telefono,
+        return await mostrarTipos(ctx.telefono, restantes,
           `❌ No hay establecimientos de tipo *${elegido.label}* cargados. Elegí otra opción:`);
-        return await mostrarTipos(ctx.telefono, restantes);
       }
 
       ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_BASE;
@@ -194,15 +201,16 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         await guardarUsuario(ctx.telefono, { context: ctxData });
         const tipos = await tiposDisponibles();
         if (tipos.length === 0) return await abortarSinEstablecimientos(ctx.telefono, tipos);
-        await enviarTexto(ctx.telefono, '❌ No hay establecimientos cargados para ese tipo. Elegí el tipo de nuevo:');
-        return await mostrarTipos(ctx.telefono, tipos);
+        return await mostrarTipos(ctx.telefono, tipos,
+          '❌ No hay establecimientos cargados para ese tipo. Elegí el tipo de nuevo:');
       }
 
-      const reMostrar = async () => {
-        await enviarTexto(ctx.telefono,
-          `❌ Opción inválida. Seleccioná el número del establecimiento (1 a ${bases.length}):`);
-        return await mostrarBases(ctx.telefono, tipoOpcion ?? TIPOS_ESTABLECIMIENTO[0], bases);
-      };
+      const reMostrar = async () => mostrarBases(
+        ctx.telefono,
+        tipoOpcion ?? TIPOS_ESTABLECIMIENTO[0],
+        bases,
+        `❌ Opción inválida. Seleccioná el número del establecimiento (1 a ${bases.length}):`,
+      );
 
       let selectedBase: Base | null = null;
 

@@ -122,6 +122,7 @@ Una vez guardado el nombre, el flujo es directo y guiado por estados:
 | Situación | Comportamiento |
 | --- | --- |
 | El usuario escribe un número fuera de rango | *"Opción inválida"* y **se vuelve a mostrar el menú completo** (tipos o establecimientos), así no queda a ciegas. |
+| El aviso de "opción inválida" y el menú | Van **en un mismo mensaje**, nunca en dos. Mandarlos separados hacía que el segundo llegara ~5s después (simulación de escritura + rate limit) y, como el usuario ya había respondido, parecía que el bot se desincronizaba. |
 | El usuario escribe el nombre en vez del número | Se acepta: el tipo por `playa`/`playas` y el establecimiento por nombre (sin distinguir mayúsculas ni acentos). |
 | Establecimiento cuyo nombre **empieza con un número** (ej. `9 de Julio`) | Se busca por nombre, no por índice: `9 de Julio` no se interpreta como "la opción 9" (el parseo numérico solo aplica si el mensaje es **puramente** numérico). |
 | Nombres muy cortos (1-2 letras) | No se usan para la búsqueda por nombre: evita que un caracter suelto matchee cualquier establecimiento. |
