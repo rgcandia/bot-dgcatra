@@ -156,3 +156,4 @@ Se revisó el flujo y aparecieron 4 huecos reales (los 4 casos que se listaron p
 - [x] `bot/handlers/ticket.ts`: `mostrarTipos()` y `mostrarBases()` aceptan un `prefijo` opcional para anteponer el aviso **en el mismo mensaje**. Unificados los 4 casos: opción inválida en el paso de tipo, opción inválida en el paso de establecimiento, tipo que se quedó sin establecimientos (en ambos pasos).
 - [x] Tests: `integration/bot-ticket.test.ts` +1 test dedicado ("emite UN solo mensaje por opción inválida", con `expect(mensajes).toHaveLength(1)`) y aserción de un solo mensaje en el test del tipo vacío. **78 integración** (era 77), 35 unitarios, `tsc` OK.
 - [x] README: fila nueva en "Casos borde del flujo".
+- [x] Commit `d2f4b03` + push a `origin/main`, rebuild de `dgcatra-api`: `/health` 200 y `WhatsApp conectado (5491126259181)` (2026-09-14 13:23).
