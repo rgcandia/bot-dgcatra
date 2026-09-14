@@ -126,3 +126,20 @@
 - [x] **Verificación**: `npx tsc --noEmit` OK; unitarios **4 archivos / 35 tests**; integración **6 archivos / 73 tests** (antes 5 / 66).
 - [x] **Commit + push** (`3a2e89c`) y **rebuild del contenedor `dgcatra-api` OK**: `/health` 200 y `WhatsApp conectado (5491126259181)`.
 - [ ] **Pendiente**: prueba manual E2E por WhatsApp (elegir tipo → establecimiento filtrado → ubicación → confirmar).
+
+### 2026-09-14 (2) — Fix: casos borde del paso "tipo de establecimiento"
+**Pedido**: arreglar los casos borde del flujo nuevo, documentarlos, commitear. **Sin push ni rebuild** (quedan pendientes a propósito).
+
+Se revisó el flujo y aparecieron 4 huecos reales (los 4 casos que se listaron para probar a mano ya funcionaban y tenían test):
+
+- [x] **Bug real con datos de producción**: `parseInt('9 de Julio')` devolvía `9`, así que un establecimiento cuyo nombre empieza con número se interpretaba como **índice 9 de la lista** (con ≥9 establecimientos elegía otro). Ahora el parseo numérico solo aplica si el mensaje es **puramente** numérico (`/^\d+$/`), tanto en `resolverTipo()` como en `PEDIR_BASE`. `"9 de julio"` pasa a resolverse por nombre.
+- [x] **Hueco sin salida (dead-end)**: si el tipo elegido se quedaba con **0 establecimientos** (los borran desde el dashboard mientras el usuario elige), el mensaje decía *"Seleccioná el número del establecimiento (1 a 0)"* y el usuario quedaba trabado en `PEDIR_BASE` para siempre. Ahora **vuelve al paso de tipo** con la lista recalculada; si ya no queda ningún tipo, corta con mensaje de soporte (`abortarSinEstablecimientos()`).
+- [x] **Opción inválida sin contexto**: antes solo decía "Opción inválida" y dejaba al usuario sin ver las opciones. Ahora **re-muestra el menú completo** (tipos o establecimientos) en ambos pasos. Se extrajeron `mostrarTipos()` / `mostrarBases()` (antes el armado de la lista estaba duplicado inline).
+- [x] **Búsqueda por nombre muy laxa**: un texto de 1-2 letras podía matchear cualquier establecimiento. Ahora se exige **mínimo 3 caracteres** y la comparación es **sin acentos** (`normalizar()` en ambos lados).
+- [x] **Multimedia a mitad de flujo** (`bot/index.ts`): el bot respondía *"Describí el problema... así puedo crear el ticket"*, invitando a **empezar de nuevo** aunque el usuario estuviera a mitad del ticket. Ahora, si hay `ticketPaso` activo, el mensaje lo invita a **continuar** con el último paso.
+
+**Tests**: `integration/bot-ticket.test.ts` +4 (77 en total, era 73) → `9 de Julio` no se lee como índice 9; opción inválida re-muestra el menú de tipos; opción inválida re-muestra la lista de establecimientos; el tipo que se queda vacío devuelve al paso anterior y el flujo sigue.
+**Verificación**: `npx tsc --noEmit` OK; unitarios **35**; integración **77**.
+**README**: nueva subsección "Casos borde del flujo" con la tabla de comportamientos.
+- [x] Commit `fix(bot): casos borde del paso tipo de establecimiento`.
+- [ ] **Pendiente a propósito**: `push` y `rebuild` de `dgcatra-api` (los hace el usuario).

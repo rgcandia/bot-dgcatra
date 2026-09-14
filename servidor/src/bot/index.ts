@@ -97,9 +97,13 @@ async function procesarMensajeCola(msg: any, from: string, text: string, rawFrom
 
   if (msg.hasMedia) {
     const { enviarTexto } = await import('./enviar.js');
+    // Si está a mitad de un flujo, el mensaje tiene que invitarlo a seguir, no a empezar.
+    const enFlujo = (await obtenerUsuario(from)).context?.ticketPaso !== undefined;
     await enviarTexto(from,
       '📎 Recibí tu archivo, pero todavía no puedo procesar imágenes ni audios.\n\n' +
-      'Describí el problema por texto así puedo crear el ticket.\n\n' +
+      (enFlujo
+        ? 'Seguimos con el ticket: respondé por texto lo que te pedí en el mensaje anterior.\n\n'
+        : 'Describí el problema por texto así puedo crear el ticket.\n\n') +
       'Escribí *cancelar* para salir.');
     return;
   }

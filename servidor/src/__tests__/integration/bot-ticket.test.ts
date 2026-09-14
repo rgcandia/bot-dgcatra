@@ -199,4 +199,76 @@ describe('flujo de ticket con tipo de establecimiento', () => {
 
     expect(await Ticket.count()).toBe(0);
   });
+
+  it('no interpreta "9 de julio" como el índice 9 de la lista', async () => {
+    // 9 playas "Playa X" + "9 de Julio" (10 en total): con el parseo viejo,
+    // parseInt('9 de julio') === 9 elegía una playa en vez del establecimiento.
+    for (const letra of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']) {
+      await crearBase(`Playa ${letra}`, 'playa');
+    }
+    await crearBase('9 de Julio', 'playa');
+    // Una base para que el menú de tipos sea [1. Base, 2. Playa] y el "2" sea válido
+    await crearBase('Base Piedras', 'base');
+    await crearUsuario({ telefono: TEL, nombreCompleto: 'Juan Perez' });
+
+    await paso('crear');
+    await paso('Se rompió la impresora');
+    await paso('2');
+
+    expect(await paso('9 de julio')).toContain('¿En qué oficina, sector o puesto');
+    const resumen = await paso('Oficina 1');
+    expect(resumen).toContain('9 de Julio');
+    expect(resumen).toContain('(Playa)');
+    // Si hubiera matcheado la 9na de la lista, el establecimiento sería una "Playa X"
+    expect(resumen).not.toContain('Playa ');
+  });
+
+  it('en el paso de tipo, una opción inválida vuelve a mostrar el menú', async () => {
+    await crearBase('Base Piedras', 'base');
+    await crearUsuario({ telefono: TEL, nombreCompleto: 'Juan Perez' });
+
+    await paso('crear');
+    await paso('Se rompió la impresora');
+
+    const respuesta = await paso('9');
+    expect(respuesta).toContain('Opción inválida');
+    expect(respuesta).toContain('¿En qué tipo de establecimiento'); // menú re-mostrado
+  });
+
+  it('en el paso de establecimiento, una opción inválida vuelve a mostrar la lista', async () => {
+    await crearBase('Playa Costanera', 'playa');
+    await crearBase('Base Piedras', 'base');
+    await crearUsuario({ telefono: TEL, nombreCompleto: 'Juan Perez' });
+
+    await paso('crear');
+    await paso('Se rompió la impresora');
+    await paso('2');
+
+    const respuesta = await paso('9');
+    expect(respuesta).toContain('Opción inválida');
+    expect(respuesta).toContain('Playa Costanera'); // lista re-mostrada
+    expect(respuesta).not.toContain('Base Piedras');
+  });
+
+  it('si el tipo se queda sin establecimientos, vuelve al paso de tipo en vez de trabarse', async () => {
+    const { Base } = await import('../../models/models.js');
+    await crearBase('Playa Costanera', 'playa');
+    await crearBase('Base Piedras', 'base');
+    await crearUsuario({ telefono: TEL, nombreCompleto: 'Juan Perez' });
+
+    await paso('crear');
+    await paso('Se rompió la impresora');
+    await paso('2'); // playa
+
+    // El admin borra las playas mientras el usuario está eligiendo
+    await Base.destroy({ where: { tipo: 'playa' } });
+
+    const respuesta = await paso('1');
+    expect(respuesta).toContain('Elegí el tipo de nuevo');
+    expect(respuesta).toContain('1. Base');       // menú de tipos re-calculado
+    expect(respuesta).not.toContain('Playa');     // ya no se ofrece el tipo vacío
+
+    // Y puede seguir el flujo normalmente
+    expect(await paso('1')).toContain('Base Piedras');
+  });
 });

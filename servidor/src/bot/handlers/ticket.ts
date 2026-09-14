@@ -47,24 +47,66 @@ function etiquetaTipo(tipo?: string | null): string {
   return TIPOS_ESTABLECIMIENTO.find(t => t.tipo === tipo)?.label || 'Establecimiento';
 }
 
+type TipoOpcion = { tipo: TipoEstablecimiento; label: string; plural: string };
+
+/** Solo dígitos: evita que "9 de Julio" se lea como el índice 9. */
+function esNumero(texto: string): boolean {
+  return /^\d+$/.test((texto || '').trim());
+}
+
 /** Resuelve el tipo elegido por botón (tipo_playa), número (2) o texto ("playa"). */
-function resolverTipo(
-  elegidos: { tipo: TipoEstablecimiento; label: string; plural: string }[],
-  texto: string,
-  buttonId?: string,
-) {
+function resolverTipo(elegidos: TipoOpcion[], texto: string, buttonId?: string): TipoOpcion | null {
   if (buttonId?.startsWith('tipo_')) {
     const t = elegidos.find(x => buttonId === `tipo_${x.tipo}`);
     if (t) return t;
   }
-  const num = parseInt((texto || '').trim());
-  if (!isNaN(num) && num >= 1 && num <= elegidos.length) return elegidos[num - 1];
 
-  const t = normalizar(texto || '');
-  if (t) {
-    return elegidos.find(x => t === x.tipo || t === x.plural.toLowerCase() || t.includes(x.tipo)) || null;
+  const raw = (texto || '').trim();
+  // Si escribió un número, se interpreta SOLO como índice: nunca cae a búsqueda por nombre.
+  if (esNumero(raw)) {
+    const num = parseInt(raw, 10);
+    return (num >= 1 && num <= elegidos.length) ? elegidos[num - 1] : null;
   }
-  return null;
+
+  const t = normalizar(raw);
+  if (!t) return null;
+  return elegidos.find(x =>
+    t === x.tipo || t === x.label.toLowerCase() || t === x.plural.toLowerCase() || t.includes(x.tipo),
+  ) || null;
+}
+
+/** Muestra (o vuelve a mostrar) el menú de tipos, guardando los botones para el parseo numérico. */
+async function mostrarTipos(telefono: string, tipos: TipoOpcion[]): Promise<boolean> {
+  const { guardarUltimosBotones } = await import('../session.js');
+  await guardarUltimosBotones(telefono, tipos.map(t => ({ id: `tipo_${t.tipo}`, title: t.label })));
+
+  let msg = '🏢 *¿En qué tipo de establecimiento ocurre el problema?*\n\n';
+  tipos.forEach((t, index) => { msg += `${index + 1}. ${t.label}\n`; });
+  msg += '\nEscribí el número de la opción o *cancelar* para salir.';
+  return await enviarTexto(telefono, msg);
+}
+
+/** Muestra (o vuelve a mostrar) los establecimientos de un tipo. */
+async function mostrarBases(telefono: string, tipo: TipoOpcion, bases: Base[]): Promise<boolean> {
+  const { guardarUltimosBotones } = await import('../session.js');
+  await guardarUltimosBotones(telefono, bases.map(b => ({ id: `base_${b.id}`, title: b.nombre })));
+
+  let msg = `📍 *Establecimientos de tipo ${tipo.label}:*\n\n`;
+  bases.forEach((b, index) => {
+    msg += `${index + 1}. ${b.nombre}${b.direccion ? ` — ${b.direccion}` : ''}\n`;
+  });
+  msg += '\nEscribí el número de la opción o *cancelar* para salir.';
+  return await enviarTexto(telefono, msg);
+}
+
+/** El usuario quedó sin opciones para elegir: mensaje claro y fin del flujo. */
+async function abortarSinEstablecimientos(telefono: string, tipos: TipoOpcion[]): Promise<boolean> {
+  const detalle = tipos.length === 0
+    ? 'No hay establecimientos cargados en este momento.'
+    : 'No hay establecimientos de ese tipo cargados.';
+  await enviarTexto(telefono, `❌ ${detalle} Contactá a soporte.`);
+  await guardarUsuario(telefono, { context: null });
+  return false;
 }
 
 export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
@@ -96,65 +138,42 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
       }
 
       const tipos = await tiposDisponibles();
-      if (tipos.length === 0) {
-        await enviarTexto(ctx.telefono, '❌ No hay establecimientos registrados en el sistema. Contactá a soporte.');
-        await guardarUsuario(ctx.telefono, { context: null });
-        return false;
-      }
+      if (tipos.length === 0) return await abortarSinEstablecimientos(ctx.telefono, tipos);
 
       ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_TIPO;
       ctxData.descripcion = ctx.texto;
       await guardarUsuario(ctx.telefono, { context: ctxData });
 
-      const options = tipos.map(t => ({ id: `tipo_${t.tipo}`, title: t.label }));
-      // Guardar últimos botones para que parsearBotonNumerico funcione
-      const { guardarUltimosBotones } = await import('../session.js');
-      await guardarUltimosBotones(ctx.telefono, options);
-
-      let msg = '🏢 *¿En qué tipo de establecimiento ocurre el problema?*\n\n';
-      tipos.forEach((t, index) => { msg += `${index + 1}. ${t.label}\n`; });
-      msg += '\nEscribí el número de la opción o *cancelar* para salir.';
-
-      return await enviarTexto(ctx.telefono, msg);
+      return await mostrarTipos(ctx.telefono, tipos);
     }
 
     case ESTADOS_TICKET.PEDIR_TIPO: {
       const tipos = await tiposDisponibles();
-      if (tipos.length === 0) {
-        await enviarTexto(ctx.telefono, '❌ No hay establecimientos registrados en el sistema. Contactá a soporte.');
-        await guardarUsuario(ctx.telefono, { context: null });
-        return false;
-      }
+      if (tipos.length === 0) return await abortarSinEstablecimientos(ctx.telefono, tipos);
 
       const elegido = resolverTipo(tipos, ctx.texto, ctx.buttonId);
       if (!elegido) {
+        // Opción inválida: se re-muestra el menú completo para no dejar al usuario a ciegas.
         await enviarTexto(ctx.telefono,
           `❌ Opción inválida. Elegí un número del 1 al ${tipos.length} o el nombre del tipo:`);
-        return false;
+        return await mostrarTipos(ctx.telefono, tipos);
       }
 
       const bases = await Base.findAll({ where: { tipo: elegido.tipo }, order: [['nombre', 'ASC']] });
       if (bases.length === 0) {
+        // El tipo se quedó sin establecimientos (los borraron desde el dashboard): volver a elegir.
+        const restantes = tipos.filter(t => t.tipo !== elegido.tipo);
+        if (restantes.length === 0) return await abortarSinEstablecimientos(ctx.telefono, restantes);
         await enviarTexto(ctx.telefono,
-          `❌ No hay establecimientos de tipo *${elegido.label}* cargados. Elegí otra opción.`);
-        return false;
+          `❌ No hay establecimientos de tipo *${elegido.label}* cargados. Elegí otra opción:`);
+        return await mostrarTipos(ctx.telefono, restantes);
       }
 
       ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_BASE;
       ctxData.baseTipo = elegido.tipo;
       await guardarUsuario(ctx.telefono, { context: ctxData });
 
-      const options = bases.map(b => ({ id: `base_${b.id}`, title: b.nombre }));
-      const { guardarUltimosBotones } = await import('../session.js');
-      await guardarUltimosBotones(ctx.telefono, options);
-
-      let msg = `📍 *Establecimientos de tipo ${elegido.label}:*\n\n`;
-      bases.forEach((b, index) => {
-        msg += `${index + 1}. ${b.nombre}${b.direccion ? ` — ${b.direccion}` : ''}\n`;
-      });
-      msg += '\nEscribí el número de la opción o *cancelar* para salir.';
-
-      return await enviarTexto(ctx.telefono, msg);
+      return await mostrarBases(ctx.telefono, elegido, bases);
     }
 
     case ESTADOS_TICKET.PEDIR_BASE: {
@@ -166,29 +185,44 @@ export async function manejarCreacionTicket(ctx: Ctx): Promise<boolean> {
         order: [['nombre', 'ASC']],
       });
 
+      const tipoOpcion = TIPOS_ESTABLECIMIENTO.find(t => t.tipo === tipo);
+
+      // Se quedó sin establecimientos para mostrar: volver al paso de tipo en vez de
+      // dejarlo en un "elegí del 1 al 0" imposible de responder.
+      if (bases.length === 0) {
+        ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_TIPO;
+        await guardarUsuario(ctx.telefono, { context: ctxData });
+        const tipos = await tiposDisponibles();
+        if (tipos.length === 0) return await abortarSinEstablecimientos(ctx.telefono, tipos);
+        await enviarTexto(ctx.telefono, '❌ No hay establecimientos cargados para ese tipo. Elegí el tipo de nuevo:');
+        return await mostrarTipos(ctx.telefono, tipos);
+      }
+
+      const reMostrar = async () => {
+        await enviarTexto(ctx.telefono,
+          `❌ Opción inválida. Seleccioná el número del establecimiento (1 a ${bases.length}):`);
+        return await mostrarBases(ctx.telefono, tipoOpcion ?? TIPOS_ESTABLECIMIENTO[0], bases);
+      };
+
       let selectedBase: Base | null = null;
 
       if (ctx.buttonId && ctx.buttonId.startsWith('base_')) {
-        const id = parseInt(ctx.buttonId.split('_')[1]);
+        const id = parseInt(ctx.buttonId.split('_')[1], 10);
         selectedBase = bases.find(b => b.id === id) || null;
       } else {
-        const num = parseInt((ctx.texto || '').trim());
-        if (!isNaN(num) && num >= 1 && num <= bases.length) {
-          selectedBase = bases[num - 1];
-        } else {
-          // Fuzzy matching por nombre de establecimiento (solo dentro del tipo elegido)
-          const textNorm = (ctx.texto || '').toLowerCase().trim();
-          selectedBase = textNorm
-            ? bases.find(b => b.nombre.toLowerCase().includes(textNorm)) || null
-            : null;
+        const raw = (ctx.texto || '').trim();
+        if (esNumero(raw)) {
+          // Un número es siempre un índice de la lista, nunca el nombre de un establecimiento.
+          const num = parseInt(raw, 10);
+          if (num >= 1 && num <= bases.length) selectedBase = bases[num - 1];
+        } else if (raw.length >= 3) {
+          // Búsqueda por nombre (sin acentos), solo dentro del tipo elegido.
+          const buscado = normalizar(raw);
+          selectedBase = bases.find(b => normalizar(b.nombre).includes(buscado)) || null;
         }
       }
 
-      if (!selectedBase) {
-        await enviarTexto(ctx.telefono,
-          `❌ Opción inválida. Seleccioná el número del establecimiento (1 a ${bases.length}):`);
-        return false;
-      }
+      if (!selectedBase) return await reMostrar();
 
       ctxData.ticketPaso = ESTADOS_TICKET.PEDIR_UBICACION;
       ctxData.baseId = selectedBase.id;

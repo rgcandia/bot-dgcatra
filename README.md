@@ -118,6 +118,18 @@ Una vez guardado el nombre, el flujo es directo y guiado por estados:
 
 > El establecimiento se elige **siempre del catálogo** (`bases`) administrado desde el dashboard: no hay carga manual ni texto libre, así que no puede quedar un establecimiento mal escrito o duplicado. `cancelar` funciona en cualquier paso y reinicia el flujo.
 
+#### Casos borde del flujo
+| Situación | Comportamiento |
+| --- | --- |
+| El usuario escribe un número fuera de rango | *"Opción inválida"* y **se vuelve a mostrar el menú completo** (tipos o establecimientos), así no queda a ciegas. |
+| El usuario escribe el nombre en vez del número | Se acepta: el tipo por `playa`/`playas` y el establecimiento por nombre (sin distinguir mayúsculas ni acentos). |
+| Establecimiento cuyo nombre **empieza con un número** (ej. `9 de Julio`) | Se busca por nombre, no por índice: `9 de Julio` no se interpreta como "la opción 9" (el parseo numérico solo aplica si el mensaje es **puramente** numérico). |
+| Nombres muy cortos (1-2 letras) | No se usan para la búsqueda por nombre: evita que un caracter suelto matchee cualquier establecimiento. |
+| **Se borran los establecimientos mientras el usuario elige** (desde el dashboard) | Si el tipo quedó vacío, el bot **vuelve al paso de tipo** con la lista recalculada; si ya no queda ninguno, corta con un mensaje de soporte en vez de trabarse. |
+| `buttonId` viejo de otra categoría | Se descarta: solo se acepta el establecimiento si pertenece al tipo elegido. |
+| El usuario manda **foto/audio** a mitad del flujo | Se avisa que no se procesan y se lo invita a **continuar** el ticket por texto (no a empezarlo de nuevo). |
+| `cancelar` en cualquier paso | Limpia el contexto y no crea ticket. |
+
 ---
 
 ## Flujo de Administradores
@@ -215,7 +227,7 @@ DB no termina en `_test`, así nunca pueden tocar la base de producción.
 | `src/__tests__/integration/usuarios.test.ts` | Soft-delete (conserva tickets e historial), bloqueo de login y del token viejo, alta de admins por el super admin, confirmación por WhatsApp, **anti duplicados de la invitación** (no reenvía WhatsApp si se repite el alta/promoción) |
 | `src/__tests__/integration/rate-limit.test.ts` | Bloqueo por fuerza bruta (10 intentos de verificación / 5 pedidos de código por ventana) y aislamiento por IP |
 | `src/__tests__/integration/lid.test.ts` | Consolidación de usuarios guardados con LID (mueve tickets y conversaciones al teléfono real, sin perder historial; idempotente) |
-| `src/__tests__/integration/bot-ticket.test.ts` | Flujo del bot de creación de tickets (handler directo, con envío y Groq mockeados): pregunta el **tipo de establecimiento**, filtra el listado por tipo, no ofrece tipos sin establecimientos, rechaza establecimientos de otro tipo (número o `buttonId` de una lista vieja) y `cancelar` resetea el flujo |
+| `src/__tests__/integration/bot-ticket.test.ts` | Flujo del bot de creación de tickets (handler directo, con envío y Groq mockeados): pregunta el **tipo de establecimiento**, filtra el listado por tipo, no ofrece tipos sin establecimientos, rechaza establecimientos de otro tipo (número o `buttonId` de una lista vieja) y `cancelar` resetea el flujo. **Casos borde**: nombres que empiezan con número (ej. `9 de Julio` no se lee como opción 9), opción inválida re-muestra el menú, y el tipo que se queda sin establecimientos devuelve al paso anterior |
 
 ### ¿Contra qué Postgres corren?
 
