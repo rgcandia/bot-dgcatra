@@ -141,5 +141,6 @@ Se revisó el flujo y aparecieron 4 huecos reales (los 4 casos que se listaron p
 **Tests**: `integration/bot-ticket.test.ts` +4 (77 en total, era 73) → `9 de Julio` no se lee como índice 9; opción inválida re-muestra el menú de tipos; opción inválida re-muestra la lista de establecimientos; el tipo que se queda vacío devuelve al paso anterior y el flujo sigue.
 **Verificación**: `npx tsc --noEmit` OK; unitarios **35**; integración **77**.
 **README**: nueva subsección "Casos borde del flujo" con la tabla de comportamientos.
-- [x] Commit `fix(bot): casos borde del paso tipo de establecimiento`.
-- [ ] **Pendiente a propósito**: `push` y `rebuild` de `dgcatra-api` (los hace el usuario).
+- [x] Commit `fix(bot): casos borde del paso tipo de establecimiento` → `2f2432c`.
+- [x] **`push` OK** (`c3d6ae8..2f2432c`) y **rebuild de `dgcatra-api` OK**: `/health` 200 y `WhatsApp conectado (5491126259181)`.
+- [ ] **Pendiente**: prueba manual E2E por WhatsApp del flujo completo (elegir tipo → establecimiento filtrado → ubicación → confirmar).
