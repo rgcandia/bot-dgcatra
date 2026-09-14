@@ -124,4 +124,5 @@
   - `__tests__/integration/bot-ticket.test.ts` (**nuevo**, 7 tests): flujo feliz completo (verifica el `baseId` creado), tipo escrito por texto, opción inválida, tipos sin establecimientos no se ofrecen, no colar un establecimiento de otro tipo (número y nombre), `buttonId` de otra categoría, y `cancelar` en cada paso. Mockea `bot/enviar.js` y `bot/groq.js`.
 - [x] **README**: sección "Creación de Ticket (bot)" reescrita con los pasos 3 y 4 nuevos + nota de que el establecimiento sale siempre del catálogo; tabla de tests con `bot-ticket.test.ts` y `lid.test.ts` (faltaba).
 - [x] **Verificación**: `npx tsc --noEmit` OK; unitarios **4 archivos / 35 tests**; integración **6 archivos / 73 tests** (antes 5 / 66).
-- [ ] **Pendiente**: rebuild del contenedor `dgcatra-api` y prueba manual E2E por WhatsApp.
+- [x] **Commit + push** (`3a2e89c`) y **rebuild del contenedor `dgcatra-api` OK**: `/health` 200 y `WhatsApp conectado (5491126259181)`.
+- [ ] **Pendiente**: prueba manual E2E por WhatsApp (elegir tipo → establecimiento filtrado → ubicación → confirmar).
