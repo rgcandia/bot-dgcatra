@@ -44,8 +44,7 @@
 - ⏸️ **#2 (CI/CD / GitHub Actions)** — pospuesto.
 - ⏸️ **#3 (migraciones controladas en vez de `sync({alter:true})`)** — pospuesto.
 - ✅ **#1 (tests de integración)** — implementado el 2026-09-12 (ver abajo).
-### Pendiente detectado (no implementado)
-- [ ] **`sync({alter:true})` recrea constraints UNIQUE duplicados en cada rebuild.** Evidencia: `usuarios.email` llegó a tener 6 (`key`, `key1`…`key5`) y `bases.nombre` 3. Inofensivo pero se acumula. Opciones: (a) declarar los índices con nombre fijo en los modelos, (b) migraciones controladas (#3).
+- [x] **`sync({alter:true})` recreaba constraints UNIQUE duplicados en cada rebuild.** Evidencia: `usuarios.email` llegó a tener 6 (`key`, `key1`…`key5`) y `bases.nombre` 3. **Resuelto en `fee2699`** con la opción (a): los índices se declaran con nombre fijo en el modelo (`User.ts`: `usuarios_email_unique`, `Base.ts`: `bases_nombre_unique`). Verificado con 2 arranques consecutivos: **no se acumulan más**. *(Queda 1 índice legacy pre-existente de cada uno — `usuarios_email_key` — inofensivo; se limpiaría recién con migraciones controladas, opción #3.)*
 
 ### 2026-09-12 — Fix: índices UNIQUE duplicados por `sync({alter:true})`
 - [x] `Base.nombre` y `User.email`: quitado `unique: true` del campo y declarado índice con **nombre fijo** (`bases_nombre_unique`, `usuarios_email_unique`) en las opciones del modelo.
@@ -78,7 +77,8 @@
 - [x] **Tests**: `src/__tests__/identidad.test.ts` (9 unitarios: @c.us no consulta, LID→teléfono, normalización, caché, pn vacío, excepción, sin cliente, fallo no cacheado) y `src/__tests__/integration/lid.test.ts` (6: consolidación con y sin fila destino, tickets donde el LID era técnico, sin fila propia, ids iguales, idempotencia).
 - [x] **Verificación**: `tsc` OK; unitarios **4 archivos / 32 tests**; integración **5 archivos / 61 tests**; rebuild Docker + `/health` 200 + bot conectado.
 - [x] **README**: nueva sección "0. Identidad de WhatsApp: LID vs. teléfono" con la tabla PN/LID, cómo se resuelve y la consolidación automática.
-- [ ] **Pendiente de confirmar en producción**: cuando el usuario escriba al bot después del deploy, verificar en logs (`Identidad LID resuelta a teléfono`) y en la DB que su fila pasó al teléfono real. Después ya se puede dar de alta como admin con ese teléfono.
+- [x] **Confirmado en producción (2026-09-14)**: verificado en la DB real (`dgcatra`), hay **1 sola fila** en `usuarios` y está correcta: `telefono = 5491163688406` (teléfono canónico, no el LID) y `chatId = 30262373163147@lid` conservado para responder. **Sin duplicados** y sin filas residuales con LID. Prueba directa de que `resolverIdentidad()` + la consolidación funcionan end-to-end. *(Nota: las líneas de log `Identidad LID resuelta a teléfono` ya rotaron porque el contenedor se recreó en los rebuilds del 14/09; la fila en la DB es la evidencia que importa.)*
+- [ ] Queda como paso siguiente (no es parte de este fix): promover a ese usuario a admin (`esAdmin=false` hoy). Antes fallaba con 400 por el teléfono inválido; ahora debería funcionar, y es la prueba definitiva del fix.
 
 
 ### 2026-09-12 — Fix UI: loader y anti doble-submit al crear admin / enviar código
