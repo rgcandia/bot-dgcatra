@@ -21,6 +21,21 @@ describe('TicketContextSchema', () => {
     const result = TicketContextSchema.safeParse({ ticketPaso: 0 });
     expect(result.success).toBe(true);
   });
+
+  it('acepta el último paso del flujo (confirmar = 5)', () => {
+    const result = TicketContextSchema.safeParse({ ticketPaso: 5, baseTipo: 'playa', baseNombre: 'Costanera' });
+    expect(result.success).toBe(true);
+  });
+
+  it('acepta baseTipo válido en el paso de establecimiento', () => {
+    const result = TicketContextSchema.safeParse({ ticketPaso: 3, baseTipo: 'comuna' });
+    expect(result.success).toBe(true);
+  });
+
+  it('rechaza baseTipo desconocido', () => {
+    const result = TicketContextSchema.safeParse({ ticketPaso: 3, baseTipo: 'oficina' });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe('RegisterContextSchema', () => {

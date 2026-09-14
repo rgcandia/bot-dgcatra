@@ -108,3 +108,20 @@
 - [x] `cliente/src/pages/admin/UsuariosPage.tsx`: `savingAdmin` + `savingAdminRef`; spinner/`disabled` en "Enviar invitación" y "Sí, promover y verificar"; se bloquea Cancelar y el click en el overlay mientras se envía.
 - [x] `cliente/src/pages/LoginPage.tsx`: `sendingRef`/`verifyingRef` + estado `verifying`; spinner en "Ingresar" (OTP y código maestro); "Volver" deshabilitado al verificar. Se dejó de depender del `loading` global del `AuthContext`.
 - [x] Verificación: `npx tsc --noEmit` OK y `npm run build` (frontend) OK.
+
+### 2026-09-14 — Feat: paso "tipo de establecimiento" en el flujo de creación de tickets
+**Pedido**: antes de listar los establecimientos, preguntar el **tipo** (base / playa / comuna) y mostrar solo los de ese tipo. Se evaluó y **descartó** una opción "Otro" con carga manual (el usuario prefirió lista cerrada: "no hay margen de error"), así que no se tocó el modelo `Ticket` ni el frontend.
+
+- [x] **`servidor/src/bot/handlers/ticket.ts`**: nuevo paso `PEDIR_TIPO` (2). Estados renumerados: `PEDIR_BASE` 3, `PEDIR_UBICACION` 4, `CONFIRMAR` 5.
+  - `tiposDisponibles()`: consulta `SELECT DISTINCT tipo FROM bases` y **solo ofrece los tipos que tienen al menos un establecimiento** (decisión acordada). Si no hay ninguno, corta con mensaje de error.
+  - `resolverTipo()`: acepta botón (`tipo_playa`), **número** (`2`) o **texto** (`playa`), insensible a mayúsculas/acentos.
+  - `PEDIR_BASE` ahora filtra por `baseTipo` guardado en el context y **valida que el establecimiento elegido pertenezca al tipo**: un número fuera de rango, un nombre de otro tipo o un `buttonId` `base_<id>` de una lista vieja (otra categoría) se rechazan.
+  - El resumen de confirmación muestra `Establecimiento (Tipo)`; el listado de establecimientos incluye la dirección como ayuda.
+  - Guarda `baseTipo` y `baseNombre` en `user.context` y reusa `guardarUltimosBotones` para el parseo numérico.
+- [x] **`servidor/src/bot/schemas.ts`**: `baseTipo: z.enum(['base','playa','comuna']).optional()` + comentario con los pasos. (`ticketPaso` sigue en `max(5)`: el paso máximo real sigue siendo 5.)
+- [x] **Tests**:
+  - `__tests__/schemas.test.ts` (+3): último paso (5), `baseTipo` válido, `baseTipo` desconocido → 11 tests.
+  - `__tests__/integration/bot-ticket.test.ts` (**nuevo**, 7 tests): flujo feliz completo (verifica el `baseId` creado), tipo escrito por texto, opción inválida, tipos sin establecimientos no se ofrecen, no colar un establecimiento de otro tipo (número y nombre), `buttonId` de otra categoría, y `cancelar` en cada paso. Mockea `bot/enviar.js` y `bot/groq.js`.
+- [x] **README**: sección "Creación de Ticket (bot)" reescrita con los pasos 3 y 4 nuevos + nota de que el establecimiento sale siempre del catálogo; tabla de tests con `bot-ticket.test.ts` y `lid.test.ts` (faltaba).
+- [x] **Verificación**: `npx tsc --noEmit` OK; unitarios **4 archivos / 35 tests**; integración **6 archivos / 73 tests** (antes 5 / 66).
+- [ ] **Pendiente**: rebuild del contenedor `dgcatra-api` y prueba manual E2E por WhatsApp.

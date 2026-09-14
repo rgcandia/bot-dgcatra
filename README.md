@@ -110,10 +110,13 @@ LID antes de esta corrección se consolidan solos al recibir el primer mensaje
 Una vez guardado el nombre, el flujo es directo y guiado por estados:
 1. El usuario inicia escribiendo "crear", "ticket", "problema", o seleccionando la opción `1` en el menú.
 2. Bot pide **descripción del problema** (mínimo 5 caracteres).
-3. Bot pide **Base / Establecimiento**: Presenta una lista numerada de todas las bases registradas (1. Base Piedras, 2. Base Once, etc.). El usuario selecciona respondiendo con el número de la opción.
-4. Bot pide **Ubicación específica**: *"¿En qué oficina, sector o puesto específico de la base ocurre el problema?"*
-5. Muestra un resumen con Nombre, Base, Ubicación y Descripción del problema, y pide confirmación respondiendo **SI** o **NO**.
-6. Una vez confirmado, la IA (Groq) genera un título corto, se guarda el ticket, se asocia el historial de conversación, y se notifica en tiempo real a los técnicos a través del panel administrativo.
+3. Bot pide el **tipo de establecimiento**: presenta una lista numerada con los tipos que **tienen al menos un establecimiento cargado** (1. Base, 2. Playa, 3. Comuna). Si un tipo no tiene establecimientos, no se ofrece. El usuario puede responder con el número o escribiendo el nombre del tipo.
+4. Bot pide **el establecimiento**: presenta una lista numerada **filtrada por el tipo elegido** (solo las playas si eligió Playa, etc.). El usuario selecciona respondiendo con el número de la opción.
+5. Bot pide **Ubicación específica**: *"¿En qué oficina, sector o puesto específico del establecimiento ocurre el problema?"*
+6. Muestra un resumen con Nombre, Establecimiento (con su tipo), Ubicación y Descripción del problema, y pide confirmación respondiendo **SI** o **NO**.
+7. Una vez confirmado, la IA (Groq) genera un título corto, se guarda el ticket, se asocia el historial de conversación, y se notifica en tiempo real a los técnicos a través del panel administrativo.
+
+> El establecimiento se elige **siempre del catálogo** (`bases`) administrado desde el dashboard: no hay carga manual ni texto libre, así que no puede quedar un establecimiento mal escrito o duplicado. `cancelar` funciona en cualquier paso y reinicia el flujo.
 
 ---
 
@@ -211,6 +214,8 @@ DB no termina en `_test`, así nunca pueden tocar la base de producción.
 | `src/__tests__/integration/tickets.test.ts` | Creación de tickets, validaciones, asignación de técnico **por teléfono** (2 técnicos homónimos no se pisan), permisos (auto-asignación / reasignación / prioridad), filtros `?tecnicoTelefono=` y `?sinAsignar=true` |
 | `src/__tests__/integration/usuarios.test.ts` | Soft-delete (conserva tickets e historial), bloqueo de login y del token viejo, alta de admins por el super admin, confirmación por WhatsApp, **anti duplicados de la invitación** (no reenvía WhatsApp si se repite el alta/promoción) |
 | `src/__tests__/integration/rate-limit.test.ts` | Bloqueo por fuerza bruta (10 intentos de verificación / 5 pedidos de código por ventana) y aislamiento por IP |
+| `src/__tests__/integration/lid.test.ts` | Consolidación de usuarios guardados con LID (mueve tickets y conversaciones al teléfono real, sin perder historial; idempotente) |
+| `src/__tests__/integration/bot-ticket.test.ts` | Flujo del bot de creación de tickets (handler directo, con envío y Groq mockeados): pregunta el **tipo de establecimiento**, filtra el listado por tipo, no ofrece tipos sin establecimientos, rechaza establecimientos de otro tipo (número o `buttonId` de una lista vieja) y `cancelar` resetea el flujo |
 
 ### ¿Contra qué Postgres corren?
 
